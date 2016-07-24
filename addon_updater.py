@@ -27,7 +27,20 @@ myUpdater.user = "username"
 myUpdater.stage_path = "//"
 myUpdater.current_version = "v1.1.0"
 myUpdater.set_check_interval(months=0,days=14,minutes=5) # optional
-(update_ready, version, link) = myUpdater.check_for_update(force=false)
+
+
+# Check for existing updates or any past versions
+# option 1: backgorund, async check with callback function input
+myUpdater.check_for_update_async(callback=None) # input callback function
+# option 2: immediate, thread-blocking
+(update_ready, version, link) = myUpdater.check_for_update()
+
+# run the update
+run_update(revert_tag=None)
+# or, select a verion to install
+tags = myUpdater.get_tag_names()
+latest_tag = tags[0] # equivalent to using revert_tag = None
+myUpdater.run_update(revert_tag=latest_tag) # e.g. latest_tag = "v1.0.0"
 
 
 """
@@ -54,10 +67,6 @@ import addon_utils
 DEFAULT_API_URL = "https://api.github.com" # plausibly could be some other system
 DEFAULT_TIMEOUT = 10
 DEFAULT_PER_PAGE = 30
-
-ERRORS ={
-	1:"Unknown error"
-}
 
 
 # -----------------------------------------------------------------------------
@@ -608,7 +617,7 @@ class Singleton_updater(object):
 			return # already running the bg thread
 		elif self._update_ready == None:
 			# return (self._update_ready,self._update_version,self._update_link)
-			self.start_async(callback)
+			self.start_async_check_update(callback)
 
 	def check_for_update_now(self, callback=None):
 		if self._async_checking == True:
@@ -616,7 +625,7 @@ class Singleton_updater(object):
 			return # already running the bg thread
 		elif self._update_ready == None:
 			# return (self._update_ready,self._update_version,self._update_link)
-			self.start_async(callback)
+			self.start_async_check_update(callback)
 
 
 	# this function is not async, will always return in sequential fashion
@@ -822,17 +831,17 @@ class Singleton_updater(object):
 	# Come back to later.
 	# -------------------------------------------------------------------------
 
-	def start_async(self, callback=None):
+	def start_async_check_update(self, callback=None):
 		if self._async_checking == True:
 			return
 		
-		check_thread = threading.Thread(target=self.test_asyn_delay, args=(callback,))
+		check_thread = threading.Thread(target=self.async_check_update, args=(callback,))
 		check_thread.daemon = True
 		check_thread.start()
 		
 		return True
 
-	def test_asyn_delay(self, callback=None):
+	def async_check_update(self, callback=None):
 		self._async_checking = True
 		if self._verbose:print("BG: Checking for update now in background")
 		# time.sleep(3) # to test background, in case internet too fast to tell
@@ -841,13 +850,10 @@ class Singleton_updater(object):
 		callback(self._update_ready)
 		self._async_checking = False
 
-	def end_async():
+	def end_async_check_update():
 		# could return popup if condition met
 		
 		return True
-
-
-
 
 
 # -----------------------------------------------------------------------------
