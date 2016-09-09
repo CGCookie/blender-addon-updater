@@ -18,30 +18,8 @@
 
 
 """
-Example base usage:
-
-from addon_updater import Updater as myUpdater
-
-myUpdater.repo = "repository_name"
-myUpdater.user = "username"
-myUpdater.stage_path = "//"
-myUpdater.current_version = "v1.1.0"
-myUpdater.set_check_interval(months=0,days=14,minutes=5) # optional
-
-
-# Check for existing updates or any past versions
-# option 1: backgorund, async check with callback function input
-myUpdater.check_for_update_async(callback=None) # input callback function
-# option 2: immediate, thread-blocking
-(update_ready, version, link) = myUpdater.check_for_update()
-
-# run the update
-run_update(revert_tag=None)
-# or, select a verion to install
-tags = myUpdater.get_tag_names()
-latest_tag = tags[0] # equivalent to using revert_tag = None
-myUpdater.run_update(revert_tag=latest_tag) # e.g. latest_tag = "v1.0.0"
-
+See documentation for usage
+https://github.com/CGCookie/blender-addon-updater
 
 """
 
@@ -114,10 +92,10 @@ class Singleton_updater(object):
 		self._fake_install = False
 		self._async_checking = False # only true when async daemon started
 		self._update_ready = None
-		self._connection_failed = False
 		self._update_link = None
 		self._update_version = None
 		self._source_zip = None
+		self._check_thread = None
 
 		# get from module data
 		self._addon = __package__.lower()
@@ -126,6 +104,8 @@ class Singleton_updater(object):
 							self._addon+"_updater")
 		self._addon_root = os.path.dirname(__file__)
 		self._json = {}
+		self._error = None
+		self._error_msg = None
 
 
 	# -------------------------------------------------------------------------
@@ -185,10 +165,6 @@ class Singleton_updater(object):
 		if self._json == {}:
 			self.set_updater_json()
 		return self._json
-
-	@property
-	def connection_failed(self):
-		return self._connection_failed
 
 	@property
 	def repo(self):
@@ -342,6 +318,14 @@ class Singleton_updater(object):
 	def check_interval(self, value):
 		raise ValueError("Check frequency is read-only")
 
+	@property
+	def error(self):
+		return self._error
+
+	@property
+	def error_msg(self):
+		return self._error_msg
+
 
 	# -------------------------------------------------------------------------
 	# Parameter validation related functions
@@ -383,13 +367,20 @@ class Singleton_updater(object):
 	def get_tags(self):
 		request = "/repos/"+self.user+"/"+self.repo+"/tags"
 		# print("Request url: ",request)
-		if self.verbose:print("Grabbing tags from server")
+		if self.verbose:print("Getting tags from server")
 
-		# do more error checking e.g. no connection here, and relay back up
+		# do more error checking e.g. no connection here
 		self._tags = self.get_api(request)
-		if len(self._tags) == 0:
+		if self._tags == None:
+			# some error occured
 			self._tag_latest = None
-			if self.verbose:print("No tags found on this repository")
+			self._tags = []
+			return
+		elif len(self._tags) == 0:
+			self._tag_latest = None
+			self._error = "No releases found"
+			self._error_msg = "No releases or tags found on this repository"
+			if self.verbose:print("No releases or tags found on this repository")
 		else:
 			self._tag_latest = self._tags[0]
 			if self.verbose:print("Most recent tag found:",self._tags[0])
@@ -401,11 +392,14 @@ class Singleton_updater(object):
 		try:
 			result = urllib.request.urlopen(request)
 		except urllib.error.HTTPError as e:
-			raise ValueError("HTTPError, code: ",e.code)
-			# return or raise error?
+			self._error = "HTTP error"
+			self._error_msg = str(e.code)
+			self._update_ready = None 
 		except urllib.error.URLError as e:
-			raise ValueError("URLError, reason: ",e.reason)
-			# return or raise error?
+			self._error = "URL error, check internet connection"
+			self._error_msg = str(e.reason)
+			self._update_ready = None 
+			return None
 		else:
 			result_string = result.read()
 			result.close()
@@ -418,7 +412,10 @@ class Singleton_updater(object):
 		# return the json version
 		get = None
 		get = self.get_api_raw(url) # this can fail by self-created error raising
-		return json.JSONDecoder().decode( get )
+		if get != None:
+			return json.JSONDecoder().decode( get )
+		else:
+			return None
 
 
 	# create a working directory and download the new files
@@ -450,7 +447,6 @@ class Singleton_updater(object):
 			if self._verbose: print("Error: Aborting update, "+error)
 			raise ValueError("Aborting update, "+error)
 
-		if self._verbose:print("Todo: create backup zip of current addon now")
 		if self._backup_current==True:
 			self.create_backup()
 		if self._verbose:print("Now retreiving the new source zip")
@@ -595,7 +591,6 @@ class Singleton_updater(object):
 			return
 
 
-
 		if self._verbose:print("Reloading addon...")
 		addon_utils.modules(refresh=True)
 		bpy.utils.refresh_script_paths()
@@ -647,7 +642,7 @@ class Singleton_updater(object):
 				callback(True)
 				return
 
-		# do the threading
+		# do the check
 		if self._check_interval_enable == False:
 			return
 		elif self._async_checking == True:
@@ -658,6 +653,10 @@ class Singleton_updater(object):
 			self.start_async_check_update(False, callback)
 
 	def check_for_update_now(self, callback=None):
+
+		self._error = None
+		self._error_msg = None
+
 		if self._verbose: print("Check update pressed, first getting current status")
 		if self._async_checking == True:
 			if self._verbose:print("Skipping async check, already started")
@@ -674,6 +673,10 @@ class Singleton_updater(object):
 	# but should have a parent which calls it in another thread
 	def check_for_update(self, now=False):
 		if self._verbose:print("Checking for update function")
+
+		# clear the errors if any
+		self._error = None
+		self._error_msg = None
 
 		# avoid running again in if already run once in BG, just return past result
 		# but if force now check, then still do it
@@ -702,14 +705,16 @@ class Singleton_updater(object):
 			self._update_link = "http://127.0.0.1"
 			
 			return (self._update_ready, self._update_version, self._update_link)
+		
+		# primaryb internet call
 		self.get_tags() # sets self._tags and self._tag_latest
+
 		self._json["last_check"] = str(datetime.now())
 		self.save_updater_json()
 
 		if len(self._tags) == 0:
 			if self._verbose:print("No tag found on this repository")
 			self._update_ready = False
-			self._connection_failed = True
 			return (False, None, None)
 		new_version = self.version_tuple_from_text(self.tag_latest)
 
@@ -756,6 +761,10 @@ class Singleton_updater(object):
 		if revert_tag != None:
 			self.set_tag(revert_tag)
 			self._update_ready = True
+
+		# clear the errors if any
+		self._error = None
+		self._error_msg = None
 
 
 		if self.verbose:print("Running update")
@@ -893,9 +902,7 @@ class Singleton_updater(object):
 		self.save_updater_json()
 
 	# -------------------------------------------------------------------------
-	# ASYNC stuff...
-	# EDIT: needs to be threaded unfortunately.
-	# Come back to later.
+	# ASYNC stuff
 	# -------------------------------------------------------------------------
 
 	def start_async_check_update(self, now=False,callback=None):
@@ -904,6 +911,7 @@ class Singleton_updater(object):
 		if self._verbose: print("Starting background checking thread")
 		check_thread = threading.Thread(target=self.async_check_update, args=(now,callback,))
 		check_thread.daemon = True
+		self._check_thread = check_thread
 		check_thread.start()
 		
 		return True
@@ -916,11 +924,18 @@ class Singleton_updater(object):
 		if self._verbose:print("BG: Finished checking for update, doing callback")
 		if callback != None:callback(self._update_ready)
 		self._async_checking = False
+		self._check_thread = None
 
-	def end_async_check_update():
-		# could return popup if condition met
-		
-		return True
+
+	def stop_async_check_update(self):
+		if self._check_thread != None:
+			try:
+				print("Thread will end in normal course.")
+				# however, "There is no direct kill method on a thread object."
+				#self._check_thread.stop()
+			except:
+				pass
+		self._async_checking = False
 
 
 # -----------------------------------------------------------------------------
