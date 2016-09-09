@@ -42,7 +42,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 
 0) Copy the Python Module (addon_updater.py) and the Operator File (addon_updater_ops.py) to the root folder of the existing addon folder
 
-1) import the updater operator file in __init__ file e.g. `from . import addon_updater_ops`
+1) import the updater operator file in `__init__` file e.g. `from . import addon_updater_ops`
 
 2) Run the register function on the updater module in the addon's def register() function, e.g. `addon_updater_ops.register(bl_info)`
 
@@ -51,6 +51,27 @@ Included in this repository is an example addon which is integrates the auto-upd
 3) To get the updater UI in the preferences draw panel, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function (be sure to import the addon_updater_ops file if in a file other than the addon's `__init__` file where already imported)
 
 5) Add the needed blender properties to make the sample updater preferences UI work by copying over the blender properties from the sample demo addon's `DemoPreferences` class, located in the `__init__` file
+
+```
+# addon updater preferences from `__init__`, be sure to copy all of them
+
+    auto_check_update = bpy.props.BoolProperty(
+        name = "Auto-check for Update",
+        description = "If enabled, auto-check for updates using an interval",
+        default = False,
+        )
+    
+    ....
+
+    updater_intrval_minutes = bpy.props.IntProperty(
+        name='Minutes',
+        description = "Number of minutes between checking for updates",
+        default=0,
+        min=0,
+        max=59
+        )
+
+```
 
 6) Add the draw call to an according panel to indicate there is an update by adding this line to the end of the panel or window: `addon_updater_ops.update_notice_box_ui()`, again making sure to import the addon_updater_ops module if this panel is defined in a file other than the addon's `__init__` file.
 
@@ -116,7 +137,14 @@ else:
 
 # addon_updater module settings
 
-This section is a work in progress, but ultimately will provide simple documentation for all of the addon_updater module settings available and required. These are the settings applied directly to the addon_updater module itself.
+This section provides documentation for all of the addon_updater module settings available and required. These are the settings applied directly to the addon_updater module itself, imported into any other python file. 
+
+**Example changing or applying a setting:**
+
+```
+from .addon_updater import Updater as updater
+updater.addon = "addon_name"
+```
 
 *Required settings*
 
@@ -217,24 +245,17 @@ This section is a work in progress, but ultimately will provide simple documenta
 - **error:** If an error occurs, such as no internet or if the repo has no tags, this will be a string with the name of the error; otherwise, it is `None`
   - Type: String
   - Default: None
-  - It may be useful for user interfaces to check e.g. `updater.error == None` to draw a label with an error message e.g. `layout.label(updater.error_msg)`
+  - It may be useful for user interfaces to check e.g. `updater.error != None` to draw a label with an error message e.g. `layout.label(updater.error_msg)`
 - **error_msg:** If an error occurs, such as no internet or if the repo has no tags, this will be a string with the description of the error; otherwise, it is `None`
   - Type: String
   - Default: None
-  - It may be useful for user interfaces to check e.g. `updater.error == None` to draw a label with an error message e.g. `layout.label(updater.error_msg)`
+  - It may be useful for user interfaces to check e.g. `updater.error != None` to draw a label with an error message e.g. `layout.label(updater.error_msg)`
 
 
-
-Example changing or applying a setting:
-
-```
-from .addon_updater import Updater as updater
-updater.addon = "addon_name"
-```
 
 # About addon_updater_ops
 
-This is the code which acts as a bridge between the pure python addon_updater.py module and blender itself. It is safe and even advised to modify the addon_updater_ops file to fit the UI/UX wishes. You should not need to modify the addon_updater.py file.
+This is the code which acts as a bridge between the pure python addon_updater.py module and blender itself. It is safe and even advised to modify the addon_updater_ops file to fit the UI/UX wishes. You should not need to modify the addon_updater.py file to make a customized updater experience.
 
 ### User preferences UI
 
@@ -244,7 +265,16 @@ Most of the key settings for the user are available in the user preferences of t
 
 ### Integrated panel UI
 
-![Alt](/images/updater_preferences.png)
+![Alt](/images/integrated_panel.png)
+
+*If a check has been performed and an update is ready, this panel is displayed in the panel otherwise just dedicated to the addon's tools itself. The draw function can be appended to any panel.*
+
+### Popup notice after new update found
+
+![Alt](/images/popup_update.png)
+
+*After a check for update has occurred, either by the user interface or automatically in the background (with auto-check enabled and the interval passed), a popup is set to appear when the draw panel is first triggered. It will not re-trigger until blender is restarted. Pressing ignore on the integrate panel UI box will prevent popups in the future.*
+
 
 ### Install different addon versions
 
