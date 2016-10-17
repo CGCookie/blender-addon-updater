@@ -44,7 +44,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 
 1) import the updater operator file in `__init__` file e.g. `from . import addon_updater_ops`
 
-2) Run the register function on the updater module in the addon's def register() function, e.g. `addon_updater_ops.register(bl_info)`
+2) Run the register function on the updater module in the addon's def register() function, e.g. `addon_updater_ops.register(bl_info)`. Consider trying to place the updater register near the front of the addon along with any preferences function so that if the user updates/reverts to a non-working version of the addon, they can still use the updater to revert
 
 3) Edit the according fields in the register function of the `addon_updater_ops.py` file
 
@@ -280,7 +280,7 @@ Most of the key settings for the user are available in the user preferences of t
 
 ![Alt](/images/install_versions.png)
 
-In addition to grabbing the code for the most recent release or tag of a GitHub repository, this updater can also install other target versions of the addon through the popup interface. 
+*In addition to grabbing the code for the most recent release or tag of a GitHub repository, this updater can also install other target versions of the addon through the popup interface.* 
 
 
 
