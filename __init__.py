@@ -20,8 +20,8 @@ bl_info = {
 	"name":        "Addon Updater Demo",
 	"description": "Demo addon for showcasing the blender-addon-updater module",
 	"author":      "Patrick W. Crawford",
-	"version":     (0, 3, 0),
-	"blender":     (2, 7, 7),
+	"version":     (0, 3, 1),
+	"blender":     (2, 7, 8),
 	"location":    "View 3D > Tool Shelf > Demo Updater",
 	"warning":     "",  # used for warning icon and text in addons panel
 	"wiki_url":    "https://github.com/CGCookie/blender-addon-updater",
@@ -61,7 +61,7 @@ class DemoUpdaterPabel(bpy.types.Panel):
 		layout.label("")
 
 		# call built-in function with draw code/checks
-		addon_updater_ops.update_notice_box_ui()
+		addon_updater_ops.update_notice_box_ui(self, context)
 
 
 # demo bare-bones preferences
