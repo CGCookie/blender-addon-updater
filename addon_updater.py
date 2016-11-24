@@ -405,18 +405,18 @@ class Singleton_updater(object):
 
 	def get_tags(self):
 		request = "/repos/"+self.user+"/"+self.repo+"/tags"
-		# print("Request url: ",request)
 		if self.verbose:print("Getting tags from server")
 
 		# get all tags, internet call
 		all_tags = self.get_api(request)
-		self._prefiltered_tag_count = len(all_tags)
 
 		# pre-process to skip tags
 		if self.skip_tag != None:
 			self._tags = [tg for tg in all_tags if self.skip_tag(tg)==False]
 		else:
 			self._tags = all_tags
+
+		self._prefiltered_tag_count = len(self._tags)
 
 		# get master too, if needed, and place in front but not actively
 		if self._include_master == True:
@@ -441,6 +441,9 @@ class Singleton_updater(object):
 		elif self._prefiltered_tag_count == 0 and self._include_master == True:
 			self._tag_latest = self._tags[0]
 			if self.verbose:print("Only master branch found:",self._tags[0])
+		elif self._prefiltered_tag_count > 0 and self._include_master == True:
+			self._tag_latest = self._tags[1]
+			if self.verbose:print("Most recent tag found:",self._tags[1])
 		elif len(self._tags) == 0 and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
 			self._error = "No releases available"
@@ -564,14 +567,14 @@ class Singleton_updater(object):
 	def upack_staged_zip(self):
 
 		if os.path.isfile(self._source_zip) == False:
-			print("Error, update zip not found")
+			if self._verbose:print("Error, update zip not found")
 			return -1
 
 		# clear the existing source folder in case previous files remain
 		try:
 			shutil.rmtree( os.path.join(self._updater_path,"source") )
 			os.makedirs( os.path.join(self._updater_path,"source") )
-			print("Source folder cleared and recreated")
+			if self._verbose:print("Source folder cleared and recreated")
 		except:
 			pass
 		
@@ -582,7 +585,8 @@ class Singleton_updater(object):
 				# extractall is no longer a security hazard
 				zf.extractall(os.path.join(self._updater_path,"source"))
 		else:
-			print("Not a zip file, future add support for just .py files")
+			if self._verbose:
+				print("Not a zip file, future add support for just .py files")
 			raise ValueError("Resulting file is not a zip")
 		if self.verbose:print("Extracted source")
 
@@ -594,9 +598,9 @@ class Singleton_updater(object):
 				unpath = os.path.join(unpath,dirlist[0])
 
 			if os.path.isfile(os.path.join(unpath,"__init__.py")) == False:
-				print("not a valid addon found")
-				print("Paths:")
-				print(dirlist)
+				if self._verbose:print("not a valid addon found")
+				if self._verbose:print("Paths:")
+				if self._verbose:print(dirlist)
 
 				raise ValueError("__init__ file not found in new source")
 
@@ -643,7 +647,7 @@ class Singleton_updater(object):
 		# if post_update false, skip this function
 		# else, unload/reload addon & trigger popup
 		if self._auto_reload_post_update == False:
-			print("Restart blender to reload")
+			print("Restart blender to reload addon and complete update")
 			return
 
 
@@ -662,6 +666,13 @@ class Singleton_updater(object):
 	# Other non-api functions and setups
 	# -------------------------------------------------------------------------
 
+	def clear_state(self):
+		self._update_ready = None
+		self._update_link = None
+		self._update_version = None
+		self._source_zip = None
+		self._error = None
+		self._error_msg = None
 
 	def version_tuple_from_text(self,text):
 
@@ -775,20 +786,21 @@ class Singleton_updater(object):
 
 
 		# if (len(self._tags) == 0 and self._include_master == False) or\
-		# 		(len(self._tags) < 2 and self._include_master == True):
-		# 	if self._verbose:print("No tag found on this repository")
-		# 	self._update_ready = False
-		# 	self._error = "No online versions found"
-		# 	if self._include_master == True:
-		# 		self._error_msg = "Try installing master from Reinstall"
-		# 	else:
-		# 		self._error_msg = "No repository tags found for version comparison"
-		# 	return (False, None, None)
+		#       (len(self._tags) < 2 and self._include_master == True):
+		#   if self._verbose:print("No tag found on this repository")
+		#   self._update_ready = False
+		#   self._error = "No online versions found"
+		#   if self._include_master == True:
+		#       self._error_msg = "Try installing master from Reinstall"
+		#   else:
+		#       self._error_msg = "No repository tags found for version comparison"
+		#   return (False, None, None)
 
 		# can be () or ('master') in addition to version tag
 		new_version = self.version_tuple_from_text(self.tag_latest)
+			
 
-		if len(self._tags)==0:
+		if len(self._tags)==0 or (len(self._tags)==1 and self._include_master == True):
 			self._update_ready = False
 			self._update_version = None
 			self._update_link = None
@@ -809,12 +821,18 @@ class Singleton_updater(object):
 			self._update_link = link
 			self.save_updater_json()
 			return (True, new_version, link)
-		elif new_version != self._current_version:
+		elif new_version > self._current_version:
 			self._update_ready = True
 			self._update_version = new_version
 			self._update_link = link
 			self.save_updater_json()
 			return (True, new_version, link)
+		# elif new_version != self._current_version:
+		#   self._update_ready = False
+		#   self._update_version = new_version
+		#   self._update_link = link
+		#   self.save_updater_json()
+		#   return (True, new_version, link)
 
 		# if no update, set ready to False from None
 		self._update_ready = False
@@ -983,7 +1001,7 @@ class Singleton_updater(object):
 		self._json["update_ready"] = False
 		self._json["version_text"] = {}
 		self.save_updater_json()
-		updater.update_ready = None # reset so you could check update again
+		self._update_ready = None # reset so you could check update again
 
 	def ignore_update(self):
 		self._json["ignore"] = True
@@ -1012,13 +1030,13 @@ class Singleton_updater(object):
 		# try:
 		self.check_for_update(now=now)
 		# except Exception as exception:
-		# 	print("Checking for update error:")
-		# 	print(exception)
-		# 	self._update_ready = False
-		# 	self._update_version = None
-		# 	self._update_link = None
-		# 	self._error = "Error occurred"
-		# 	self._error_msg = "Encountered an error while checking for updates"
+		#   print("Checking for update error:")
+		#   print(exception)
+		#   self._update_ready = False
+		#   self._update_version = None
+		#   self._update_link = None
+		#   self._error = "Error occurred"
+		#   self._error_msg = "Encountered an error while checking for updates"
 
 		if self._verbose:
 			print("BG: Finished checking for update, doing callback")
@@ -1030,7 +1048,7 @@ class Singleton_updater(object):
 	def stop_async_check_update(self):
 		if self._check_thread != None:
 			try:
-				print("Thread will end in normal course.")
+				if self._verbose:print("Thread will end in normal course.")
 				# however, "There is no direct kill method on a thread object."
 				# better to let it run its course
 				#self._check_thread.stop()

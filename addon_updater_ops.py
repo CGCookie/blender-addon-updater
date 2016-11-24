@@ -83,7 +83,7 @@ class addon_updater_install_popup(bpy.types.Operator):
 			#bpy.ops.retopoflow.updater_install_popup('INVOKE_DEFAULT')
 
 		else:
-			print("Doing nothing, not ready for update")
+			if updater.verbose:print("Doing nothing, not ready for update")
 		return {'FINISHED'}
 
 
@@ -96,9 +96,11 @@ class addon_updater_check_now(bpy.types.Operator):
 
 	def execute(self,context):
 
-		if updater.async_checking == True:
+		if updater.async_checking == True and updater.error == None:
 			# Check already happened
 			# Used here to just avoid constant applying settings below
+			# Ignoring if erro, to prevent being stuck on the error screen
+			return {'CANCELLED'}
 			return 
 
 		# apply the UI settings
@@ -202,9 +204,9 @@ class addon_updater_update_target(bpy.types.Operator):
 			if res==0: print("Updater returned successful")
 			else: print("Updater returned "+str(res)+", error occurred")
 		# try:
-		# 	updater.run_update(force=False,revert_tag=self.target)
+		#   updater.run_update(force=False,revert_tag=self.target)
 		# except:
-		# 	self.report({'ERROR'}, "Problem installing target version")
+		#   self.report({'ERROR'}, "Problem installing target version")
 
 		return {'FINISHED'}
 
@@ -327,7 +329,7 @@ class addon_updater_ignore(bpy.types.Operator):
 	
 	def execute(self, context):
 		updater.ignore_update()
-		self.report({"INFO","Open addon preferences for updater options"})
+		self.report({"INFO"},"Open addon preferences for updater options")
 		return {'FINISHED'}
 
 
@@ -339,10 +341,10 @@ class addon_updater_end_background(bpy.types.Operator):
 
 	# @classmethod
 	# def poll(cls, context):
-	# 	if updater.async_checking == True:
-	# 		return True
-	# 	else:
-	# 		return False
+	#   if updater.async_checking == True:
+	#       return True
+	#   else:
+	#       return False
 	
 	def execute(self, context):
 		updater.stop_async_check_update()
@@ -609,9 +611,17 @@ def update_settings_ui(self, context):
 						text = "", icon="X")
 		
 	elif updater.update_ready==True and updater.manual_only==False:
-		col.scale_y = 2
-		col.operator(addon_updater_update_now.bl_idname,
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_update_now.bl_idname,
 					"Update now to "+str(updater.update_version))
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						text = "", icon="FILE_REFRESH")
+
 	elif updater.update_ready==True and updater.manual_only==True:
 		col.scale_y = 2
 		col.operator("wm.url_open",
@@ -631,7 +641,11 @@ def update_settings_ui(self, context):
 
 	if updater.manual_only == False:
 		col = row.column(align=True)
-		col.operator(addon_updater_update_target.bl_idname,
+		if updater.include_master == True:
+			col.operator(addon_updater_update_target.bl_idname,
+					"Install master / old verison")
+		else:
+			col.operator(addon_updater_update_target.bl_idname,
 					"Reinstall / install old verison")
 		lastdate = "none found"
 		backuppath = os.path.join(updater.stage_path,"backup")
@@ -668,8 +682,8 @@ def skip_tag_function(tag):
 	#
 	# # Filter out e.g. if 'beta' is in name of release
 	# if 'beta' in tag.lower():
-	#	return True
-	# ---- write any custom code here, return true to disallow version ---- #
+	#   return True
+	# ---- write any custom code above, return true to disallow version --- #
 
 	if tag["name"].lower() == 'master' and updater.include_master == True:
 		return False
@@ -681,24 +695,20 @@ def skip_tag_function(tag):
 	# select the min tag version - change tuple accordingly
 	if updater.version_min_update != None:
 		if tupled < updater.version_min_update:
-			print("skip lo")
 			return True # skip if current version below this
 	
 	# select the max tag version
 	if updater.version_max_update != None:
 		if tupled >= updater.version_max_update:
-			print("skip hi")
 			return True # skip if current version at or above this
 	
 	# in all other cases, allow showing the tag for updating/reverting
 	return False
 
 
-
 # -----------------------------------------------------------------------------
 # Register, should be run in the register module itself
 # -----------------------------------------------------------------------------
-
 
 
 # registering the operators in this module
