@@ -2,8 +2,8 @@
 
 With this python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHubs code api, so the addon must have it's updated code available on GitHub and be making use of either GitHub tags or releases.
 
-**This code is close but not yet production ready**
-*This notice will change when ready for external use*
+**This code is ready for production with public repositories**
+
 
 # Key Features
 *From the user perspective*
@@ -17,7 +17,12 @@ With this python module, developers can create auto-checking for updates with th
 - One-click button to install update
 - Ability to install other (older) versions of the addon
 
+With this module, there are essentially  3 different configurations:
+- Connect an addon to github releases & be notified when new releases are out and allow 1-click install (with an option to install master if available)
+- Connect an addon to github releases & be notified when new releases are out, but direct user to website or download page instead of one-click installing
+- Configure the addon to one click install from master, not using github releases at all. No notifications (currently). 
 
+*Note the repository is not currently setup to be used with single python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*
 
 # High level setup
 
@@ -39,18 +44,21 @@ Included in this repository is an example addon which is integrates the auto-upd
 
 # Step-by-step as-is integration with existing addons
 
+*These steps are for the configuration that provides notifications of new releases and allows one-click installation*
 
-0) Copy the Python Module (addon_updater.py) and the Operator File (addon_updater_ops.py) to the root folder of the existing addon folder
+1) Copy the Python Module (addon_updater.py) and the Operator File (addon_updater_ops.py) to the root folder of the existing addon folder
 
-1) import the updater operator file in `__init__` file e.g. `from . import addon_updater_ops`
+2) import the updater operator file in `__init__.py` file e.g. `from . import addon_updater_ops` at the top with other module imports like `import bpy`
 
-2) Run the register function on the updater module in the addon's def register() function, e.g. `addon_updater_ops.register(bl_info)`. Consider trying to place the updater register near the front of the addon along with any preferences function so that if the user updates/reverts to a non-working version of the addon, they can still use the updater to revert
+3) In the register function of `__init__.py`, run the addon's def register() function by adding `addon_updater_ops.register(bl_info)`.
+  - Consider trying to place the updater register near the top of the addon's register function along with any preferences function so that if the user updates/reverts to a non-working version of the addon, they can still use the updater to restore backwards.
 
-3) Edit the according fields in the register function of the `addon_updater_ops.py` file
+4) Edit the according fields in the register function of the `addon_updater_ops.py` file. See the documentation below on these options, but at the bare minimum set the github username and repository. 
 
-3) To get the updater UI in the preferences draw panel, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function (be sure to import the addon_updater_ops file if in a file other than the addon's `__init__` file where already imported)
+5) To get the updater UI in the preferences draw panel and show all settings, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function.
+  - Be sure to import the addon_updater_ops file if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
 
-5) Add the needed blender properties to make the sample updater preferences UI work by copying over the blender properties from the sample demo addon's `DemoPreferences` class, located in the `__init__` file
+6) Add the needed blender properties to make the sample updater preferences UI work by copying over the blender properties from the sample demo addon's `DemoPreferences` class, located in the `__init__` file. Change the defaults as desired.
 
 ```
 # addon updater preferences from `__init__`, be sure to copy all of them
@@ -70,17 +78,20 @@ Included in this repository is an example addon which is integrates the auto-upd
         min=0,
         max=59
         )
-
 ```
 
-6) Add the draw call to an according panel to indicate there is an update by adding this line to the end of the panel or window: `addon_updater_ops.update_notice_box_ui()`, again making sure to import the addon_updater_ops module if this panel is defined in a file other than the addon's `__init__` file.
+7) Add the draw call to any according panel to indicate there is an update by adding this line to the end of the panel or window: `addon_updater_ops.update_notice_box_ui()`
+  - Again make sure to import the addon_updater_ops module if this panel is defined in a file other than the addon's `__init__.py` file.
+  - Note that this function will only be called once per blender session, and will only do anything if auto-check is enabled, thus triggering a background check for update provided the interval of time has passed since the last check for update. This is safe to trigger from draw as it is launched in a background thread and will not hang blender. 
 
-7) Ensure at least one [release or tag](https://help.github.com/articles/creating-releases/) exists on the GitHub repository
+8) Ensure at least one [release or tag](https://help.github.com/articles/creating-releases/) exists on the GitHub repository
+  - As an alternative or in addition to using releases, the setting `updater.include_master = True` in the `addon_updater_ops.py` register function allows you to update to master.
+  - If no releases are found, the user preferences button will always show "Update to Master" without doing any version checking
 
 
 # Minimal example setup / use cases
 
-If interested in implemented a purely customized UI implementation of this code, it is also possible to not use the included Operator File. This section covers the typical steps required to accomplish the main tasks and what needs to be connected to an interface. This also exposes the underlying ideas implemented in the provided files.
+If interested in implemented a purely customized UI implementation of this code, it is also possible to not use the included Operator File (addon_updater_ops). This section covers the typical steps required to accomplish the main tasks and what needs to be connected to an interface. This also exposes the underlying ideas implemented in the provided files.
 
 **Required settings** *Attributes to define before any other use case, to be defined in the registration of the addon*
 
@@ -91,10 +102,12 @@ updater.repo = "blender-addon-updater"
 updater.current_version = bl_info["version"]
 ```
 
-**Check for update** *(foreground using/blocking the main thread, after pressing an explicit "check for update button")*
+**Check for update** *(foreground using/blocking the main thread, after pressing an explicit "check for update button" - blender will hang)*
 
 ```
 updater.check_for_update_now()
+
+# convinience returns, values also saved internally to updater object
 (update_ready, version, link) = updater.check_for_update()
 	
 ```
@@ -109,23 +122,28 @@ updater.check_for_update_now(callback=None)
 
 ```
 updater.check_for_update_async(background_update_callback)
-# callback could be the code to trigger a popup if result has updater.update_ready == True
+# callback could be the function object to trigger a popup if result has updater.update_ready == True
 ```
 
-**Update to newest addon**
+**Update to newest version available** *(Must have already checked for an update. This uses/blocks the main thread)*
 
 ```
-res = updater.run_update(force=False, revert_tag=None, callback=function_obj)
-if res == 0:
-	print("Update ran successfully, restart blender")
-else:
-	print("Updater returned "+str(res)+", error occurred")
+if updater.update_ready == True:
+  res = updater.run_update(force=False, revert_tag=None, callback=function_obj)
+  if res == 0:
+  	print("Update ran successfully, restart blender")
+  else:
+  	print("Updater returned "+str(res)+", error occurred")
+elif updater.update_ready == False:
+  print("No update available")
+elif updater.update_ready == None:
+  print("You need to check for an update first")
 ```
 
-**Update to a target version of the addon**
+**Update to a target version of the addon** *(Perform the necessary error checking, updater.tags will == [] if a check has not yet been performed or releases are not found. Master will be inserted as the first entry if `updater.include_master == True`)*
 
 ```
-tag_version = addon.tags[2] # or otherwise select a valid tag
+tag_version = updater.tags[2] # or otherwise select a valid tag
 res = updater.run_update(force=False,revert_tag=None, callback=function_obj)
 if res == 0:
 	print("Update ran successfully, restart blender")
@@ -282,6 +300,31 @@ Most of the key settings for the user are available in the user preferences of t
 
 *In addition to grabbing the code for the most recent release or tag of a GitHub repository, this updater can also install other target versions of the addon through the popup interface.* 
 
+
+### If you repository doesn't have any releases...
+
+![Alt](/images/no_releases.png)
+
+*This is what you will find. See below on tags and releases* 
+
+
+# How to use git and tags/releases
+
+## What are they
+
+From a [good reference website](https://git-scm.com/book/en/v2/Git-Basics-Tagging), a tag acts much like a branch except it never changes - it is linked with a specific commit in time. Tags can be annotated to have information liek release logs or binaries, but at the base they allow one to designate major versions of code. This addon udpator uses tag names in order to base the comparison version numbers, and thus to also grab the code from those points in times.
+
+## Through the interface (github specific)
+
+View the releases tab at the top of any github repository to create and view all releases and tags. Note that a release is just an annotated tag, and that this repository will function with both tags and releases. 
+
+## Through command line (for any git-based system)
+
+To show all tags on your local git repository use `git tag`
+
+To create a new tag with the current local or pushed comit, use e.g. `git tag -a v0.0.1 -m "v0.0.1 release"` which will create an annotated tag. 
+
+To push this tag up to the server (which wont' happen autoamtically via `git push`), use `git push origin v0.0.1` or whichever according tag name
 
 
 # Issues or help
