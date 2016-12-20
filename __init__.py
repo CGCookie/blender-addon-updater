@@ -20,7 +20,7 @@ bl_info = {
 	"name":        "Addon Updater Demo",
 	"description": "Demo addon for showcasing the blender-addon-updater module",
 	"author":      "Patrick W. Crawford",
-	"version":     (0, 3, 1),
+	"version":     (1, 0, 0),
 	"blender":     (2, 7, 8),
 	"location":    "View 3D > Tool Shelf > Demo Updater",
 	"warning":     "",  # used for warning icon and text in addons panel
@@ -36,7 +36,7 @@ import bpy
 from . import addon_updater_ops
 
 
-class DemoUpdaterPabel(bpy.types.Panel):
+class DemoUpdaterPanel(bpy.types.Panel):
 	"""Panel to demo popup notice and ignoring functionality"""
 	bl_label = "Updater Demo Panel"
 	bl_idname = "OBJECT_PT_hello"
@@ -47,6 +47,16 @@ class DemoUpdaterPabel(bpy.types.Panel):
 
 	def draw(self, context):
 		layout = self.layout
+
+		# Call to check for update in background
+		# note: built-in checks ensure it runs at most once
+		# and will run in the background thread, not blocking
+		# or hanging blender
+		# Internal also checks to see if auto-check enabeld
+		# and if the time interval has passed
+		addon_updater_ops.check_for_update_background(context)
+
+
 		layout.label("Demo Updater Addon")
 		layout.label("")
 
@@ -120,9 +130,7 @@ def register():
 
 	# register the example panel, to show updater buttons
 	bpy.utils.register_class(DemoPreferences)
-	bpy.utils.register_class(DemoUpdaterPabel)
-
-	# TODO: create sample panel for background update checking demo
+	bpy.utils.register_class(DemoUpdaterPanel)
 
 
 def unregister():
@@ -132,6 +140,6 @@ def unregister():
 
 	# register the example panel, to show updater buttons
 	bpy.utils.unregister_class(DemoPreferences)
-	bpy.utils.unregister_class(DemoUpdaterPabel)
+	bpy.utils.unregister_class(DemoUpdaterPanel)
 
 

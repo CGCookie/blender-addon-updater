@@ -18,9 +18,9 @@ With this python module, developers can create auto-checking for updates with th
 - Ability to install other (older) versions of the addon
 
 With this module, there are essentially  3 different configurations:
-- Connect an addon to github releases & be notified when new releases are out and allow 1-click install (with an option to install master if available)
-- Connect an addon to github releases & be notified when new releases are out, but direct user to website or download page instead of one-click installing
-- Configure the addon to one click install from master, not using github releases at all. No notifications (currently). 
+- Connect an addon to GitHub releases & be notified when new releases are out and allow 1-click install (with an option to install master if available)
+- Connect an addon to GitHub releases & be notified when new releases are out, but direct user to website or download page instead of one-click installing
+- Configure the addon to one click install from master, not using GitHub releases at all. No notifications (currently). 
 
 *Note the repository is not currently setup to be used with single python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*
 
@@ -36,7 +36,7 @@ This repository contains a fully working example of an addon with the updater co
 
 `addon_updater_ops.py` links the states and settings of the `addon_updater.py` module and displays the according interface. This file is expected to be modified accordingly to be integrated with into another addon, and serves mostly as a working example of how to implement the updater code. 
 
-In this documentation, `addon_updater.py` is referred to by "the Python Module" and `addon_updater.py` is referred to by "the Operator File".
+In this documentation, `addon_updater.py` is referred to by "the Python Module" and `addon_updater_ops.py` is referred to by "the Operator File".
 
 # About the example addon
 
@@ -53,10 +53,11 @@ Included in this repository is an example addon which is integrates the auto-upd
 3) In the register function of `__init__.py`, run the addon's def register() function by adding `addon_updater_ops.register(bl_info)`.
   - Consider trying to place the updater register near the top of the addon's register function along with any preferences function so that if the user updates/reverts to a non-working version of the addon, they can still use the updater to restore backwards.
 
-4) Edit the according fields in the register function of the `addon_updater_ops.py` file. See the documentation below on these options, but at the bare minimum set the github username and repository. 
+4) Edit the according fields in the register function of the `addon_updater_ops.py` file. See the documentation below on these options, but at the bare minimum set the GitHub username and repository. 
+  - Note that many of the settings are assigned in the `addon_updater_ops.py: register()` function to avoid having excess updater-related code in the addon's `__init__.py:register()` function, however because the updater module is shared across the addon, these settings could be made in either place.
 
 5) To get the updater UI in the preferences draw panel and show all settings, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function.
-  - Be sure to import the addon_updater_ops file if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
+  - Be sure to import the Operator File if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
 
 6) Add the needed blender properties to make the sample updater preferences UI work by copying over the blender properties from the sample demo addon's `DemoPreferences` class, located in the `__init__` file. Change the defaults as desired.
 
@@ -81,7 +82,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 ```
 
 7) Add the draw call to any according panel to indicate there is an update by adding this line to the end of the panel or window: `addon_updater_ops.update_notice_box_ui()`
-  - Again make sure to import the addon_updater_ops module if this panel is defined in a file other than the addon's `__init__.py` file.
+  - Again make sure to import the Operator File if this panel is defined in a file other than the addon's `__init__.py` file.
   - Note that this function will only be called once per blender session, and will only do anything if auto-check is enabled, thus triggering a background check for update provided the interval of time has passed since the last check for update. This is safe to trigger from draw as it is launched in a background thread and will not hang blender. 
 
 8) Ensure at least one [release or tag](https://help.github.com/articles/creating-releases/) exists on the GitHub repository
@@ -91,7 +92,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 
 # Minimal example setup / use cases
 
-If interested in implemented a purely customized UI implementation of this code, it is also possible to not use the included Operator File (addon_updater_ops). This section covers the typical steps required to accomplish the main tasks and what needs to be connected to an interface. This also exposes the underlying ideas implemented in the provided files.
+If interested in implementing a purely customized UI implementation of this code, it is also possible to not use the included Operator File (addon_updater_ops.py). This section covers the typical steps required to accomplish the main tasks and what needs to be connected to an interface. This also exposes the underlying ideas implemented in the provided files.
 
 **Required settings** *Attributes to define before any other use case, to be defined in the registration of the addon*
 
@@ -107,18 +108,18 @@ updater.current_version = bl_info["version"]
 ```
 updater.check_for_update_now()
 
-# convinience returns, values also saved internally to updater object
+# convenience returns, values also saved internally to updater object
 (update_ready, version, link) = updater.check_for_update()
 	
 ```
 
-**Check for update** *(foreground using background thread, after pressing an explicit "check for update button")*
+**Check for update** *(foreground using background thread, i.e. after pressing an explicit "check for update button")*
 
 ```
 updater.check_for_update_now(callback=None)
 ```
 
-**Check for update** *(background using background thread, triggered without notifying user - eg via auto-check after interval of time passed)*
+**Check for update** *(background using background thread, intended to trigger without notifying user - e.g. via auto-check after interval of time passed. Safe to call e.g. in a UI panel as it will at most run once per blender session)*
 
 ```
 updater.check_for_update_async(background_update_callback)
@@ -140,7 +141,7 @@ elif updater.update_ready == None:
   print("You need to check for an update first")
 ```
 
-**Update to a target version of the addon** *(Perform the necessary error checking, updater.tags will == [] if a check has not yet been performed or releases are not found. Master will be inserted as the first entry if `updater.include_master == True`)*
+**Update to a target version of the addon** *(Perform the necessary error checking, updater.tags will == [] if a check has not yet been performed or releases are not found. Master will be inserted as the first entry if `updater.include_master == True`. Pass in a function object function_obj to run code once the updater has finished if desired, or pass in None)*
 
 ```
 tag_version = updater.tags[2] # or otherwise select a valid tag
@@ -166,8 +167,8 @@ updater.addon = "addon_name"
 
 *Required settings*
 
-- **current_version:** The current version of the installed addon
-  - Type: Tuple, e.g. (1,1,0) or (1,1)
+- **current_version:** The current version of the installed addon, typically acquired from bl_info
+  - Type: Tuple, e.g. (1,1,0) or (1,1) or bl_info["version"]
 - **repo:** The name of the repository as found in the GitHub link
   - Type: String, e.g. "blender-addon-updater"
 - **user:** The name of the user the repository belongs to
@@ -209,7 +210,7 @@ updater.addon = "addon_name"
 - **check_interval_days:** Set the interval of days between the previous check for update and the next
 - **check_interval_months:** Set the interval of months between the previous check for update and the next
 
-*Internal values (read only)*
+*Internal values (read only by the Python Module)*
 
 - **addon_package:** The package name of the addon, used for enabling or disabling the addon
   - Type: String
@@ -217,7 +218,7 @@ updater.addon = "addon_name"
   - Must use the provided default value of `__package__` , automatically assigned
 - **addon_root:** The location of the root of the updater file
   - Type: String, path
-  - Default: os.path.dirname(__file__)
+  - Default: `os.path.dirname(__file__)`
 - **api_url:** The GitHub API url
   - Type: String
   - Default: "https://api.github.com"
@@ -231,7 +232,7 @@ updater.addon = "addon_name"
 - **json:** Contains important state information about the updater
   - Type: Dictionary with string keys
   - Default: {}
-  - Notes: This is used by both the module and the operator file to store saved state information, such as when the last update is and caching update links / versions to prevent the need to check the internet more than necessary. The contents of this dictionary object are directly saved to a json file in the addon updater folder
+  - Notes: This is used by both the module and the operator file to store saved state information, such as when the last update is and caching update links / versions to prevent the need to check the internet more than necessary. The contents of this dictionary object are directly saved to a json file in the addon updater folder. The contents are periodically updated, such as to save timestamps after checking for update, or saving locally the update link of not updated immediately, or storing the "ignore update" decision by user.
 - **source_zip:** Once a version of the addon is downloaded directly from the server, this variable is set to the absolute path to the zip file created.
   - Type: String, OS path
   - Default: None
@@ -273,7 +274,7 @@ updater.addon = "addon_name"
 
 # About addon_updater_ops
 
-This is the code which acts as a bridge between the pure python addon_updater.py module and blender itself. It is safe and even advised to modify the addon_updater_ops file to fit the UI/UX wishes. You should not need to modify the addon_updater.py file to make a customized updater experience.
+This is the code which acts as a bridge between the pure python addon_updater.py module and blender itself. It is safe and even advised to modify the Operator File to fit the UI/UX wishes. You should not need to modify the addon_updater.py file to make a customized updater experience.
 
 ### User preferences UI
 
@@ -301,30 +302,30 @@ Most of the key settings for the user are available in the user preferences of t
 *In addition to grabbing the code for the most recent release or tag of a GitHub repository, this updater can also install other target versions of the addon through the popup interface.* 
 
 
-### If you repository doesn't have any releases...
+### If your repository doesn't have any releases...
 
 ![Alt](/images/no_releases.png)
 
-*This is what you will find. See below on tags and releases* 
+*This is what you will find. See below on creating tags and releases* 
 
 
 # How to use git and tags/releases
 
 ## What are they
 
-From a [good reference website](https://git-scm.com/book/en/v2/Git-Basics-Tagging), a tag acts much like a branch except it never changes - it is linked with a specific commit in time. Tags can be annotated to have information liek release logs or binaries, but at the base they allow one to designate major versions of code. This addon udpator uses tag names in order to base the comparison version numbers, and thus to also grab the code from those points in times.
+From a [good reference website](https://git-scm.com/book/en/v2/Git-Basics-Tagging), a tag acts much like a branch except it never changes - it is linked with a specific commit in time. Tags can be annotated to have information like release logs or binaries, but at the base they allow one to designate major versions of code. This addon updater uses tag names in order to base the comparison version numbers, and thus to also grab the code from those points in times.
 
-## Through the interface (github specific)
+## Through the interface (GitHub specific)
 
-View the releases tab at the top of any github repository to create and view all releases and tags. Note that a release is just an annotated tag, and that this repository will function with both tags and releases. 
+View the releases tab at the top of any GitHub repository to create and view all releases and tags. Note that a release is just an annotated tag, and that this repository will function with both tags and releases. 
 
 ## Through command line (for any git-based system)
 
 To show all tags on your local git repository use `git tag`
 
-To create a new tag with the current local or pushed comit, use e.g. `git tag -a v0.0.1 -m "v0.0.1 release"` which will create an annotated tag. 
+To create a new tag with the current local or pushed commit, use e.g. `git tag -a v0.0.1 -m "v0.0.1 release"` which will create an annotated tag. 
 
-To push this tag up to the server (which wont' happen autoamtically via `git push`), use `git push origin v0.0.1` or whichever according tag name
+To push this tag up to the server (which wont' happen automatically via `git push`), use `git push origin v0.0.1` or whichever according tag name
 
 
 # Issues or help
