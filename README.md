@@ -4,6 +4,8 @@ With this python module, developers can create auto-checking for updates with th
 
 **This code is ready for production with public repositories**
 
+*Want to add this code to your addon? [See this tutorial here](http://theduckcow.com/2016/addon-updater-tutorial/)*
+
 
 # Key Features
 *From the user perspective*
@@ -45,6 +47,8 @@ Included in this repository is an example addon which is integrates the auto-upd
 # Step-by-step as-is integration with existing addons
 
 *These steps are for the configuration that provides notifications of new releases and allows one-click installation*
+
+*These steps are also represented more thoroughly in [this text tutorial](http://theduckcow.com/2016/addon-updater-tutorial/)*
 
 1) Copy the Python Module (addon_updater.py) and the Operator File (addon_updater_ops.py) to the root folder of the existing addon folder
 
