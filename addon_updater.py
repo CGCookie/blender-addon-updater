@@ -115,6 +115,9 @@ class Singleton_updater(object):
 		self._error_msg = None
 		self._prefiltered_tag_count = 0
 
+		# to verify a valid import, in place of placeholder import
+		self.invalidupdater = False
+
 
 	# -------------------------------------------------------------------------
 	# Getters and setters
@@ -171,11 +174,11 @@ class Singleton_updater(object):
 
 	@property
 	def fake_install(self):
-		return self._verbose
+		return self._fake_install
 	@fake_install.setter
 	def fake_install(self, value):
 		if type(value) != type(False):
-			raise ValueError("Verbose must be a boolean value")
+			raise ValueError("fake_install must be a boolean value")
 		self._fake_install = bool(value)
 			
 	@property
@@ -457,10 +460,7 @@ class Singleton_updater(object):
 			result = urllib.request.urlopen(request)
 		except urllib.error.HTTPError as e:
 			self._error = "HTTP error"
-			if str(e.code) == '404':
-				self._error_msg = "404 - repository not found, verify register settings"
-			else:
-				self._error_msg = "Response: "+str(e.code)
+			self._error_msg = str(e.code)
 			self._update_ready = None 
 		except urllib.error.URLError as e:
 			self._error = "URL error, check internet connection"
@@ -512,7 +512,7 @@ class Singleton_updater(object):
 
 		if self._backup_current==True:
 			self.create_backup()
-		if self._verbose:print("Now retreiving the new source zip")
+		if self._verbose:print("Now retrieving the new source zip")
 
 		self._source_zip = os.path.join(local,"source.zip")
 		
@@ -600,8 +600,6 @@ class Singleton_updater(object):
 				if self._verbose:print("not a valid addon found")
 				if self._verbose:print("Paths:")
 				if self._verbose:print(dirlist)
-				self._error = "Install addon update manually"
-				self._error_msg = "Valid addon zip not found"
 
 				raise ValueError("__init__ file not found in new source")
 
@@ -779,7 +777,7 @@ class Singleton_updater(object):
 			
 			return (self._update_ready, self._update_version, self._update_link)
 		
-		# primaryb internet call
+		# primary internet call
 		self.get_tags() # sets self._tags and self._tag_latest
 
 		self._json["last_check"] = str(datetime.now())
@@ -807,10 +805,8 @@ class Singleton_updater(object):
 			return (False, None, None)
 		elif self._include_master == False:
 			link = self._tags[0]["zipball_url"] # potentially other sources
-		elif self._include_master == True and len(self._tags)>1:
-			link = self._tags[1]["zipball_url"] # potentially other sources
 		else:
-			link = self._tags[0]["zipball_url"] # potentially other sources
+			link = self._tags[1]["zipball_url"] # potentially other sources
 		
 		if new_version == ():
 			self._update_ready = False
@@ -990,7 +986,7 @@ class Singleton_updater(object):
 		outf.write(data_out)
 		outf.close()
 		if self._verbose:
-			print("Wrote out json settings to file, with the contents:")
+			print(self._addon+": Wrote out updater json settings to file, with the contents:")
 			print(self._json)
 
 	def json_reset_postupdate(self):
@@ -1059,7 +1055,6 @@ class Singleton_updater(object):
 		self._async_checking = False
 		self._error = None
 		self._error_msg = None
-
 
 
 
