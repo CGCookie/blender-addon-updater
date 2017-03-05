@@ -329,7 +329,7 @@ To show all tags on your local git repository use `git tag`
 
 To create a new tag with the current local or pushed commit, use e.g. `git tag -a v0.0.1 -m "v0.0.1 release"` which will create an annotated tag. 
 
-To push this tag up to the server (which wont' happen automatically via `git push`), use `git push origin v0.0.1` or whichever according tag name
+To push this tag up to the server (which won't happen automatically via `git push`), use `git push origin v0.0.1` or whichever according tag name
 
 
 # Issues or help
