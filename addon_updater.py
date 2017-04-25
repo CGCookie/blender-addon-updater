@@ -1058,6 +1058,7 @@ class Singleton_updater(object):
 
 
 
+
 # -----------------------------------------------------------------------------
 # The module-shared class instance,
 # should be what's imported to other files

@@ -91,20 +91,24 @@ class addon_updater_install_popup(bpy.types.Operator):
 		if updater.invalidupdater == True:
 			return {'CANCELLED'}
 
-		if updater.update_ready == True:
+		if updater.update_ready == True and updater.manual_only==False::
 			res = updater.run_update(force=False, callback=post_update_callback)
 			# should return 0, if not something happened
 			if updater.verbose:
 				if res==0: print("Updater returned successful")
 				else: print("Updater returned "+str(res)+", error occurred")
 
-		elif updater.update_ready == None:
+		elif updater.update_ready == None and updater.manual_only==True:
 			(update_ready, version, link) = updater.check_for_update(now=True)
 			
 			# re-launch this dialog
 			atr = addon_updater_install_popup.bl_idname.split(".")
 			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
-			#bpy.ops.retopoflow.updater_install_popup('INVOKE_DEFAULT')
+
+		elif updater.manual_only==True:
+			# launch this dialog
+			atr = addon_updater_install_manually.bl_idname.split(".")
+			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 
 		else:
 			if updater.verbose:print("Doing nothing, not ready for update")
@@ -750,7 +754,12 @@ def update_settings_ui(self, context):
 
 	if updater.manual_only == False:
 		col = row.column(align=True)
-		col.operator(addon_updater_update_target.bl_idname,
+		#col.operator(addon_updater_update_target.bl_idname,
+		if updater.include_master == True:
+			col.operator(addon_updater_update_target.bl_idname,
+					"Install master / old verison")
+		else:
+			col.operator(addon_updater_update_target.bl_idname,
 					"Reinstall / install old verison")
 		lastdate = "none found"
 		backuppath = os.path.join(updater.stage_path,"backup")
@@ -919,4 +928,3 @@ def unregister():
 
 	global ran_background_check
 	ran_background_check = False
-
