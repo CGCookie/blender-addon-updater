@@ -885,8 +885,10 @@ def register(bl_info):
 	# Optional, default None
 	updater.version_min_update = (0,0,0) # min install (>=) will install this and higher
 	# updater.version_min_update = None  # if not wanting to define a min
-	updater.version_max_update = (9,9,9) # max install (<) will install strictly anything lower
-	# updater.version_max_update = None  # if not wanting to define a max
+	
+	# updater.version_max_update = (9,9,9) # max install (<) will install strictly anything lower
+	updater.version_max_update = None  # if not wanting to define a max
+	
 	updater.skip_tag = skip_tag_function # min and max used in this function
 
 	# The register line items for all operators/panels
