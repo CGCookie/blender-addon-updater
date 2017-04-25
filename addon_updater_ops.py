@@ -98,14 +98,14 @@ class addon_updater_install_popup(bpy.types.Operator):
 				if res==0: print("Updater returned successful")
 				else: print("Updater returned "+str(res)+", error occurred")
 
-		elif updater.update_ready == None and updater.manual_only==True:
+		elif updater.update_ready == None:
 			(update_ready, version, link) = updater.check_for_update(now=True)
 			
 			# re-launch this dialog
 			atr = addon_updater_install_popup.bl_idname.split(".")
 			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 
-		elif updater.manual_only==True:
+		elif updater.update_ready == True and updater.manual_only==True:
 			# launch this dialog
 			atr = addon_updater_install_manually.bl_idname.split(".")
 			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
