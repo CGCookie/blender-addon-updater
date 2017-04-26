@@ -20,7 +20,7 @@ bl_info = {
 	"name":        "Addon Updater Demo",
 	"description": "Demo addon for showcasing the blender-addon-updater module",
 	"author":      "Patrick W. Crawford",
-	"version":     (1, 0, 2),
+	"version":     (1, 0, 3),
 	"blender":     (2, 7, 8),
 	"location":    "View 3D > Tool Shelf > Demo Updater",
 	"warning":     "",  # used for warning icon and text in addons panel
@@ -60,9 +60,11 @@ class DemoUpdaterPanel(bpy.types.Panel):
 		layout.label("Demo Updater Addon")
 		layout.label("")
 
-		layout.label("If an update is ready,")
-		layout.label("popup triggered by opening")
-		layout.label("this panel & plus a box ui")
+		col = layout.column()
+		col.scale_y = 0.7
+		col.label("If an update is ready,")
+		col.label("popup triggered by opening")
+		col.label("this panel & plus a box ui")
 
 		# could also use your own custom drawing
 		# based on shared variables

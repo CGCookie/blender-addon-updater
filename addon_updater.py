@@ -77,6 +77,8 @@ class Singleton_updater(object):
 		self._tag_names = []
 		self._latest_release = None
 		self._include_master = False
+		self._include_master_branch = 'master'
+		self._include_master_autocheck = False
 		self._manual_only = False
 		self._version_min_update = None
 		self._version_max_update = None
@@ -151,6 +153,32 @@ class Singleton_updater(object):
 			self._include_master = bool(value)
 		except:
 			raise ValueError("include_master must be a boolean value")
+
+	@property
+	def include_master_branch(self):
+		return self._include_master_branch
+	@include_master_branch.setter
+	def include_master_branch(self, value):
+		try:
+			if value == None:
+				self._include_master_branch = 'master'
+				print("Setting include_master_branch = None --> 'master'")
+			else:
+				self._include_master_branch = value
+		except:
+			raise ValueError("include_master_branch should match a branch name")
+
+	# not currently used
+	@property
+	def include_master_autocheck(self):
+		return self._include_master_autocheck
+	@include_master_autocheck.setter
+	def include_master_autocheck(self, value):
+		try:
+			self._include_master_autocheck = bool(value)
+		except:
+			raise ValueError("include_master must be a boolean value")
+
 
 	@property
 	def manual_only(self):
@@ -422,16 +450,17 @@ class Singleton_updater(object):
 
 		# get master too, if needed, and place in front but not actively
 		if self._include_master == True:
+			branch = self._include_master_branch
 			request = self._api_url +"/repos/" \
-					+self.user+"/"+self.repo+"/zipball/master"
+					+self.user+"/"+self.repo+"/zipball/"+branch
 			master = {
-				"name":"Master",
+				"name":branch.title(),
 				"zipball_url":request
 			}
 			self._tags = [master] + self._tags # append to front
 
 		if self._tags == None:
-			# some error occured
+			# some error occurred
 			self._tag_latest = None
 			self._tags = []
 			return
@@ -442,15 +471,22 @@ class Singleton_updater(object):
 			if self.verbose:print("No releases or tags found on this repository")
 		elif self._prefiltered_tag_count == 0 and self._include_master == True:
 			self._tag_latest = self._tags[0]
-			if self.verbose:print("Only master branch found:",self._tags[0])
+			if self.verbose:
+				branch = self._include_master_branch
+				print("Only {} branch found:".format(branch),self._tags[0])
 		elif len(self._tags) == 0 and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
 			self._error = "No releases available"
 			self._error_msg = "No versions found within compatible version range"
 			if self.verbose:print("No versions found within compatible version range")
 		else:
-			self._tag_latest = self._tags[0]
-			if self.verbose:print("Most recent tag found:",self._tags[0])
+			if self._include_master == False:
+				self._tag_latest = self._tags[0]
+				if self.verbose:print("Most recent tag found:",self._tags[0])
+			else:
+				# don't return master if in list
+				self._tag_latest = self._tags[1]
+				if self.verbose:print("Most recent tag found:",self._tags[1])
 
 
 	# all API calls to base url
@@ -697,7 +733,7 @@ class Singleton_updater(object):
 			if self._include_master == False:
 				return ()
 			else:
-				return ('master')
+				return (self._include_master_branch)
 		return tuple(segments)
 
 	# called for running check in a background thread
@@ -814,17 +850,35 @@ class Singleton_updater(object):
 			self._update_link = None
 			return (False, None, None)
 		elif str(new_version).lower() == "master":
-			self._update_ready = True
-			self._update_version = new_version
-			self._update_link = link
-			self.save_updater_json()
-			return (True, new_version, link)
-		elif new_version > self._current_version:
-			self._update_ready = True
-			self._update_version = new_version
-			self._update_link = link
-			self.save_updater_json()
-			return (True, new_version, link)
+			# handle situation where master is included
+			# however, this code effectively is not triggered now
+			# as new_version will only be tag names, not branch names
+			if self._include_master_autocheck == False:
+				# don't offer update as ready,
+				# but set the link for the master
+				# branch for installing
+				self._update_ready = False
+				self._update_version = new_version
+				self._update_link = link
+				self.save_updater_json()
+				return (True, new_version, link)
+			else:
+				raise ValueError("include_master_autocheck: NOT YET DEVELOPED")
+				# bypass releases and look at timestamp of last update
+				# from master compared to now, see if commit values
+				# match or not.
+
+		else:
+			# situation where master not included
+
+			if new_version > self._current_version:
+
+				self._update_ready = True
+				self._update_version = new_version
+				self._update_link = link
+				self.save_updater_json()
+				return (True, new_version, link)
+
 		# elif new_version != self._current_version:
 		# 	self._update_ready = False
 		# 	self._update_version = new_version
