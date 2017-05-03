@@ -210,7 +210,7 @@ class addon_updater_update_target(bpy.types.Operator):
 		ret = []
 		i=0
 		for tag in updater.tags:
-			ret.append( (tag,tag,"Select to install version "+tag) )
+			ret.append( (tag,tag,"Select to install "+tag) )
 			i+=1
 		return ret
 
@@ -818,6 +818,7 @@ def skip_tag_function(tag):
 	# if 'beta' in tag.lower():
 	#	return True
 	# ---- write any custom code above, return true to disallow version --- #
+
 	branch = updater.include_master_branch
 	if tag["name"].lower() == branch and updater.include_master == True:
 		return False
@@ -886,12 +887,12 @@ def register(bl_info):
 	# default behavior: releases will still be used for auto check (popup),
 	# but the user has the option from user preferences to directly 
 	# update to the master branch.
-	updater.include_master = False
+	updater.include_master = True
 
 	# if using "include_master", 
 	# updater.include_master_branch defaults to 'master' branch if set to none
 	# updater.include_master_branch = 'dev' # example targeting another branch
-	updater.include_master_branch = None
+	updater.include_master_branch = 'dev'
 
 
 	# only allow manual install, thus prompting the user to open
