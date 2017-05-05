@@ -19,9 +19,10 @@ With this python module, developers can create auto-checking for updates with th
 - One-click button to install update
 - Ability to install other (older) versions of the addon
 
-With this module, there are essentially 2 different configurations:
+With this module, there are essentially 3 different configurations:
 - Connect an addon to GitHub releases & be notified when new releases are out and allow 1-click install (with an option to install master or another branch if enabled)
 - Connect an addon to GitHub releases & be notified when new releases are out, but direct user to website or specific download page instead of one-click installing
+- Connect an addon to GitHub that doesn't have any releases, and allow use to 1-click install to a default branch and select from other explicitly included branches to install (does not us any version checking, will alway pull the latest code even if the same)
 
 
 *Note the repository is not currently setup to be used with single python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*

@@ -78,7 +78,7 @@ class Singleton_updater(object):
 		self._latest_release = None
 		self._include_branches = False
 		self._include_branch_list = ['master']
-		self._include_branch_autocheck = None
+		self._include_branch_autocheck = False
 		self._manual_only = False
 		self._version_min_update = None
 		self._version_max_update = None
@@ -844,7 +844,12 @@ class Singleton_updater(object):
 			link = self._tags[0]["zipball_url"] # potentially other sources
 		else:
 			n = len(self._include_branch_list)
-			link = self._tags[n]["zipball_url"] # potentially other sources
+			if len(self._tags)==n:
+				# effectively means no tags found on repo
+				# so provide the first one as default
+				link = self._tags[0]["zipball_url"] # potentially other sources
+			else:
+				link = self._tags[n]["zipball_url"] # potentially other sources
 		
 		if new_version == ():
 			self._update_ready = False
@@ -859,7 +864,7 @@ class Singleton_updater(object):
 				# don't offer update as ready,
 				# but set the link for the default
 				# branch for installing
-				self._update_ready = False
+				self._update_ready = True
 				self._update_version = new_version
 				self._update_link = link
 				self.save_updater_json()
@@ -1029,9 +1034,13 @@ class Singleton_updater(object):
 
 		# first save the state
 		if self._update_ready == True:
-			self._json["update_ready"] = True
-			self._json["version_text"]["link"]=self._update_link
-			self._json["version_text"]["version"]=self._update_version
+			if type(self._update_version) == type((0,0,0)):
+				self._json["update_ready"] = True
+				self._json["version_text"]["link"]=self._update_link
+				self._json["version_text"]["version"]=self._update_version
+			else:
+				self._json["update_ready"] = False
+				self._json["version_text"] = {}
 		else:
 			self._json["update_ready"] = False
 			self._json["version_text"] = {}

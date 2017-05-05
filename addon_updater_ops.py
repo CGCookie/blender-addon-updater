@@ -479,9 +479,14 @@ def updater_run_install_popup_handler(scene):
 
 	if "ignore" in updater.json and updater.json["ignore"] == True:
 		return # don't do popup if ignore pressed
+	elif type(updater.update_version) != type((0,0,0)):
+		# likely was from master or another branch, shouldn't trigger popup
+		updater.json_reset_restore()
+		return
 	elif "version_text" in updater.json and "version" in updater.json["version_text"]:
 		version = updater.json["version_text"]["version"]
 		ver_tuple = updater.version_tuple_from_text(version)
+		
 		if ver_tuple < updater.current_version:
 			# user probably manually installed to get the up to date addon
 			# in here. Clear out the update flag using this function
@@ -752,6 +757,21 @@ def update_settings_ui(self, context):
 		split.operator(addon_updater_end_background.bl_idname,
 						text = "", icon="X")
 		
+	elif updater.include_branches==True and \
+			len(updater.tags)==len(updater.include_branch_list) and \
+			updater.manual_only==False:
+		# no releases found, but still show the appropriate branch
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_update_now.bl_idname,
+					"Update directly to "+str(updater.include_branch_list[0]))
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						text = "", icon="FILE_REFRESH")
+
 	elif updater.update_ready==True and updater.manual_only==False:
 		subcol = col.row(align=True)
 		subcol.scale_y = 1
@@ -798,7 +818,7 @@ def update_settings_ui(self, context):
 				lastdate = "Date not found"
 			else:
 				lastdate = updater.json["backup_date"]
-		backuptext = "Restore addon backup ({x})".format(x=lastdate)
+		backuptext = "Restore addon backup ({})".format(lastdate)
 		col.operator(addon_updater_restore_backup.bl_idname, backuptext)
 
 	row = box.row()
@@ -910,7 +930,8 @@ def register(bl_info):
 	# if using "include_branches", 
 	# updater.include_branch_list defaults to ['master'] branch if set to none
 	# example targeting another multiple branches allowed to pull from
-	updater.include_branch_list = ['master', 'dev']
+	# updater.include_branch_list = ['master', 'dev'] # example with two branches
+	updater.include_branch_list = None  # is the equvalent to setting ['master']
 
 	# Only allow manual install, thus prompting the user to open
 	# the addon's webpage to download, specifically: updater.website
