@@ -95,25 +95,21 @@ class addon_updater_install_popup(bpy.types.Operator):
 		if updater.invalidupdater == True:
 			return {'CANCELLED'}
 
-		if updater.update_ready == True and updater.manual_only==False:
+		if updater.manual_only==True:
+			row.operator("wm.url_open",text="Open website").url=\
+						updater.website
+		elif updater.update_ready == True:
 			res = updater.run_update(force=False, callback=post_update_callback)
 			# should return 0, if not something happened
 			if updater.verbose:
 				if res==0: print("Updater returned successful")
 				else: print("Updater returned "+str(res)+", error occurred")
-
 		elif updater.update_ready == None:
 			(update_ready, version, link) = updater.check_for_update(now=True)
 			
 			# re-launch this dialog
 			atr = addon_updater_install_popup.bl_idname.split(".")
 			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
-
-		elif updater.update_ready == True and updater.manual_only==True:
-			# launch this dialog
-			atr = addon_updater_install_manually.bl_idname.split(".")
-			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
-
 		else:
 			if updater.verbose:print("Doing nothing, not ready for update")
 		return {'FINISHED'}
@@ -168,6 +164,9 @@ class addon_updater_update_now(bpy.types.Operator):
 		if updater.invalidupdater == True:
 			return {'CANCELLED'}
 
+		if updater.manual_only == True:
+			row.operator("wm.url_open",text="Open website").url=\
+						updater.website
 		if updater.update_ready == True:
 			# if it fails, offer to open the website instead
 			try:
@@ -284,9 +283,11 @@ class addon_updater_install_manually(bpy.types.Operator):
 		if False:
 			layout.label("There was an issue trying to auto-install")
 		else:
-			layout.label("Install the addon manually")
-			layout.label("Press the download button below and install")
-			layout.label("the zip file like a normal addon.")
+			col = layout.column()
+			col.scale_y = 0.7
+			col.label("Install the addon manually")
+			col.label("Press the download button below and install")
+			col.label("the zip file like a normal addon.")
 
 		# if check hasn't happened, ie accidentally called this menu
 		# allow to check here
@@ -302,13 +303,10 @@ class addon_updater_install_manually(bpy.types.Operator):
 
 			if updater.website != None:
 				row = layout.row()
-				row.label("Grab update from account")
-
 				row.operator("wm.url_open",text="Open website").url=\
 						updater.website
 			else:
 				row = layout.row()
-
 				row.label("See source website to download the update")
 
 	def execute(self,context):
@@ -481,6 +479,17 @@ def updater_run_install_popup_handler(scene):
 
 	if "ignore" in updater.json and updater.json["ignore"] == True:
 		return # don't do popup if ignore pressed
+	elif "version_text" in updater.json and "version" in updater.json["version_text"]:
+		version = updater.json["version_text"]["version"]
+		ver_tuple = updater.version_tuple_from_text(version)
+		if ver_tuple < updater.current_version:
+			# user probably manually installed to get the up to date addon
+			# in here. Clear out the update flag using this function
+			if updater.verbose:
+				print("{} updater: appears user updated, clearing flag".format(\
+						updater.addon))
+			updater.json_reset_restore()
+			return
 	atr = addon_updater_install_popup.bl_idname.split(".")
 	getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 	
@@ -516,7 +525,7 @@ def post_update_callback():
 
 	# this is the same code as in conditional at the end of the register function
 	# ie if "auto_reload_post_update" == True, comment out this code
-	if updater.verbose: print("Running post update callback")
+	if updater.verbose: print("{} updater: Running post update callback".format(updater.addon))
 	#bpy.app.handlers.scene_update_post.append(updater_run_success_popup_handler)
 
 	atr = addon_updater_updated_successful.bl_idname.split(".")
@@ -554,7 +563,9 @@ def check_for_update_background(context):
 	# input is an optional callback function
 	# this function should take a bool input, if true: update ready
 	# if false, no update ready
-	if updater.verbose: print("Running background check for update")
+	if updater.verbose:
+		print("{} updater: Running background check for update".format(\
+				updater.addon))
 	updater.check_for_update_async(background_update_callback)
 	ran_background_check = True
 
@@ -647,13 +658,17 @@ def update_notice_box_ui(self, context):
 	layout = self.layout
 	box = layout.box()
 	col = box.column(align=True)
-	col.label("Update ready!",icon="ERROR")
-	col.operator("wm.url_open", text="Open website").url = updater.website
-	#col.operator("wm.url_open",text="Direct download").url=updater.update_link
-	col.operator(addon_updater_install_manually.bl_idname, "Install manually")
+	
 	if updater.manual_only==False:
+		col.label("Update ready!",icon="ERROR")
+		col.operator("wm.url_open", text="Open website").url = updater.website
+		#col.operator("wm.url_open",text="Direct download").url=updater.update_link
+		col.operator(addon_updater_install_manually.bl_idname, "Install manually")
 		col.operator(addon_updater_update_now.bl_idname,
 						"Update now", icon="LOOP_FORWARDS")
+	else:
+		col.operator("wm.url_open", text="Get update", icon="ERROR").url = \
+				updater.website
 	col.operator(addon_updater_ignore.bl_idname,icon="X")
 
 
@@ -769,8 +784,8 @@ def update_settings_ui(self, context):
 	if updater.manual_only == False:
 		col = row.column(align=True)
 		#col.operator(addon_updater_update_target.bl_idname,
-		if updater.include_master == True:
-			branch = updater.include_master_branch
+		if updater.include_branches == True and len(updater.include_branch_list)>0:
+			branch = updater.include_branch_list[0]
 			col.operator(addon_updater_update_target.bl_idname,
 					"Install latest {} / old version".format(branch))
 		else:
@@ -819,13 +834,13 @@ def skip_tag_function(tag):
 	#	return True
 	# ---- write any custom code above, return true to disallow version --- #
 
-	branch = updater.include_master_branch
-	if tag["name"].lower() == branch and updater.include_master == True:
-		return False
+	if updater.include_branches == True:
+		for branch in updater.include_branch_list:
+			if tag["name"].lower() == branch: return False
 
 	# function converting string to tuple, ignoring e.g. leading 'v'
 	tupled = updater.version_tuple_from_text(tag["name"])
-	if type(tupled) != type( (1,2,3) ): return True # master
+	if type(tupled) != type( (1,2,3) ): return True
 	
 	# select the min tag version - change tuple accordingly
 	if updater.version_min_update != None:
@@ -858,9 +873,9 @@ def register(bl_info):
 	# choose your own repository, must match github name
 	updater.repo = "blender-addon-updater"
 
-	#updater.addon = # define at top of module, must be done first
+	#updater.addon = # define at top of module, MUST be done first
 
-	# Website for manual addon download, optional 
+	# Website for manual addon download, optional but reocmmended to set
 	updater.website = "https://github.com/CGCookie/blender-addon-updater/"
 	
 	# used to check/compare versions
@@ -871,36 +886,39 @@ def register(bl_info):
 	# updater.set_check_interval(
 	# 		enable=False,months=0,days=0,hours=0,minutes=2)
 	
-	# optional, consider turning off for production or allow as an option
+	# Optional, consider turning off for production or allow as an option
 	# This will print out additional debugging info to the console
 	updater.verbose = True # make False for production default
 
-	# optional, customize where the addon updater processing subfolder is,
-	# needs to be within the same folder as the addon itself
+	# Optional, customize where the addon updater processing subfolder is,
+	# essentially a staging folder used by the updater on its own
+	# Needs to be within the same folder as the addon itself
 	# updater.updater_path = # set path of updater folder, by default:
 	#			/addons/{__package__}/{__package__}_updater
 
 	# auto create a backup of the addon when installing other versions
 	updater.backup_current = True # True by default
 
-	# allow 'master' as an option to update to, regardless of release or version
-	# default behavior: releases will still be used for auto check (popup),
+	# Allow branches like 'master' as an option to update to, regardless
+	# of release or version.
+	# Default behavior: releases will still be used for auto check (popup),
 	# but the user has the option from user preferences to directly 
-	# update to the master branch.
-	updater.include_master = True
+	# update to the master branch or any other branches specified using
+	# the "install {branch}/older version" operator.
+	updater.include_branches = True
 
-	# if using "include_master", 
-	# updater.include_master_branch defaults to 'master' branch if set to none
-	# updater.include_master_branch = 'dev' # example targeting another branch
-	updater.include_master_branch = 'dev'
+	# if using "include_branches", 
+	# updater.include_branch_list defaults to ['master'] branch if set to none
+	# example targeting another multiple branches allowed to pull from
+	updater.include_branch_list = ['master', 'dev']
 
-
-	# only allow manual install, thus prompting the user to open
-	# the web page to download but not auto-installing. Useful if
-	# only wanting to get notification of updates but not directly install
+	# Only allow manual install, thus prompting the user to open
+	# the addon's webpage to download, specifically: updater.website
+	# Useful if only wanting to get notification of updates but not
+	# directly install.
 	updater.manual_only = False
 
-	# used for development only, "pretend" to install an update to test
+	# Used for development only, "pretend" to install an update to test
 	# reloading conditions
 	updater.fake_install = False # Set to true to test callback/reloading
 
@@ -908,10 +926,12 @@ def register(bl_info):
 	# to skip showing for updater; see code for function above.
 	# Set the min and max versions allowed to install.
 	# Optional, default None
-	updater.version_min_update = (0,0,0) # min install (>=) will install this and higher
+	# min install (>=) will install this and higher
+	updater.version_min_update = (0,0,0) 
 	# updater.version_min_update = None  # if not wanting to define a min
 	
-	# updater.version_max_update = (9,9,9) # max install (<) will install strictly anything lower
+	# max install (<) will install strictly anything lower
+	# updater.version_max_update = (9,9,9)
 	updater.version_max_update = None  # if not wanting to define a max
 	
 	updater.skip_tag = skip_tag_function # min and max used in this function
