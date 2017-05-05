@@ -19,10 +19,10 @@ With this python module, developers can create auto-checking for updates with th
 - One-click button to install update
 - Ability to install other (older) versions of the addon
 
-With this module, there are essentially  3 different configurations:
-- Connect an addon to GitHub releases & be notified when new releases are out and allow 1-click install (with an option to install master if available)
-- Connect an addon to GitHub releases & be notified when new releases are out, but direct user to website or download page instead of one-click installing
-- Configure the addon to one click install from master, not using GitHub releases at all. No notifications (currently). 
+With this module, there are essentially 2 different configurations:
+- Connect an addon to GitHub releases & be notified when new releases are out and allow 1-click install (with an option to install master or another branch if enabled)
+- Connect an addon to GitHub releases & be notified when new releases are out, but direct user to website or specific download page instead of one-click installing
+
 
 *Note the repository is not currently setup to be used with single python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*
 
@@ -90,7 +90,7 @@ Included in this repository is an example addon which is integrates the auto-upd
   - Note that this function will only be called once per blender session, and will only do anything if auto-check is enabled, thus triggering a background check for update provided the interval of time has passed since the last check for update. This is safe to trigger from draw as it is launched in a background thread and will not hang blender. 
 
 8) Ensure at least one [release or tag](https://help.github.com/articles/creating-releases/) exists on the GitHub repository
-  - As an alternative or in addition to using releases, the setting `updater.include_master = True` in the `addon_updater_ops.py` register function allows you to update to master.
+  - As an alternative or in addition to using releases, the setting `updater.include_branches = True` in the `addon_updater_ops.py` register function allows you to update to specific git branches. You can then specify the list of branches for updating by using `updater.include_branche_list = ['branch','names']` for which the default is set to ['master']
   - If no releases are found, the user preferences button will always show "Update to Master" without doing any version checking
 
 
@@ -145,7 +145,7 @@ elif updater.update_ready == None:
   print("You need to check for an update first")
 ```
 
-**Update to a target version of the addon** *(Perform the necessary error checking, updater.tags will == [] if a check has not yet been performed or releases are not found. Master will be inserted as the first entry if `updater.include_master == True`. Pass in a function object function_obj to run code once the updater has finished if desired, or pass in None)*
+**Update to a target version of the addon** *(Perform the necessary error checking, updater.tags will == [] if a check has not yet been performed or releases are not found. Additional direct branch downloads will be inserted as the first entries if `updater.include_branches == True`. Pass in a function object function_obj to run code once the updater has finished if desired, or pass in None)*
 
 ```
 tag_version = updater.tags[2] # or otherwise select a valid tag
@@ -154,6 +154,19 @@ if res == 0:
 	print("Update ran successfully, restart blender")
 else:
 	print("Updater returned "+str(res)+", error occurred")
+```
+
+
+If utilizing updater.include_branches, you can grab the latest release tag by skipping the branches included (which appear first in the tags list)
+
+```
+n = len(updater.include_branch_list)
+tag_version = updater.tags[n] # or otherwise select a valid tag
+res = updater.run_update(force=False,revert_tag=None, callback=function_obj)
+if res == 0:
+  print("Update ran successfully, restart blender")
+else:
+  print("Updater returned "+str(res)+", error occurred")
 ```
 
 
