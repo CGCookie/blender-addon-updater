@@ -38,11 +38,12 @@ from datetime import datetime,timedelta
 import bpy
 import addon_utils
 
+from . import addon_updater_bitbucket
+from . import addon_updater_github
 # -----------------------------------------------------------------------------
 # Define error messages/notices & hard coded globals
 # -----------------------------------------------------------------------------
 
-DEFAULT_API_URL = "https://api.github.com" # plausibly could be some other system
 DEFAULT_TIMEOUT = 10
 DEFAULT_PER_PAGE = 30
 
@@ -67,10 +68,10 @@ class Singleton_updater(object):
 		:param current_version: tuple # typically 3 values meaning the version #
 		"""
 
+		self._engine = addon_updater_github.Engine
 		self._user = None
 		self._repo = None
 		self._website = None
-		self._api_url = DEFAULT_API_URL
 		self._current_version = None
 		self._tags = []
 		self._tag_latest = None
@@ -124,6 +125,13 @@ class Singleton_updater(object):
 	# -------------------------------------------------------------------------
 	# Getters and setters
 	# -------------------------------------------------------------------------
+
+	@property
+	def engine(self):
+		return self._engine
+	@engine.setter
+	def engine(self, value):
+		self._engine = value
 
 	@property
 	def addon(self):
@@ -251,12 +259,12 @@ class Singleton_updater(object):
 
 	@property
 	def api_url(self):
-		return self._api_url
+		return self.engine.api_url
 	@api_url.setter
 	def api_url(self, value):
 		if self.check_is_url(value) == False:
 			raise ValueError("Not a valid URL: " + value)
-		self._api_url = value
+		self.engine.api_url = value
 
 	@property
 	def stage_path(self):
@@ -431,15 +439,20 @@ class Singleton_updater(object):
 	# -------------------------------------------------------------------------
 
 	def form_repo_url(self):
-		return self._api_url+"/repos/"+self.user+"/"+self.repo
+		return self.engine.form_repo_url(self)
 
+	def form_tags_url(self):
+		return self.engine.form_tags_url(self)
+
+	def form_branch_url(self, branch):
+		return self.engine.form_branch_url(branch, self)
 
 	def get_tags(self):
-		request = "/repos/"+self.user+"/"+self.repo+"/tags"
+		request = self.form_tags_url()
 		if self.verbose:print("Getting tags from server")
 
 		# get all tags, internet call
-		all_tags = self.get_api(request)
+		all_tags = self.engine.parse_tags(self.get_api(request), self)
 		self._prefiltered_tag_count = len(all_tags)
 
 		# pre-process to skip tags
@@ -454,8 +467,7 @@ class Singleton_updater(object):
 			temp_branches = self._include_branch_list.copy()
 			temp_branches.reverse()
 			for branch in temp_branches:
-				request = self._api_url +"/repos/" \
-						+self.user+"/"+self.repo+"/zipball/"+branch
+				request = self.form_branch_url(branch)
 				include = {
 					"name":branch.title(),
 					"zipball_url":request
@@ -494,8 +506,9 @@ class Singleton_updater(object):
 
 
 	# all API calls to base url
-	def get_api_raw(self, url):
-		request = urllib.request.Request(self._api_url + url)
+	def get_raw(self, url):
+		# print("Raw request:", url)
+		request = urllib.request.Request(url)
 		try:
 			result = urllib.request.urlopen(request)
 		except urllib.error.HTTPError as e:
@@ -518,7 +531,7 @@ class Singleton_updater(object):
 	def get_api(self, url):
 		# return the json version
 		get = None
-		get = self.get_api_raw(url) # this can fail by self-created error raising
+		get = self.get_raw(url) # this can fail by self-created error raising
 		if get != None:
 			return json.JSONDecoder().decode( get )
 		else:
