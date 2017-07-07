@@ -38,8 +38,6 @@ from datetime import datetime,timedelta
 import bpy
 import addon_utils
 
-from . import addon_updater_bitbucket
-from . import addon_updater_github
 # -----------------------------------------------------------------------------
 # Define error messages/notices & hard coded globals
 # -----------------------------------------------------------------------------
@@ -68,7 +66,7 @@ class Singleton_updater(object):
 		:param current_version: tuple # typically 3 values meaning the version #
 		"""
 
-		self._engine = addon_updater_github.Engine
+		self._engine = GithubEngine()
 		self._user = None
 		self._repo = None
 		self._website = None
@@ -86,6 +84,7 @@ class Singleton_updater(object):
 
 		# by default, backup current addon if new is being loaded
 		self._backup_current = True 
+		self._backup_ignore_patterns = None
 
 		# by default, enable/disable the addon.. but less safe.
 		self._auto_reload_post_update = False
@@ -402,7 +401,27 @@ class Singleton_updater(object):
 			# potentially check entries are integers
 			self._version_max_update = value
 
+	@property
+	def backup_current(self):
+		return self._backup_current
+	@backup_current.setter
+	def backup_current(self, value):
+		if value == None:
+			self._backup_current = False
+			return
+		else:
+			self._backup_current = value
 
+	@property
+	def backup_ignore_patterns(self):
+		return self._backup_ignore_patterns
+	@backup_ignore_patterns.setter
+	def backup_ignore_patterns(self, value):
+		if value == None:
+			self._backup_ignore_patterns = None
+			return
+		else:
+			self._backup_ignore_patterns = value
 
 	# -------------------------------------------------------------------------
 	# Parameter validation related functions
@@ -593,7 +612,10 @@ class Singleton_updater(object):
 		if self._verbose:print("Backup destination path: ",local)
 
 		# make the copy
-		shutil.copytree(self._addon_root,tempdest)
+		if self._backup_ignore_patterns != None:
+			shutil.copytree(self._addon_root,tempdest, ignore=shutil.ignore_patterns(*self._backup_ignore_patterns))
+		else:
+			shutil.copytree(self._addon_root,tempdest)
 		shutil.move(tempdest,local)
 
 		# save the date for future ref
@@ -1134,8 +1156,48 @@ class Singleton_updater(object):
 		self._error = None
 		self._error_msg = None
 
+class BitbucketEngine(object):
+
+	def __init__(self):
+		self.api_url = 'https://api.bitbucket.org'
+
+	def form_repo_url(self, updater):
+		return self.api_url+"/2.0/repositories/"+updater.user+"/"+updater.repo
+
+	def form_tags_url(self, updater):
+		return self.form_repo_url(updater) + "/refs/tags?sort=-name"
+
+	def form_branch_url(self, branch, updater):
+		return self.get_zip_url(branch, updater)
+
+	def get_zip_url(self, name, updater):
+		return "https://bitbucket.org/{user}/{repo}/get/{name}.zip".format(
+			user = updater.user,
+			repo = updater.repo,
+			name = name)
+
+	def parse_tags(self, resp, updater):
+		if resp == None:
+			return []
+		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["name"], updater)} for tag in resp["values"]]
 
 
+class GithubEngine(object):
+
+	def __init__(self):
+		self.api_url = 'https://api.github.com'
+
+	def form_repo_url(self, updater):
+		return self.api_url+"/repos/"+updater.user+"/"+updater.repo
+
+	def form_tags_url(self, updater):
+		return self.form_repo_url(updater) + "/tags"
+
+	def form_branch_url(self, branch, updater):
+		return self.form_repo_url(updater)+"/zipball/"+branch
+		
+	def parse_tags(self, resp, updater):
+		return resp
 
 # -----------------------------------------------------------------------------
 # The module-shared class instance,
