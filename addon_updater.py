@@ -42,7 +42,6 @@ import addon_utils
 # Define error messages/notices & hard coded globals
 # -----------------------------------------------------------------------------
 
-DEFAULT_API_URL = "https://api.github.com" # plausibly could be some other system
 DEFAULT_TIMEOUT = 10
 DEFAULT_PER_PAGE = 30
 
@@ -67,10 +66,10 @@ class Singleton_updater(object):
 		:param current_version: tuple # typically 3 values meaning the version #
 		"""
 
+		self._engine = GithubEngine()
 		self._user = None
 		self._repo = None
 		self._website = None
-		self._api_url = DEFAULT_API_URL
 		self._current_version = None
 		self._tags = []
 		self._tag_latest = None
@@ -85,6 +84,7 @@ class Singleton_updater(object):
 
 		# by default, backup current addon if new is being loaded
 		self._backup_current = True 
+		self._backup_ignore_patterns = None
 
 		# by default, enable/disable the addon.. but less safe.
 		self._auto_reload_post_update = False
@@ -124,6 +124,13 @@ class Singleton_updater(object):
 	# -------------------------------------------------------------------------
 	# Getters and setters
 	# -------------------------------------------------------------------------
+
+	@property
+	def engine(self):
+		return self._engine
+	@engine.setter
+	def engine(self, value):
+		self._engine = value
 
 	@property
 	def addon(self):
@@ -251,12 +258,12 @@ class Singleton_updater(object):
 
 	@property
 	def api_url(self):
-		return self._api_url
+		return self.engine.api_url
 	@api_url.setter
 	def api_url(self, value):
 		if self.check_is_url(value) == False:
 			raise ValueError("Not a valid URL: " + value)
-		self._api_url = value
+		self.engine.api_url = value
 
 	@property
 	def stage_path(self):
@@ -394,7 +401,27 @@ class Singleton_updater(object):
 			# potentially check entries are integers
 			self._version_max_update = value
 
+	@property
+	def backup_current(self):
+		return self._backup_current
+	@backup_current.setter
+	def backup_current(self, value):
+		if value == None:
+			self._backup_current = False
+			return
+		else:
+			self._backup_current = value
 
+	@property
+	def backup_ignore_patterns(self):
+		return self._backup_ignore_patterns
+	@backup_ignore_patterns.setter
+	def backup_ignore_patterns(self, value):
+		if value == None:
+			self._backup_ignore_patterns = None
+			return
+		else:
+			self._backup_ignore_patterns = value
 
 	# -------------------------------------------------------------------------
 	# Parameter validation related functions
@@ -431,15 +458,20 @@ class Singleton_updater(object):
 	# -------------------------------------------------------------------------
 
 	def form_repo_url(self):
-		return self._api_url+"/repos/"+self.user+"/"+self.repo
+		return self.engine.form_repo_url(self)
 
+	def form_tags_url(self):
+		return self.engine.form_tags_url(self)
+
+	def form_branch_url(self, branch):
+		return self.engine.form_branch_url(branch, self)
 
 	def get_tags(self):
-		request = "/repos/"+self.user+"/"+self.repo+"/tags"
+		request = self.form_tags_url()
 		if self.verbose:print("Getting tags from server")
 
 		# get all tags, internet call
-		all_tags = self.get_api(request)
+		all_tags = self.engine.parse_tags(self.get_api(request), self)
 		self._prefiltered_tag_count = len(all_tags)
 
 		# pre-process to skip tags
@@ -454,8 +486,7 @@ class Singleton_updater(object):
 			temp_branches = self._include_branch_list.copy()
 			temp_branches.reverse()
 			for branch in temp_branches:
-				request = self._api_url +"/repos/" \
-						+self.user+"/"+self.repo+"/zipball/"+branch
+				request = self.form_branch_url(branch)
 				include = {
 					"name":branch.title(),
 					"zipball_url":request
@@ -494,8 +525,9 @@ class Singleton_updater(object):
 
 
 	# all API calls to base url
-	def get_api_raw(self, url):
-		request = urllib.request.Request(self._api_url + url)
+	def get_raw(self, url):
+		# print("Raw request:", url)
+		request = urllib.request.Request(url)
 		try:
 			result = urllib.request.urlopen(request)
 		except urllib.error.HTTPError as e:
@@ -518,7 +550,7 @@ class Singleton_updater(object):
 	def get_api(self, url):
 		# return the json version
 		get = None
-		get = self.get_api_raw(url) # this can fail by self-created error raising
+		get = self.get_raw(url) # this can fail by self-created error raising
 		if get != None:
 			return json.JSONDecoder().decode( get )
 		else:
@@ -580,7 +612,10 @@ class Singleton_updater(object):
 		if self._verbose:print("Backup destination path: ",local)
 
 		# make the copy
-		shutil.copytree(self._addon_root,tempdest)
+		if self._backup_ignore_patterns != None:
+			shutil.copytree(self._addon_root,tempdest, ignore=shutil.ignore_patterns(*self._backup_ignore_patterns))
+		else:
+			shutil.copytree(self._addon_root,tempdest)
 		shutil.move(tempdest,local)
 
 		# save the date for future ref
@@ -1121,8 +1156,48 @@ class Singleton_updater(object):
 		self._error = None
 		self._error_msg = None
 
+class BitbucketEngine(object):
+
+	def __init__(self):
+		self.api_url = 'https://api.bitbucket.org'
+
+	def form_repo_url(self, updater):
+		return self.api_url+"/2.0/repositories/"+updater.user+"/"+updater.repo
+
+	def form_tags_url(self, updater):
+		return self.form_repo_url(updater) + "/refs/tags?sort=-name"
+
+	def form_branch_url(self, branch, updater):
+		return self.get_zip_url(branch, updater)
+
+	def get_zip_url(self, name, updater):
+		return "https://bitbucket.org/{user}/{repo}/get/{name}.zip".format(
+			user = updater.user,
+			repo = updater.repo,
+			name = name)
+
+	def parse_tags(self, resp, updater):
+		if resp == None:
+			return []
+		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["name"], updater)} for tag in resp["values"]]
 
 
+class GithubEngine(object):
+
+	def __init__(self):
+		self.api_url = 'https://api.github.com'
+
+	def form_repo_url(self, updater):
+		return self.api_url+"/repos/"+updater.user+"/"+updater.repo
+
+	def form_tags_url(self, updater):
+		return self.form_repo_url(updater) + "/tags"
+
+	def form_branch_url(self, branch, updater):
+		return self.form_repo_url(updater)+"/zipball/"+branch
+		
+	def parse_tags(self, resp, updater):
+		return resp
 
 # -----------------------------------------------------------------------------
 # The module-shared class instance,

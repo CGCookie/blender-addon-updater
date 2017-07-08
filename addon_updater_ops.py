@@ -539,7 +539,7 @@ def post_update_callback():
 
 
 # function for asynchronous background check, which *could* be called on register
-def check_for_update_background(context):
+def check_for_update_background():
 
 	# in case of error importing updater
 	if updater.invalidupdater == True:
@@ -555,7 +555,10 @@ def check_for_update_background(context):
 		return 
 
 	# apply the UI settings
-	settings = context.user_preferences.addons[__package__].preferences
+	addon_prefs = bpy.context.user_preferences.addons.get(__package__, None)
+	if not addon_prefs:
+		return
+	settings = addon_prefs.preferences
 	updater.set_check_interval(enable=settings.auto_check_update,
 				months=settings.updater_intrval_months,
 				days=settings.updater_intrval_days,
@@ -916,6 +919,8 @@ def register(bl_info):
 
 	# auto create a backup of the addon when installing other versions
 	updater.backup_current = True # True by default
+
+	updater.backup_ignore_patterns = [".git", ".tmp", "__pycache__", "tests", "*.bat", ".gitignore", "*.exe"]
 
 	# Allow branches like 'master' as an option to update to, regardless
 	# of release or version.
