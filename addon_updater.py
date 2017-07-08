@@ -169,7 +169,7 @@ class Singleton_updater(object):
 		try:
 			if value == None:
 				self._include_branch_list = ['master']
-			elif type(value) != type(['master']):
+			elif type(value) != type(['master']) or value==[]:
 				raise ValueError("include_branch_list should be a list of valid branches")
 			else:
 				self._include_branch_list = value
