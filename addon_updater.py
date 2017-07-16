@@ -543,16 +543,22 @@ class Singleton_updater(object):
 			result_string = result.read()
 			result.close()
 			return result_string.decode()
-		# if we didn't get here, return or raise something else
 		
 		
 	# result of all api calls, decoded into json format
 	def get_api(self, url):
 		# return the json version
 		get = None
-		get = self.get_raw(url) # this can fail by self-created error raising
+		get = self.get_raw(url)
 		if get != None:
-			return json.JSONDecoder().decode( get )
+			try:
+				return json.JSONDecoder().decode( get )
+			except Exception as e:
+				self._error = "API response has invalid JSON format"
+				self._error_msg = str(e.reason)
+				self._update_ready = None 
+				return None
+
 		else:
 			return None
 
@@ -659,7 +665,6 @@ class Singleton_updater(object):
 			if self._verbose:print("Source folder cleared and recreated")
 		except:
 			pass
-		
 
 		if self.verbose:print("Begin extracting source")
 		if zipfile.is_zipfile(self._source_zip):
@@ -732,7 +737,6 @@ class Singleton_updater(object):
 		if self._auto_reload_post_update == False:
 			print("Restart blender to reload addon and complete update")
 			return
-
 
 		if self._verbose:print("Reloading addon...")
 		addon_utils.modules(refresh=True)
@@ -1156,10 +1160,18 @@ class Singleton_updater(object):
 		self._error = None
 		self._error_msg = None
 
+
+# -----------------------------------------------------------------------------
+# Updater Engines
+# -----------------------------------------------------------------------------
+
+
+
 class BitbucketEngine(object):
 
 	def __init__(self):
 		self.api_url = 'https://api.bitbucket.org'
+		self.token = None
 
 	def form_repo_url(self, updater):
 		return self.api_url+"/2.0/repositories/"+updater.user+"/"+updater.repo
@@ -1176,16 +1188,17 @@ class BitbucketEngine(object):
 			repo = updater.repo,
 			name = name)
 
-	def parse_tags(self, resp, updater):
-		if resp == None:
+	def parse_tags(self, response, updater):
+		if response == None:
 			return []
-		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["name"], updater)} for tag in resp["values"]]
+		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["name"], updater)} for tag in response["values"]]
 
 
 class GithubEngine(object):
 
 	def __init__(self):
 		self.api_url = 'https://api.github.com'
+		self.token = None
 
 	def form_repo_url(self, updater):
 		return self.api_url+"/repos/"+updater.user+"/"+updater.repo
@@ -1193,11 +1206,52 @@ class GithubEngine(object):
 	def form_tags_url(self, updater):
 		return self.form_repo_url(updater) + "/tags"
 
+	def form_branch_list_url(self, updater):
+		return self.form_repo_url(updater) + "/branches"
+
 	def form_branch_url(self, branch, updater):
 		return self.form_repo_url(updater)+"/zipball/"+branch
 		
-	def parse_tags(self, resp, updater):
-		return resp
+	def parse_tags(self, response, updater):
+		return response
+
+
+class GitlabEngine(object):
+
+	def __init__(self):
+		self.api_url = 'https://gitlab.com'
+		self.token = None
+
+	def form_repo_url(self, updater):
+		return self.api_url+"/api/v3/projects/"+updater.repo
+
+	def form_tags_url(self, updater):
+		return self.form_repo_url(updater) + "/repository/tags"
+
+	def form_branch_list_url(self, updater):
+		# does not validate branch name.
+		return self.form_repo_url(updater)+"/repository/branches"
+
+	def form_branch_url(self, branch, updater):
+		# Could clash with tag names and if it does, it will
+		# download TAG zip instead of branch zip to get 
+		# direct path, would need.
+		return self.form_repo_url(updater)+"/repository/archive.zip?sha="+branch
+
+	def get_zip_url(self, sha, updater):
+		return "{base}/repository/archive.zip?sha:{sha}".format(
+			base = self.form_repo_url(updater),
+			sha = sha)
+
+	# def get_commit_zip(self, id, updater):
+	# 	return self.form_repo_url(updater)+"/repository/archive.zip?sha:"+id
+		
+	def parse_tags(self, response, updater):
+		if response == None:
+			return []
+		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["commit"]["id"], updater)} for tag in response[0]]
+		return response
+
 
 # -----------------------------------------------------------------------------
 # The module-shared class instance,

@@ -336,28 +336,28 @@ class addon_updater_updated_successful(bpy.types.Operator):
 			if "just_restored" in saved and saved["just_restored"] == True:
 				col = layout.column()
 				col.scale_y = 0.7
-				col.label("Addon restored")
-				col.label("Restart blender to reload.")
+				col.label("Addon restored", icon="RECOVER_LAST")
+				col.label("Restart blender to reload.",icon="BLANK1")
 				updater.json_reset_restore()
 			else:
 				col = layout.column()
 				col.scale_y = 0.7
-				col.label("Addon successfully installed")
-				col.label("Restart blender to reload.")
+				col.label("Addon successfully installed", icon="FILE_TICK")
+				col.label("Restart blender to reload.", icon="BLANK1")
 
 		else:
 			# reload addon, but still recommend they restart blender
 			if "just_restored" in saved and saved["just_restored"] == True:
 				col = layout.column()
 				col.scale_y = 0.7
-				col.label("Addon restored")
-				col.label("Consider restarting blender to fully reload.")
+				col.label("Addon restored", icon="RECOVER_LAST")
+				col.label("Consider restarting blender to fully reload.",icon="BLANK1")
 				updater.json_reset_restore()
 			else:
 				col = layout.column()
 				col.scale_y = 0.7
-				col.label("Addon successfully installed.")
-				col.label("Consider restarting blender to fully reload.")
+				col.label("Addon successfully installed", icon="FILE_TICK")
+				col.label("Consider restarting blender to fully reload.", icon="BLANK1")
 	
 	def execut(self, context):
 		return {'FINISHED'}
@@ -887,6 +887,11 @@ def register(bl_info):
 
 	# See output to verify this register function is working properly
 	# print("Running updater reg")
+
+	# confirm your updater "engine"
+	updater.engine = updater.GithubEngine()
+	#updater.engine = updater.GitlabEngine()
+	#updater.engine = updater.BitbucketEngine()
 
 	# choose your own username
 	updater.user = "cgcookie"
