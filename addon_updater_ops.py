@@ -253,10 +253,6 @@ class addon_updater_update_target(bpy.types.Operator):
 			if res==0: print("Updater returned successful")
 			else: print("Updater returned "+str(res)+", error occurred")
 			return {'CANCELLED'}
-		# try:
-		# 	updater.run_update(force=False,revert_tag=self.target)
-		# except:
-		# 	self.report({'ERROR'}, "Problem installing target version")
 
 		return {'FINISHED'}
 
@@ -266,6 +262,12 @@ class addon_updater_install_manually(bpy.types.Operator):
 	bl_label = "Install update manually"
 	bl_idname = updater.addon+".updater_install_manually"
 	bl_description = "Proceed to manually install update"
+
+	error = bpy.props.StringProperty(
+		name="Error Occured",
+		default="",
+		options={'HIDDEN'}
+		)
 
 	def invoke(self, context, event):
 		return context.window_manager.invoke_popup(self)
@@ -278,8 +280,12 @@ class addon_updater_install_manually(bpy.types.Operator):
 			return
 
 		# use a "failed flag"? it shows this label if the case failed.
-		if False:
-			layout.label("There was an issue trying to auto-install")
+		if self.error!="":
+			col = layout.column()
+			col.scale_y = 0.7
+			col.label("There was an issue trying to auto-install",icon="ERROR")
+			col.label("Press the download button below and install",icon="BLANK1")
+			col.label("the zip file like a normal addon.",icon="BLANK1")
 		else:
 			col = layout.column()
 			col.scale_y = 0.7
@@ -313,11 +319,17 @@ class addon_updater_install_manually(bpy.types.Operator):
 
 
 class addon_updater_updated_successful(bpy.types.Operator):
-	"""Addon in place, popup telling user it completed"""
-	bl_label = "Success"
+	"""Addon in place, popup telling user it completed or what went wrong"""
+	bl_label = "Installation Report"
 	bl_idname = updater.addon+".updater_update_successful"
-	bl_description = "Update installation was successful"
+	bl_description = "Update installation response"
 	bl_options = {'REGISTER', 'UNDO'}
+
+	error = bpy.props.StringProperty(
+		name="Error Occured",
+		default="",
+		options={'HIDDEN'}
+		)
 
 	def invoke(self, context, event):
 		return context.window_manager.invoke_props_popup(self, event)
@@ -329,9 +341,20 @@ class addon_updater_updated_successful(bpy.types.Operator):
 			layout.label("Updater error")
 			return
 
-		# use a "failed flag"? it show this label if the case failed.
 		saved = updater.json
-		if updater.auto_reload_post_update == False:
+		if self.error != "":
+			col = layout.column()
+			col.scale_y = 0.7
+			col.label("Error occured, did not install", icon="ERROR")
+			col.label(updater.error_msg, icon="BLANK1")
+			rw = col.row()
+			rw.scale_y = 2
+			rw.operator("wm.url_open",
+				text="Click for manual download.",
+				icon="BLANK1"
+				).url=updater.website
+			# manual download button here
+		elif updater.auto_reload_post_update == False:
 			# tell user to restart blender
 			if "just_restored" in saved and saved["just_restored"] == True:
 				col = layout.column()
@@ -520,21 +543,27 @@ def background_update_callback(update_ready):
 # a callback for once the updater has completed
 # Only makes sense to use this if "auto_reload_post_update" == False,
 # ie don't auto-restart the addon
-def post_update_callback():
+def post_update_callback(res=None):
 
 	# in case of error importing updater
 	if updater.invalidupdater == True:
 		return
 
-	# this is the same code as in conditional at the end of the register function
-	# ie if "auto_reload_post_update" == True, comment out this code
-	if updater.verbose: print("{} updater: Running post update callback".format(updater.addon))
-	#bpy.app.handlers.scene_update_post.append(updater_run_success_popup_handler)
+	if res==None:
+		# this is the same code as in conditional at the end of the register function
+		# ie if "auto_reload_post_update" == True, comment out this code
+		if updater.verbose: print("{} updater: Running post update callback".format(updater.addon))
+		#bpy.app.handlers.scene_update_post.append(updater_run_success_popup_handler)
 
-	atr = addon_updater_updated_successful.bl_idname.split(".")
-	getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
-	global ran_update_sucess_popup
-	ran_update_sucess_popup = True
+		atr = addon_updater_updated_successful.bl_idname.split(".")
+		getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
+		global ran_update_sucess_popup
+		ran_update_sucess_popup = True
+	else:
+		# some kind of error occured and it was unable to install,
+		# offer manual download instead
+		atr = addon_updater_updated_successful.bl_idname.split(".")
+		getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT',error=res)
 	return
 
 
@@ -673,7 +702,9 @@ def update_notice_box_ui(self, context):
 		col.operator(addon_updater_update_now.bl_idname,
 						"Update now", icon="LOOP_FORWARDS")
 	else:
-		col.operator("wm.url_open", text="Get update", icon="ERROR").url = \
+		col.label("Update ready!",icon="ERROR")
+		#col.operator("wm.url_open",text="Direct download").url=updater.update_link
+		col.operator("wm.url_open", text="Get it now").url = \
 				updater.website
 	col.operator(addon_updater_ignore.bl_idname,icon="X")
 
@@ -889,9 +920,13 @@ def register(bl_info):
 	# print("Running updater reg")
 
 	# confirm your updater "engine"
-	updater.engine = updater.GithubEngine()
-	#updater.engine = updater.GitlabEngine()
-	#updater.engine = updater.BitbucketEngine()
+	updater.engine = "Github" # default engine
+	# updater.engine = "GitLab"
+	# updater.engine = "Bitbucket"
+
+	# if using private repository, indicate the token here
+	# must be set after assigning the engine
+	updater.private_token = "enter here if applicable"
 
 	# choose your own username
 	updater.user = "cgcookie"

@@ -127,10 +127,24 @@ class Singleton_updater(object):
 
 	@property
 	def engine(self):
-		return self._engine
+		return self._engine.name
 	@engine.setter
 	def engine(self, value):
-		self._engine = value
+		if value.lower()=="github":
+			self._engine = GithubEngine()
+		elif value.lower()=="gitlab":
+			self._engine = GitlabEngine()
+		elif value.lower()=="bitbucket":
+			self._engine = BitbucketEngine()
+		else:
+			raise ValueError("Invalid engine selection")
+
+	@property
+	def private_token(self):
+		return self._engine.token
+	@private_token.setter
+	def private_token(self, value):
+		self._engine.token = str(value)
 
 	@property
 	def addon(self):
@@ -258,12 +272,12 @@ class Singleton_updater(object):
 
 	@property
 	def api_url(self):
-		return self.engine.api_url
+		return self._engine.api_url
 	@api_url.setter
 	def api_url(self, value):
 		if self.check_is_url(value) == False:
 			raise ValueError("Not a valid URL: " + value)
-		self.engine.api_url = value
+		self._engine.api_url = value
 
 	@property
 	def stage_path(self):
@@ -458,20 +472,20 @@ class Singleton_updater(object):
 	# -------------------------------------------------------------------------
 
 	def form_repo_url(self):
-		return self.engine.form_repo_url(self)
+		return self._engine.form_repo_url(self)
 
 	def form_tags_url(self):
-		return self.engine.form_tags_url(self)
+		return self._engine.form_tags_url(self)
 
 	def form_branch_url(self, branch):
-		return self.engine.form_branch_url(branch, self)
+		return self._engine.form_branch_url(branch, self)
 
 	def get_tags(self):
 		request = self.form_tags_url()
 		if self.verbose:print("Getting tags from server")
 
 		# get all tags, internet call
-		all_tags = self.engine.parse_tags(self.get_api(request), self)
+		all_tags = self._engine.parse_tags(self.get_api(request), self)
 		self._prefiltered_tag_count = len(all_tags)
 
 		# pre-process to skip tags
@@ -528,6 +542,15 @@ class Singleton_updater(object):
 	def get_raw(self, url):
 		# print("Raw request:", url)
 		request = urllib.request.Request(url)
+
+		# setup private request headers if appropriate
+		if self._engine.token != None:
+			if self._engine.name == "gitlab":
+				request.add_header('PRIVATE-TOKEN',self._engine.token)
+			else:
+				if self._verbose:print("Tokens not setup for engine yet")
+		
+		# run the request
 		try:
 			result = urllib.request.urlopen(request)
 		except urllib.error.HTTPError as e:
@@ -582,11 +605,13 @@ class Singleton_updater(object):
 			try:
 				os.makedirs(local)
 			except:
-				error = "failed to make staging directory"
+				error = "failed to create staging directory"
 		
 		if error != None:
 			if self._verbose: print("Error: Aborting update, "+error)
-			raise ValueError("Aborting update, "+error)
+			self._error = "Update aborted, staging path error"
+			self._error_msg = "Error: {}".format(error)
+			return False
 
 		if self._backup_current==True:
 			self.create_backup()
@@ -596,15 +621,26 @@ class Singleton_updater(object):
 		
 		if self._verbose:print("Starting download update zip")
 		try:
-			urllib.request.urlretrieve(url, self._source_zip)
+			request = urllib.request.Request(url)
+			# setup private token if appropriate
+			if self._engine.token != None:
+				if self._engine.name == "gitlab":
+					request.add_header('PRIVATE-TOKEN',self._engine.token)
+				else:
+					if self._verbose:print("Tokens not setup for engine yet")
+			self.urlretrieve(urllib.request.urlopen(request), self._source_zip)
+			# old method, non-header supporting
+			# urllib.request.urlretrieve(url, self._source_zip)
+			if self._verbose:print("Successfully downloaded update zip")
+			return True
 		except Exception as e:
 			self._error = "Error retreiving download, bad link?"
 			self._error_msg = "Error: {}".format(e)
 			if self._verbose:
 				print("Error retreiving download, bad link?")
 				print("Error: {}".format(e))
-			return
-		if self._verbose:print("Successfully downloaded update zip")
+			return False
+		
 
 	def create_backup(self):
 		if self._verbose:print("Backing up current addon folder")
@@ -760,6 +796,21 @@ class Singleton_updater(object):
 		self._source_zip = None
 		self._error = None
 		self._error_msg = None
+
+	# custom urlretrieve implementation
+	def urlretrieve(self, urlfile, filepath):
+		chunk = 1024*8
+		f = open(filepath, "wb")
+		while 1:
+			data = urlfile.read(chunk)
+			if not data:
+				#print("done.")
+				break
+			f.write(data)
+			#print("Read %s bytes"%len(data))
+		f.close()
+
+
 
 	def version_tuple_from_text(self,text):
 
@@ -980,32 +1031,38 @@ class Singleton_updater(object):
 				self.create_backup()
 			self.reload_addon()
 			self._update_ready = False
+			res = True # fake "success" zip download flag
 
 		elif force==False:
 			if self._update_ready != True:
 				if self.verbose:print("Update stopped, new version not ready")
-				return 1 # stopped
+				return "Update stopped, new version not ready" # stopped
 			elif self._update_link == None:
 				# this shouldn't happen if update is ready
 				if self.verbose:print("Update stopped, update link unavailable")
-				return 1 # stopped
+				return "Update stopped, update link unavailable" # stopped
 
 			if self.verbose and revert_tag==None:
 				print("Staging update")
 			elif self.verbose:
 				print("Staging install")
-			self.stage_repository(self._update_link)
+
+			res = self.stage_repository(self._update_link)
+			if res !=True:
+				if callback != None:callback(self._error_msg)
+				return self._error_msg
 			self.upack_staged_zip()
 
 		else:
 			if self._update_link == None:
-				return # stopped, no link - run check update first or set tag
-			if self.verbose:print("Forcing update")
-			# first do a check
-			if self._update_link == None:
 				if self.verbose:print("Update stopped, could not get link")
-				return
-			self.stage_repository(self._update_link)
+				return "Update stopped, could not get link" # stopped
+			if self.verbose:print("Forcing update")
+
+			res = self.stage_repository(self._update_link)
+			if res !=True:
+				if callback != None:callback(self._error_msg)
+				return self._error_msg
 			self.upack_staged_zip()
 			# would need to compare against other versions held in tags
 
@@ -1172,6 +1229,7 @@ class BitbucketEngine(object):
 	def __init__(self):
 		self.api_url = 'https://api.bitbucket.org'
 		self.token = None
+		self.name = "bitbucket"
 
 	def form_repo_url(self, updater):
 		return self.api_url+"/2.0/repositories/"+updater.user+"/"+updater.repo
@@ -1199,6 +1257,7 @@ class GithubEngine(object):
 	def __init__(self):
 		self.api_url = 'https://api.github.com'
 		self.token = None
+		self.name = "github"
 
 	def form_repo_url(self, updater):
 		return self.api_url+"/repos/"+updater.user+"/"+updater.repo
@@ -1221,6 +1280,7 @@ class GitlabEngine(object):
 	def __init__(self):
 		self.api_url = 'https://gitlab.com'
 		self.token = None
+		self.name = "gitlab"
 
 	def form_repo_url(self, updater):
 		return self.api_url+"/api/v3/projects/"+updater.repo
@@ -1249,8 +1309,7 @@ class GitlabEngine(object):
 	def parse_tags(self, response, updater):
 		if response == None:
 			return []
-		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["commit"]["id"], updater)} for tag in response[0]]
-		return response
+		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["commit"]["id"], updater)} for tag in response]
 
 
 # -----------------------------------------------------------------------------
@@ -1259,4 +1318,3 @@ class GitlabEngine(object):
 # -----------------------------------------------------------------------------
 
 Updater = Singleton_updater()
-
