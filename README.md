@@ -1,8 +1,8 @@
 # Blender Addon Updater
 
-With this python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHubs code api, so the addon must have it's updated code available on GitHub and be making use of either GitHub tags or releases.
+With this python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either GitHub tags or releases. 
 
-**This code is ready for production with public repositories**
+**This code is ready for production with public repositories, and for private use with GitLab repositories**
 
 *Want to add this code to your addon? [See this tutorial here](http://theduckcow.com/2016/addon-updater-tutorial/)*
 
@@ -200,10 +200,14 @@ updater.addon = "addon_name"
 
 *Optional settings*
 
-- **addon:**
+- **engine:**
   - Type: String, one of: ["github","gitlab","bitbucket"]
   - Default: "github"
   - This selection sets the api backend for retreiving the code. Note that 
+- **private_token:**
+  - Type: String
+  - Default: None
+  - Currently only supports private tokens for gitlab. Used only for granting access to private repositories for updating. WARNING: please be aware of all associate security risks, some noted below
 - **addon:**
   - Type: String, e.g. "demo_addon_updater"
   - Default: derived from the `__package__` global variable, but recommended to change to explicit string as `__package__` can differ based on how the user installs the addon
@@ -253,10 +257,6 @@ updater.addon = "addon_name"
 - **addon_root:** The location of the root of the updater file
   - Type: String, path
   - Default: `os.path.dirname(__file__)`
-- **api_url:** The GitHub API url
-  - Type: String
-  - Default: "https://api.github.com"
-  - Notes: Should not be changed, but in future may be possible to select other API's and pass in custom retrieval functions
 - **async_checking:** If a background thread is currently active checking for an update, this flag is set to True and prevents additional checks for updates. Otherwise, it is set to false
   - Type: Bool
   - Default: False
@@ -362,6 +362,24 @@ To create a new tag with the current local or pushed commit, use e.g. `git tag -
 To push this tag up to the server (which won't happen automatically via `git push`), use `git push origin v0.0.1` or whichever according tag name
 
 
+# Security concerns with private repositories
+
+Support for private repositories are being added to bitbucket and github, while already available for gitlab. At this time, they are only supported via authentication through personal or private tokens. These are assigned to an individual user and while can be restricted what access they do or don't have, they can effectively act as an alternate to a password. While this updater module is configured to read-only code, a private token would allow both read and write capabilities to anyone who knows how to use the according api. By nature of python modules, this private token is easily read in source code or can be reverse compiled in pyc code and used for malicious or unintended purposes. 
+
+For this reason, it is very important to be aware and setup tokens accordingly. As the authentication implementation advances here, the recommendations may change but in the meantime:
+- Gitlab: Supported through Personal Tokens
+  - Tokens are not needed and should not be used for public repositories
+  - These can be [viewed and created at here](https://gitlab.com/profile/personal_access_tokens)
+  - These tokens require an expiration date. Once expired any existing installs using the token will no longer succesfully pull updates from private repositories. 
+  - Tokens should be enabled for api access only, to limit uses
+  - This token is *user* specific, not repository specific; therefore, anyone with the token is able to push, pull, merge, and everything else that is possible from the api to any repository this user has access to. **For this reason,** it is very important to **NOT USE YOUR PERSONAL ACCOUNT** to create a token. Rather, you are better suited to create a secondary "machine user" account which is used only for the purpose of api access. This 'user' should be assigned to the project as a "reporter" for minimum required capabilities. 
+  - Use at own risk and ensure to do according research to ensure there are no security risks or possible backlashes due to providing updating for private repositories on GitLab.
+  - When in doubt, you can always revoke a personal token - but once revoked, it cannot be re-enabled and thus any existing installs using the token will no longer be able to pull from the private repo unless manually updating the addon themselves. 
+- GitHub: Not yet supported
+- Bitbucket: Not yet supported
+
 # Issues or help
 
-If you are attempting to integrate this code into your addon and run into problems, please open a new issue. As the module improves, it will be easier for more developers to integrate updating and improve blender's user experience overall! 
+If you are attempting to integrate this code into your addon and run into problems, [please open a new issue](https://github.com/CGCookie/blender-addon-updater/issues). As the module improves, it will be easier for more developers to integrate updating and improve blender's user experience overall! 
+
+Please note that the updater code is built to be dependent on existing api's of the mentioned major soruceode repositry sites. As these api's may be subject to change or interuption, updating capabilities may be impacted for existing users.
