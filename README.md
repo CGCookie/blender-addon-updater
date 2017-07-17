@@ -60,6 +60,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 
 4) Edit the according fields in the register function of the `addon_updater_ops.py` file. See the documentation below on these options, but at the bare minimum set the GitHub username and repository. 
   - Note that many of the settings are assigned in the `addon_updater_ops.py: register()` function to avoid having excess updater-related code in the addon's `__init__.py:register()` function, however because the updater module is shared across the addon, these settings could be made in either place.
+  - If using Gitlab or Bitbucket, then you must also assign the according engine value, the rest is the same setup.
 
 5) To get the updater UI in the preferences draw panel and show all settings, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function.
   - Be sure to import the Operator File if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
@@ -103,6 +104,7 @@ If interested in implementing a purely customized UI implementation of this code
 
 ```
 from .addon_updater import Updater as updater # for example
+# updater.engine left at default assumes github api/structure
 updater.user = "cgcookie"
 updater.repo = "blender-addon-updater"
 updater.current_version = bl_info["version"]
@@ -189,14 +191,23 @@ updater.addon = "addon_name"
   - Type: Tuple, e.g. (1,1,0) or (1,1) or bl_info["version"]
 - **repo:** The name of the repository as found in the GitHub link
   - Type: String, e.g. "blender-addon-updater"
+  - Note: Make sure to use the correct repo name based on the api engine used; {repo_name} is found in the following places:
+    - Github: Retreived from the url of the repository link. Example: https://github.com/cgcookie/{repo_name}
+    - Bitbucket: Retreived from the url of the repository link. Example: https://bitbucket.org/cgcookie/{repo_name}
+    - Gitlab: You must go to the repository settings page, and use the *project ID* provided; note that this is a (string-frmated) number, not a readable name. Example url where found: https://gitlab.com/TheDuckCow/test-updater-gitlab/edit, only visible to owner/editors.
 - **user:** The name of the user the repository belongs to
   - Type: String, e.g. "cgcookie"
 
 *Optional settings*
 
 - **addon:**
+  - Type: String, one of: ["github","gitlab","bitbucket"]
+  - Default: "github"
+  - This selection sets the api backend for retreiving the code. Note that 
+- **addon:**
   - Type: String, e.g. "demo_addon_updater"
   - Default: derived from the `__package__` global variable, but recommended to change to explicit string as `__package__` can differ based on how the user installs the addon
+  - Note this must be assigned once and at the very top of the UI file (addon_updater_ops.py) as the string is used in the bl_idname's for operator and panel registration.
 - **auto_reload_post_update:** If True, attempt to auto disable, refresh, and then re-enable the addon without needing to close blender
   - Type: Bool, e.g. False
   - Default: False
@@ -219,6 +230,11 @@ updater.addon = "addon_name"
   - Default: None
   - Notes: Used for no purpose other than allowing a user to manually install an addon and its update. It should be very clear from this webpage where to get the download, and thus may not be a typical landing page.
   - **backup_current** Create a backup of the current code when performing an update or reversion.
+- **backup_ignore_patterns:** A setting to ignore certain files or folders when performing a backup prior to installing an update/target version
+  - Type: List of strings
+  - Default: None
+  - Notes: You can use wildcard patterns, see documentation for shutil.copytree `ignore` input paramter as this is where the list is passed into.
+
 
 *User preference defined (ie optional but good to expose to user)*
 

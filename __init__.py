@@ -83,44 +83,42 @@ class DemoPreferences(bpy.types.AddonPreferences):
 	# addon updater preferences
 
 	auto_check_update = bpy.props.BoolProperty(
-		name = "Auto-check for Update",
-		description = "If enabled, auto-check for updates using an interval",
-		default = False,
+		name="Auto-check for Update",
+		description="If enabled, auto-check for updates using an interval",
+		default=False,
 		)
-	
 	updater_intrval_months = bpy.props.IntProperty(
 		name='Months',
-		description = "Number of months between checking for updates",
+		description="Number of months between checking for updates",
 		default=0,
 		min=0
 		)
 	updater_intrval_days = bpy.props.IntProperty(
 		name='Days',
-		description = "Number of days between checking for updates",
+		description="Number of days between checking for updates",
 		default=7,
 		min=0,
 		)
 	updater_intrval_hours = bpy.props.IntProperty(
 		name='Hours',
-		description = "Number of hours between checking for updates",
+		description="Number of hours between checking for updates",
 		default=0,
 		min=0,
 		max=23
 		)
 	updater_intrval_minutes = bpy.props.IntProperty(
 		name='Minutes',
-		description = "Number of minutes between checking for updates",
+		description="Number of minutes between checking for updates",
 		default=0,
 		min=0,
 		max=59
 		)
 
 	def draw(self, context):
-		
 		layout = self.layout
 
 		# updater draw function
-		addon_updater_ops.update_settings_ui(self,context)
+		addon_updater_ops.update_settings_ui(self, context)
 
 
 def register():
@@ -143,5 +141,3 @@ def unregister():
 	# register the example panel, to show updater buttons
 	bpy.utils.unregister_class(DemoPreferences)
 	bpy.utils.unregister_class(DemoUpdaterPanel)
-
-

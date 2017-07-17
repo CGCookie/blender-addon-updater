@@ -21,6 +21,7 @@ from bpy.app.handlers import persistent
 import os
 
 # updater import, import safely
+# Prevents popups for users with invalid python installs e.g. missing libraries
 try:
 	from .addon_updater import Updater as updater
 except Exception as e:
@@ -919,14 +920,19 @@ def register(bl_info):
 	# See output to verify this register function is working properly
 	# print("Running updater reg")
 
-	# confirm your updater "engine"
-	updater.engine = "Github" # default engine
+	# confirm your updater "engine" (Github is default if not specified)
+	updater.engine = "Github"
 	# updater.engine = "GitLab"
 	# updater.engine = "Bitbucket"
 
-	# if using private repository, indicate the token here
-	# must be set after assigning the engine
-	updater.private_token = "enter here if applicable"
+	# If using private repository, indicate the token here must be set
+	# after assigning the engine.
+	# **WARNING** Depending on the engine, this token can act like a password
+	# Only provide a token if the project is non-public, and furthermore
+	# assign a private key from a 'machine user' with read-only access to this
+	# repository and not any others. Reasearch and consider all risks before
+	# distributing addon with a token included. See readme for more information
+	updater.private_token = "token_value"
 
 	# choose your own username
 	updater.user = "cgcookie"
@@ -942,8 +948,8 @@ def register(bl_info):
 	# used to check/compare versions
 	updater.current_version = bl_info["version"] 
 
-	# to hard-set update frequency, use this here - however, this demo
-	# has this set via UI properties. Optional 
+	# Optional, to hard-set update frequency, use this here - however,
+	# this demo has this set via UI properties. 
 	# updater.set_check_interval(
 	# 		enable=False,months=0,days=0,hours=0,minutes=2)
 	
@@ -960,7 +966,10 @@ def register(bl_info):
 	# auto create a backup of the addon when installing other versions
 	updater.backup_current = True # True by default
 
-	updater.backup_ignore_patterns = [".git", ".tmp", "__pycache__", "tests", "*.bat", ".gitignore", "*.exe"]
+	# Sample ignore patterns for when creating backup of current during update
+	updater.backup_ignore_patterns = ["__pycache__"]
+	# Alternate example
+	# updater.backup_ignore_patterns = [".git", "__pycache__", "*.bat", ".gitignore", "*.exe"]
 
 	# Allow branches like 'master' as an option to update to, regardless
 	# of release or version.
