@@ -133,7 +133,6 @@ class addon_updater_check_now(bpy.types.Operator):
 			# Used here to just avoid constant applying settings below
 			# Ignoring if error, to prevent being stuck on the error screen
 			return {'CANCELLED'}
-			return 
 
 		# apply the UI settings
 		settings = context.user_preferences.addons[__package__].preferences

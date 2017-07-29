@@ -335,14 +335,20 @@ class Singleton_updater(object):
 
 	@current_version.setter
 	def current_version(self, tuple_values):
-		if type(tuple_values) is not tuple:
-			raise ValueError(
-			"Not a tuple! current_version must be a tuple of integers")
+		if tuple_values==None:
+			self._current_version = None
+			return
+		elif type(tuple_values) is not tuple:
+			try:
+				tuple(tuple_values)
+			except:
+				raise ValueError(
+				"Not a tuple! current_version must be a tuple of integers")
 		for i in tuple_values:
 			if type(i) is not int:
 				raise ValueError(
 				"Not an integer! current_version must be a tuple of integers")
-		self._current_version = tuple_values
+		self._current_version = tuple(tuple_values)
 
 	def set_check_interval(self,enable=False,months=0,days=14,hours=0,minutes=0):
 		# enabled = False, default initially will not check against frequency
