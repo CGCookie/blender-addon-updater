@@ -57,6 +57,16 @@ class addon_updater_install_popup(bpy.types.Operator):
 	bl_idname = updater.addon+".updater_install_popup"
 	bl_description = "Popup menu to check and display current updates available"
 
+	# if true, run clean install - ie remove all files before adding new
+	# equivalent to deleting the addon and reinstalling, except the
+	# updater folder/backup folder remains
+	clean_install = bpy.props.BoolProperty(
+		name="Clean install",
+		description="If enabled, completely cleare the addon's folder before isntalling new update, creating a fresh install",
+		default=False,
+		options={'HIDDEN'}
+	)
+
 	def invoke(self, context, event):
 		return context.window_manager.invoke_props_dialog(self)
 
@@ -69,8 +79,8 @@ class addon_updater_install_popup(bpy.types.Operator):
 			col = layout.column()
 			col.scale_y = 0.7
 			col.label("Update ready! Press OK to install "\
-						+str(updater.update_version))
-			col.label("or click outside window to defer")
+						+str(updater.update_version),icon="LOOP_FORWARDS")
+			col.label("or click outside window to defer",icon="BLANK1")
 			# could offer to remove popups here, but window will not redraw
 			# so may be confusing to the user/look like a bug
 			# row = layout.row()
@@ -99,7 +109,10 @@ class addon_updater_install_popup(bpy.types.Operator):
 		if updater.manual_only==True:
 			bpy.ops.wm.url_open(url=updater.website)
 		elif updater.update_ready == True:
-			res = updater.run_update(force=False, callback=post_update_callback)
+			res = updater.run_update(
+							force=False,
+							callback=post_update_callback,
+							clean=self.clean_install)
 			# should return 0, if not something happened
 			if updater.verbose:
 				if res==0: print("Updater returned successful")
@@ -150,12 +163,22 @@ class addon_updater_check_now(bpy.types.Operator):
 
 		return {'FINISHED'}
 
+
 class addon_updater_update_now(bpy.types.Operator):
 	bl_label = "Update "+updater.addon+" addon now"
 	bl_idname = updater.addon+".updater_update_now"
 	bl_description = "Update to the latest version of the {x} addon".format(
 														x=updater.addon)
 
+	# if true, run clean install - ie remove all files before adding new
+	# equivalent to deleting the addon and reinstalling, except the
+	# updater folder/backup folder remains
+	clean_install = bpy.props.BoolProperty(
+		name="Clean install",
+		description="If enabled, completely cleare the addon's folder before isntalling new update, creating a fresh install",
+		default=False,
+		options={'HIDDEN'}
+	)
 
 	def execute(self,context):
 
@@ -169,8 +192,9 @@ class addon_updater_update_now(bpy.types.Operator):
 			# if it fails, offer to open the website instead
 			try:
 				res = updater.run_update(
-						force=False,
-						callback=post_update_callback)
+								force=False,
+								callback=post_update_callback,
+								clean=self.clean_install)
 
 				# should return 0, if not something happened
 				if updater.verbose:
@@ -217,6 +241,16 @@ class addon_updater_update_target(bpy.types.Operator):
 		items=target_version
 		)
 
+	# if true, run clean install - ie remove all files before adding new
+	# equivalent to deleting the addon and reinstalling, except the
+	# updater folder/backup folder remains
+	clean_install = bpy.props.BoolProperty(
+		name="Clean install",
+		description="If enabled, completely cleare the addon's folder before isntalling new update, creating a fresh install",
+		default=False,
+		options={'HIDDEN'}
+	)
+
 	@classmethod
 	def poll(cls, context):
 		if updater.invalidupdater == True: return False
@@ -244,9 +278,10 @@ class addon_updater_update_target(bpy.types.Operator):
 			return {'CANCELLED'}
 
 		res = updater.run_update(
-				force=False,
-				revert_tag=self.target,
-				callback=post_update_callback)
+						force=False,
+						revert_tag=self.target,
+						callback=post_update_callback,
+						clean=self.clean_install)
 
 		# should return 0, if not something happened
 		if updater.verbose:
@@ -696,11 +731,11 @@ def update_notice_box_ui(self, context):
 	
 	if updater.manual_only==False:
 		col.label("Update ready!",icon="ERROR")
+		col.operator(addon_updater_update_now.bl_idname,
+						"Update now", icon="LOOP_FORWARDS")
 		col.operator("wm.url_open", text="Open website").url = updater.website
 		#col.operator("wm.url_open",text="Direct download").url=updater.update_link
 		col.operator(addon_updater_install_manually.bl_idname, "Install manually")
-		col.operator(addon_updater_update_now.bl_idname,
-						"Update now", icon="LOOP_FORWARDS")
 	else:
 		col.label("Update ready!",icon="ERROR")
 		#col.operator("wm.url_open",text="Direct download").url=updater.update_link
@@ -873,7 +908,7 @@ def update_settings_ui(self, context):
 # input is a tag text, e.g. "v1.2.3"
 # output is True for skipping this tag number, 
 # False if the tag is allowed (default for all)
-def skip_tag_function(tag):
+def skip_tag_function(self, tag):
 
 	# in case of error importing updater
 	if updater.invalidupdater == True:
@@ -919,6 +954,8 @@ def register(bl_info):
 	# See output to verify this register function is working properly
 	# print("Running updater reg")
 
+	# updater.clear_state() # clear internal vars, avoids relaoding oddities
+
 	# confirm your updater "engine" (Github is default if not specified)
 	updater.engine = "Github"
 	# updater.engine = "GitLab"
@@ -931,7 +968,7 @@ def register(bl_info):
 	# assign a private key from a 'machine user' with read-only access to this
 	# repository and not any others. Reasearch and consider all risks before
 	# distributing addon with a token included. See readme for more information
-	updater.private_token = "token_value"
+	updater.private_token = None # "tokenstring"
 
 	# choose your own username
 	updater.user = "cgcookie"
@@ -959,6 +996,7 @@ def register(bl_info):
 	# Optional, customize where the addon updater processing subfolder is,
 	# essentially a staging folder used by the updater on its own
 	# Needs to be within the same folder as the addon itself
+	# Need to supply a full, absolute path to folder
 	# updater.updater_path = # set path of updater folder, by default:
 	#			/addons/{__package__}/{__package__}_updater
 
@@ -967,8 +1005,41 @@ def register(bl_info):
 
 	# Sample ignore patterns for when creating backup of current during update
 	updater.backup_ignore_patterns = ["__pycache__"]
-	# Alternate example
+	# Alternate example patterns
 	# updater.backup_ignore_patterns = [".git", "__pycache__", "*.bat", ".gitignore", "*.exe"]
+
+	# Patterns for files to actively overwrite if found in new update
+	# file and are also found in the currently installed addon. Note that
+	# by default, updates are installed in the same wave as blender: .py
+	# files are replaced, but other file types (e.g. json, txt, blend) 
+	# will NOT be overwritten if alreay present in current install. Thus
+	# if you want to automatically update resources/non py files, add them
+	# as a part of the pattern list below so they will always be overwritten
+	# If a pattern file is not found in new update, no action is taken
+	updater.overwrite_patterns = ["*"]
+	# updater.overwrite_patterns = []
+	# other examples:
+	# ["*"] means ALL files/folders will be overwritten by update, was the behavior pre updater v1.0.4
+	# [] or ["*.py","*.pyc"] matches default blender behavior, ie same effect if user installs update manually without deleting the existing addon first
+	#    e.g. if existing install and update both have a resource.blend file, the existing installed one will remain
+	# ["some.py"] means if some.py is found in addon update, it will overwrite any exisitng some.py in current addon install, if any
+	# ["*.json"] means all josn files found in addon update will overwrite those of same name in current install
+
+	# Patterns for files to actively remove prior to running update
+	# Useful if wanting to remove old code due to changes in filenames
+	# that otherwise would accumulate. Note: this runs after taking
+	# a backup (if enabled) but before placing in new update. If the same
+	# file name removed exists in the update, then it acts as if pattern
+	# is placed in the overwrite_patterns property. Note this is effectively
+	# ignored if clean=True in the run_update method
+	updater.remove_pre_update_patterns = ["__pycache__", "*.py","*.pyc"]
+	# Note setting ["*"] here is equivalent to always running updates with
+	# clean = True in the run_update method, ie the equivalent of a fresh,
+	# new install. This would also delete any resources or user-made/modified
+	# files setting ["__pycache__"] ensures the pycache folder is always removed
+	# The default of ["__pycache__", "*.py","*.pyc"] is a safe option as this
+	# will ensure no old python files/caches remain in event different adodn
+	# versions have different filenames or structures
 
 	# Allow branches like 'master' as an option to update to, regardless
 	# of release or version.
@@ -1039,6 +1110,8 @@ def unregister():
 	bpy.utils.unregister_class(addon_updater_end_background)
 
 	# clear global vars since they may persist if not restarting blender
+	# updater.clear_state() # clear internal vars, avoids reloading oddities
+
 	global ran_autocheck_install_popup
 	ran_autocheck_install_popup = False
 	
