@@ -1,8 +1,8 @@
 # Blender Addon Updater
 
-With this python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHubs code api, so the addon must have it's updated code available on GitHub and be making use of either GitHub tags or releases.
+With this python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either GitHub tags or releases. 
 
-**This code is ready for production with public repositories**
+**This code is ready for production with public repositories, and for private use with GitLab repositories**
 
 *Want to add this code to your addon? [See this tutorial here](http://theduckcow.com/2016/addon-updater-tutorial/)*
 
@@ -10,14 +10,14 @@ With this python module, developers can create auto-checking for updates with th
 # Key Features
 *From the user perspective*
 
-- Uses GitHub repositories for source of versions and code
-  - In the future, may have support for additional or custom code repositories
+- Uses GitHub, Gitlab or Bitbucket repositories for source of versions and code
+  - All mentions of GitHub hereafter also apply to GitLab and Bitbucket unless called out separately
 - One-click to check if update is available
 - Auto-check: Ability to automatically check for updates in the background (user must enable)
 - Ability to set the interval of time between background checks (if auto-check enabled)
 - On a background check for update, contextual popup to tell user update available
 - One-click button to install update
-- Ability to install other (older) versions of the addon
+- Ability to install other (e.g. older or dev) versions of the addon
 
 With this module, there are essentially 3 different configurations:
 - Connect an addon to GitHub releases & be notified when new releases are out and allow 1-click install (with an option to install master or another branch if enabled)
@@ -60,6 +60,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 
 4) Edit the according fields in the register function of the `addon_updater_ops.py` file. See the documentation below on these options, but at the bare minimum set the GitHub username and repository. 
   - Note that many of the settings are assigned in the `addon_updater_ops.py: register()` function to avoid having excess updater-related code in the addon's `__init__.py:register()` function, however because the updater module is shared across the addon, these settings could be made in either place.
+  - If using Gitlab or Bitbucket, then you must also assign the according engine value, the rest is the same setup.
 
 5) To get the updater UI in the preferences draw panel and show all settings, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function.
   - Be sure to import the Operator File if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
@@ -103,6 +104,7 @@ If interested in implementing a purely customized UI implementation of this code
 
 ```
 from .addon_updater import Updater as updater # for example
+# updater.engine left at default assumes github api/structure
 updater.user = "cgcookie"
 updater.repo = "blender-addon-updater"
 updater.current_version = bl_info["version"]
@@ -189,14 +191,29 @@ updater.addon = "addon_name"
   - Type: Tuple, e.g. (1,1,0) or (1,1) or bl_info["version"]
 - **repo:** The name of the repository as found in the GitHub link
   - Type: String, e.g. "blender-addon-updater"
+  - Note: Make sure to use the correct repo name based on the api engine used; {repo_name} is found in the following places:
+    - Github: Retrieved from the url of the repository link. Example: https://github.com/cgcookie/{repo_name}
+    - Bitbucket: Retrieved from the url of the repository link. Example: https://bitbucket.org/cgcookie/{repo_name}
+    - Gitlab: You must go to the repository settings page, and use the *project ID* provided; note that this is a (string-formated) number, not a readable name. Example url where found: https://gitlab.com/TheDuckCow/test-updater-gitlab/edit, only visible to owner/editors.
 - **user:** The name of the user the repository belongs to
   - Type: String, e.g. "cgcookie"
+  - Note: Required but not actually used with GitLab engine enabled
 
 *Optional settings*
 
+- **engine:**
+  - Type: String, one of: ["github","gitlab","bitbucket"]
+  - Default: "github"
+  - This selection sets the api backend for retreiving the code. Note that 
+- **private_token:**
+  - Type: String
+  - Default: None
+  - Currently only supports private tokens for gitlab. Used only for granting access to private repositories for updating.
+  - WARNING: Before providing or using a personal token, [PLEASE READ SECURITY COCNERN SECTION BELOW](https://github.com/CGCookie/blender-addon-updater/tree/dev#security-concerns-with-private-repositories)
 - **addon:**
   - Type: String, e.g. "demo_addon_updater"
   - Default: derived from the `__package__` global variable, but recommended to change to explicit string as `__package__` can differ based on how the user installs the addon
+  - Note this must be assigned once and at the very top of the UI file (addon_updater_ops.py) as the string is used in the bl_idname's for operator and panel registration.
 - **auto_reload_post_update:** If True, attempt to auto disable, refresh, and then re-enable the addon without needing to close blender
   - Type: Bool, e.g. False
   - Default: False
@@ -219,6 +236,28 @@ updater.addon = "addon_name"
   - Default: None
   - Notes: Used for no purpose other than allowing a user to manually install an addon and its update. It should be very clear from this webpage where to get the download, and thus may not be a typical landing page.
   - **backup_current** Create a backup of the current code when performing an update or reversion.
+- **overwrite_patterns:** A list of patterns to match for which files of the local addon install should be overwritten by matching files in the downloaded version version
+  - Type: List of strings, each item follows a match pattern supported by the python module fnmatch
+  - Default: [], which is internally made equivalent to ["*.py","*.pyc"]
+  - Notes: You can use wild card patterns, see documentation for fnmatch.filter. The new default behavior introduced here is setting ["*.py","*.pyc"] means it matches the default behavior of blender. Also note this only describes patterns to allow *overwriting*, if a file in the new update doesn't already exist locally, then it will be installed to the local addon.
+  - Examples:
+    - ["some.py"] In this method, only files matching the name some.py would be overwritten via the update. Thus, even if the updated addon had a newer __init__.py file, it would not replace the local version. This method could be used to build a file replacement whitelist.
+    - ["*.json"] means all josn files found in addon update will overwrite those of same name in current install. This would be useful if the addon only has configuration, read-only data that should be always updated with the addon. Note that default blender behavior would not overwrite such json files if already present in the local install, this gets around that
+    - ["*"] means that all matching files found in the update would overwrite files in the local install. Note this was the behavior pre updater v1.0.4, this is also the safest option to use if you want to ensure all files always get updated with the newer version in the update, including resource files. Be mindful that any local or custom modified files may get overwritten.
+    // also note that this is a new setting as of v1.0.4 of the updater; the previous behavior of the updater was using the equivalent setting of ["*"] which would mean that all files found in the update would overwrite files in the local install. 
+    - [] or ["*.py","*.pyc"] matches default blender behavior, ie same effect if user installs update manually through blender interface without deleting the existing addon first
+- **remove_pre_update_patterns:** A list of patterns to match for which files of the currently installed addon should be removed prior to running the update
+  - Type: List of strings, each item follows a match pattern supported by the python module fnmatch
+  - Default: [], recommended/as configured in demo addon: ["*.pyc"]
+  - Notes: This explicitly will delete all files in the local addon install which match any of the rules, and will run after a backup is taken (so the backup is complete), but before the overwrite_patterns are applied. If the structure or files of an addon may change in the future, it may be wise to set remove_pre_update_patterns to ["*.py","*.pyc"] which would ensure all python files are always removed prior to the update, thus ensuring no longer used files aren't present. Using it in this fashion would also negate the need to specify the same patterns in the overwrite_patterns option. Note this option only deletes files, not folders.
+  - Examples:
+    - ["*"] means all files in the addon (except those under the dedicated udpater subfolder of the addon) will always be deleted prior to running the update. This is nearly equivalent to using clean=True in the run_update method (however that will also delete folders)
+    -  ["*.pyc"] means pycache files are always removed prior to update, which is a safe
+- **backup_ignore_patterns:** A setting to ignore certain files or folders when performing a backup prior to installing an update/target version, useful to avoid copying resources or large files that wouldn't be replaced by the update anyways (via not being included in the overwrite_patterns setting)
+  - Type: List of strings
+  - Default: None
+  - Notes: You can use wild card patterns, see documentation for shutil.copytree `ignore` input parameter as this is where the list is passed into. This is similar but slightly different to the patterns used in overwrite_patterns and remove_pre_update_patterns, except these will also apply to folders
+
 
 *User preference defined (ie optional but good to expose to user)*
 
@@ -237,10 +276,6 @@ updater.addon = "addon_name"
 - **addon_root:** The location of the root of the updater file
   - Type: String, path
   - Default: `os.path.dirname(__file__)`
-- **api_url:** The GitHub API url
-  - Type: String
-  - Default: "https://api.github.com"
-  - Notes: Should not be changed, but in future may be possible to select other API's and pass in custom retrieval functions
 - **async_checking:** If a background thread is currently active checking for an update, this flag is set to True and prevents additional checks for updates. Otherwise, it is set to false
   - Type: Bool
   - Default: False
@@ -345,7 +380,105 @@ To create a new tag with the current local or pushed commit, use e.g. `git tag -
 
 To push this tag up to the server (which won't happen automatically via `git push`), use `git push origin v0.0.1` or whichever according tag name
 
+# Configuring what files are removed, overwritten, or left alone during update
+
+Since v1.0.4 of the updater module, logic exists to help control what is modified or left in place during the updating process. This is done through the overwrite_patterns and remove_pre_update_patterns settings detailed above. Below are the common scenarios or use cases
+
+**Addon contains only py files, no resources (e.g. json files, images, blends), and against better judgment, not even licenses or readme files**
+
+In this example, we only need to worry about replacing the python files with the new python files. By default, this demo addon is configured so that new py files and pyc files will overwrite old files with matching paths/names in the local install. This is accomplished by setting `updater.overwrite_patterns = ["*.py","*.pyc"]` in the operator file. You could also be more explicit and specify all files which may be overwritten via `updater.overwrite_patterns = ["__init__.py", "module.py", "*.pyc"]` for example (noting the "*.pyc" is still there to ensure all caches are flushed).
+
+Note that if in the future, a file is renamed e.g. from module.py to new_module.py, when the update runs (and assuming remove_pre_update_patterns has been left to it's empty list default), then the updater will copy in the new_module.py into the local install, while also leaving the previous version's module.py in place. The result will have both the module.py and new_module.py file in place.
+
+If you wanted to future proof your updater to ensure no old python files are left around due to a changes in structure or filenames, it would be safe to instead set `updater.remove_pre_update_patterns = ["*.py","*.pyc"]` meaning all python files and cached files will always be removed prior to updating. After the update completes, the only python files that will be present are those that came directly from the update itself.
+
+While you could also use `updater.remove_pre_update_patterns = ["*"]`, it is not recommended unless absolutely necessary. You never know when a user may try to place files in the addon subfolder, or if sometime down in the future you might want the updater to not clear everything out, so it's best to only explicitly delete the minimum which is needed, and be sure to plan ahead.
+
+**Addon contains py files and resource files, but no user/local configuration files**
+
+This is the more common use case. It is similar to the above, except now there are also additional files such as the readme.md, the license.txt, and perhaps a blend file with some models or other resources.
+
+If the user were to install the update manually through the blender UI with an older version of the addon in place, it would actually only overwrite the py files. The readme.md and licenses.txt that existed previously would not change, they would not be overwritten. However, any new files in the update not in the local install (such as a new blend file) will be moved into the local install folder. If a blend file is in the local install prior to updating but is not found in the new addon update, it would still be left in place. Essentially, blender's default behavior is to only overwrite and update python files, and when copying in new resources it favors the files already present in the local install.
+
+Instead of this default behavior, the following settings would be more appropriate for the situation of readme's and asset blends, since they may change between versions.
+
+```
+updater.overwrite_patterns = ["README.md", "*.blend"]
+```
+
+In this setup, the updater is told to always replace the readme file explicitly (note the case sensitivity). No other files are indicated to be overwritten, indicating for example the license file will never be overwritten with an update - that shouldn't be changing anyways. This setup would actually mean not even the python files are overwritten if the update has matching files to the local install. Not even the __init__.py file would be updated, which is where the next setting becomes useful. 
+
+The "*.blend" will result in any blend file being overwritten if matching locally to the update. e.g. /addonroot/assets/resources.blend will be replaced with the e.g. /addonroot/assets/resources.blend found in update repository. This would make sense if the blend file is static and not expected to be ever user modified.
+
+```
+updater.remove_pre_update_patterns = ["*.py","*.pyc"]
+```
+
+The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the overwrite_patterns, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, json etc will all be left alone. With the exception of blend files (as per overwrite_patterns above), they also won't be overwritten - even if there are updates.
+
+**Addon contains py files, resource files, and user/local configuration files**
+This is the most intricate setup, but layers on more useful behavior even in unique situations.
+
+Imagine an addon has a changing python code structure, assets which should be updated with each update, but also configuration files with default settings provided in the master repository, but local changes wanted to be kept. Furthermore, the user may install custom image textures saved in the addon folder so you will not know the names ahead of time, but you also want to ensure custom icon file updates can be made.
+
+```
+# example addon setup
+__init__.py
+module.py
+icons/custom_icon.png
+images/   # folder where custom png images will be installed
+README.md
+assets/default.blend
+assets/customizable.blend
+
+```
+
+To accomplish the mentioned behavior, use the below configuration.
+
+```
+updater.overwrite_patterns = ["README.md", "custom_icon.png"]
+updater.remove_pre_update_patterns = ["*.py","*.pyc", "default.blend"]
+```
+
+Breaking this down, we always specify to overwrite the README and custom_icon.png files explicitly. No need to remove either in pre update since we expect they will be found in the update, and the overwrite patterns ensures they always get overwritten and only those files. 
+
+Then, we specify to delete all python files before running the update, to ensure the only python files are part of the latest release. We also force delete the an files matching the name default.blend. If this was added as an overwrite pattern instead and the default.blend file name were ever renamed in the master repository, the updater would not end up removing this extra asset. And so we delete it directly, and presume the update will contain the appropriately named and updated blend file. 
+
+Just as importantly, note how the customizable.blend is not mentioned in either line. This means that there are no rules which would allow for this file to be overwritten or removed. This is desired since the user could have modified this file per their own needs, and we don't want to reset it. If the file was manually removed by the user or otherwise not present in a previous version of the addon, the update would still copy it over as found in the master repository. 
+
+
+**In conclusion**
+
+If you are planning to modify the overwrite_patterns or remove_pre_update_patterns settings, be sure to plan and test it works as you expect. It's important to have "*.py" in at least one of them, or alternatively individually name all python file basenames in either of the two settings.
+
+It is redundant to have the same rule in both settings, behavior of the remove_pre_update_patterns will supersede the more passive overwriting permission rules of overwrite_patterns
+
+The pattern matching is done on an "or" basis, meaning in the set ["*.py", "module.py"], the second list item is redundant as the "*.py" already 
+
+The patterns only match to filenames, so there is no use in including in paths like assets/icon.png or directory names.
+
+Finally, enabled verbose and check the console output after running an update! There are explicit printouts for when any files is "pre-removed", overwritten, or ignored for overwriting due to not matching a pattern. Use this to debug.
+
+
+# Security concerns with private repositories
+
+Support for private repositories are being added to bitbucket and github, while already available for GitLab. At this time, they are only supported via authentication through personal or private tokens. These are assigned to an individual user and while can be restricted what access they do or don't have, they can **effectively act as an alternate to a password.** While this updater module is configured to only *read/download* code, a private token would allow both read and write capabilities to anyone who knows how to use the according api. By nature of python modules, this private token is easily read in source code or can be reverse compiled in pyc code and used for malicious or unintended purposes. 
+
+For this reason, it is very important to be aware and setup tokens accordingly. As the authentication implementation advances here, the recommendations may change but in the meantime:
+- Gitlab: Supported through Personal Tokens
+  - Tokens are not needed and should not be used for public repositories
+  - Personal access tokens can be [viewed and created here](https://gitlab.com/profile/personal_access_tokens)
+  - These tokens require an expiration date. Once expired any existing installs using the token will no longer successfully pull updates from private repositories. Therefore, if a user has the updater-enabled addon installed but leverages an expired token, they will not be able to update.
+  - Tokens should be enabled for api access only, to limit uses
+  - This token is *user* specific, *not* repository specific; therefore, anyone with the token is able to push, pull, merge, and everything else that is possible from the api to any repository this user has access to. **For this reason,** it is very important to **NOT USE YOUR PERSONAL ACCOUNT** to create a token. Rather, you are better suited to create a secondary "machine user" account which is used only for the purpose of api access. This 'user' should be assigned to the project as a "reporter" for minimum required capabilities. 
+  - Use at own risk and ensure to do according research to ensure there are no security risks or possible backlashes due to providing updating for private repositories on GitLab.
+  - When in doubt, you can always revoke a personal token - but once revoked, it cannot be re-enabled and thus any existing installs using the token will no longer be able to pull from the private repo unless manually updating the addon themselves. 
+  - These are only recommendations. As indicated by the GPL license, software is provided as-is and developers are not held liable to mishandling which results in unwanted consequences such as malicious exploit of a badly implemented private repository updating.
+- GitHub: Not yet supported
+- Bitbucket: Not yet supported
 
 # Issues or help
 
-If you are attempting to integrate this code into your addon and run into problems, please open a new issue. As the module improves, it will be easier for more developers to integrate updating and improve blender's user experience overall! 
+If you are attempting to integrate this code into your addon and run into problems, [please open a new issue](https://github.com/CGCookie/blender-addon-updater/issues). As the module improves, it will be easier for more developers to integrate updating and improve blender's user experience overall! 
+
+Please note that the updater code is built to be dependent on existing api's of the mentioned major source code repository sites. As these api's may be subject to change or interruption, updating capabilities may be impacted for existing users.
