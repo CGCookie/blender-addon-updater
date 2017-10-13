@@ -80,7 +80,7 @@ class Singleton_updater(object):
 		self._backup_ignore_patterns = None
 		
 		# set patterns for what files to overwrite on update
-		self._overwrite_patterns = []
+		self._overwrite_patterns = ["*.py","*.pyc"]
 		self._remove_pre_update_patterns = []
 
 		# by default, don't auto enable/disable the addon on update
@@ -198,7 +198,7 @@ class Singleton_updater(object):
 	@overwrite_patterns.setter
 	def overwrite_patterns(self, value):
 		if value == None:
-			self._overwrite_patterns = []
+			self._overwrite_patterns = ["*.py","*.pyc"]
 		elif type(value) != type(['']):
 			raise ValueError("overwrite_patterns needs to be in a list format")
 		else:
@@ -516,7 +516,7 @@ class Singleton_updater(object):
 
 	def get_tags(self):
 		request = self.form_tags_url()
-		if self.verbose: print("Getting tags from server")
+		if self._verbose: print("Getting tags from server")
 
 		# get all tags, internet call
 		all_tags = self._engine.parse_tags(self.get_api(request), self)
@@ -550,26 +550,26 @@ class Singleton_updater(object):
 			self._tag_latest = None
 			self._error = "No releases found"
 			self._error_msg = "No releases or tags found on this repository"
-			if self.verbose: print("No releases or tags found on this repository")
+			if self._verbose: print("No releases or tags found on this repository")
 		elif self._prefiltered_tag_count == 0 and self._include_branches == True:
 			self._tag_latest = self._tags[0]
-			if self.verbose:
+			if self._verbose:
 				branch = self._include_branch_list[0]
 				print("{} branch found, no releases".format(branch), self._tags[0])
 		elif len(self._tags) == 0 and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
 			self._error = "No releases available"
 			self._error_msg = "No versions found within compatible version range"
-			if self.verbose: print("No versions found within compatible version range")
+			if self._verbose: print("No versions found within compatible version range")
 		else:
 			if self._include_branches == False:
 				self._tag_latest = self._tags[0]
-				if self.verbose: print("Most recent tag found:",self._tags[0]['name'])
+				if self._verbose: print("Most recent tag found:",self._tags[0]['name'])
 			else:
 				# don't return branch if in list
 				n = len(self._include_branch_list)
-				self._tag_latest = self._tags[n]  # guarenteed at least len()=n+1
-				if self.verbose: print("Most recent tag found:",self._tags[n]['name'])
+				self._tag_latest = self._tags[n]  # guaranteed at least len()=n+1
+				if self._verbose: print("Most recent tag found:",self._tags[n]['name'])
 
 
 	# all API calls to base url
@@ -667,10 +667,10 @@ class Singleton_updater(object):
 			if self._verbose: print("Successfully downloaded update zip")
 			return True
 		except Exception as e:
-			self._error = "Error retreiving download, bad link?"
+			self._error = "Error retrieving download, bad link?"
 			self._error_msg = "Error: {}".format(e)
 			if self._verbose:
-				print("Error retreiving download, bad link?")
+				print("Error retrieving download, bad link?")
 				print("Error: {}".format(e))
 			return False
 
@@ -737,7 +737,7 @@ class Singleton_updater(object):
 		except:
 			pass
 
-		if self.verbose: print("Begin extracting source")
+		if self._verbose: print("Begin extracting source")
 		if zipfile.is_zipfile(self._source_zip):
 			with zipfile.ZipFile(self._source_zip) as zf:
 				# extractall is no longer a security hazard, below is safe
@@ -746,7 +746,7 @@ class Singleton_updater(object):
 			if self._verbose:
 				print("Not a zip file, future add support for just .py files")
 			raise ValueError("Resulting file is not a zip")
-		if self.verbose: print("Extracted source")
+		if self._verbose: print("Extracted source")
 
 		# either directly in root of zip, or one folder level deep
 		unpath = os.path.join(self._updater_path,"source")
@@ -804,10 +804,10 @@ class Singleton_updater(object):
 			try:
 				# implement clearing of all folders/files, except the
 				# updater folder and updater json
-				# Careful, this deletes entire subdirectries recursively...
-				# make sure that base is not a highlevel shared folder, but
+				# Careful, this deletes entire subdirectories recursively...
+				# make sure that base is not a high level shared folder, but
 				# is dedicated just to the addon itself
-				if self.verbose: print("clean=True, clearing addon folder to fresh install state")
+				if self._verbose: print("clean=True, clearing addon folder to fresh install state")
 
 				# remove root files and folders (except update folder)
 				files = [f for f in os.listdir(base) if os.path.isfile(os.path.join(base,f))]
@@ -818,20 +818,9 @@ class Singleton_updater(object):
 					print("Clean removing file {}".format(os.path.join(base,f)))
 				for f in folders:
 					if os.path.join(base,f)==self._updater_path: continue
-					# shutil.rmtree(os.path.join(base,f))
+					shutil.rmtree(os.path.join(base,f))
 					print("Clean removing folder and contents {}".format(os.path.join(base,f)))
 
-				# # remove updater folder files and folders (except json)
-				# updater_files = [f for f in os.listdir(self._updater_path) if os.path.isfile(f)]
-				# updater_folders = [f for f in os.listdir(self._updater_path) if os.path.isdir(f)]
-
-				# for f in updater_files:
-				# 	if f==json_path: continue
-				# 	os.remove(f)
-				# for f in updater_folders:
-				# 	if f==backup_path or f==staging_path: continue
-				# 	shutil.rmtree(f)
-				###
 			except error:
 				error = "failed to create clean existing addon folder"
 				print(error,str(e))
@@ -847,22 +836,22 @@ class Singleton_updater(object):
 						try:
 							fl = os.path.join(path,file)
 							os.remove(fl)
-							if self.verbose: print("Pre-removed file "+file)
+							if self._verbose: print("Pre-removed file "+file)
 						except OSError:
 							print("Failed to pre-remove "+file)
 
-		# Walk through the temp addon subfolder for replacements
-		# this also implements the overwrite rules, which apply after
-		# the above pre-removal rules
+		# Walk through the temp addon sub folder for replacements
+		# this implements the overwrite rules, which apply after
+		# the above pre-removal rules. This also performs the
+		# actual file copying/replacements
 		for path, dirs, files in os.walk(merger):
-			# verify this structure works to prune updater subfolder overwritting
-			# dirs[:] = [d for d in dirs if os.path.join(base,d) not in [self._updater_path]]
+			# verify this structure works to prune updater sub folder overwriting
+			dirs[:] = [d for d in dirs if os.path.join(path,d) not in [self._updater_path]]
 			relPath = os.path.relpath(path, merger)
 			destPath = os.path.join(base, relPath)
 			if not os.path.exists(destPath):
 				os.makedirs(destPath)
 			for file in files:
-
 				# bring in additional logic around copying/replacing
 				# Blender default: overwrite .py's, don't overwrite the rest
 				destFile = os.path.join(destPath, file)
@@ -870,7 +859,7 @@ class Singleton_updater(object):
 
 				# decide whether to replace if file already exists, and copy new over
 				if os.path.isfile(destFile):
-					ptrns = self.overwrite_patterns
+					ptrns = self._overwrite_patterns
 					if ptrns==[]: ptrns=["*.py","*.pyc"]
 					
 					# otherwise, check each file to see if matches an overwrite pattern
@@ -882,16 +871,15 @@ class Singleton_updater(object):
 					if replaced:
 						os.remove(destFile)
 						os.rename(srcFile, destFile)
-						if self.verbose: print("Overwrote file "+os.path.basename(destFile))
+						if self._verbose: print("Overwrote file "+os.path.basename(destFile))
 					else:
-						if self.verbose: print("Pattern not matched to "+os.path.basename(destFile)+", not overwritten")
-
+						if self._verbose: print("Pattern not matched to "+os.path.basename(destFile)+", not overwritten")
 				else:
 					# file did not previously exist, simply move it over
 					os.rename(srcFile, destFile)
-					if self.verbose: print("New file "+os.path.basename(destFile))
+					if self._verbose: print("New file "+os.path.basename(destFile))
 
-		# now remove the old staging folder and downloaded zip
+		# now remove the temp staging folder and downloaded zip
 		try:
 			shutil.rmtree(staging_path)
 		except:
@@ -1031,7 +1019,7 @@ class Singleton_updater(object):
 		self.set_updater_json()  # self._json
 
 		if now == False and self.past_interval_timestamp()==False:
-			if self.verbose:
+			if self._verbose:
 				print("Aborting check for updated, check interval not reached")
 			return (False, None, None)
 
@@ -1052,7 +1040,7 @@ class Singleton_updater(object):
 		self._json["last_check"] = str(datetime.now())
 		self.save_updater_json()
 
-		# can be () or ('master') in addition to branchs, and version tag
+		# can be () or ('master') in addition to branches, and version tag
 		new_version = self.version_tuple_from_text(self.tag_latest)
 
 		if len(self._tags)==0:
@@ -1149,7 +1137,7 @@ class Singleton_updater(object):
 		self._error = None
 		self._error_msg = None
 
-		if self.verbose: print("Running update")
+		if self._verbose: print("Running update")
 
 		if self._fake_install == True:
 			# change to True, to trigger the reload/"update installed" handler
@@ -1166,16 +1154,16 @@ class Singleton_updater(object):
 
 		elif force==False:
 			if self._update_ready != True:
-				if self.verbose: print("Update stopped, new version not ready")
+				if self._verbose: print("Update stopped, new version not ready")
 				return "Update stopped, new version not ready"
 			elif self._update_link == None:
 				# this shouldn't happen if update is ready
-				if self.verbose: print("Update stopped, update link unavailable")
+				if self._verbose: print("Update stopped, update link unavailable")
 				return "Update stopped, update link unavailable"
 
-			if self.verbose and revert_tag==None:
+			if self._verbose and revert_tag==None:
 				print("Staging update")
-			elif self.verbose:
+			elif self._verbose:
 				print("Staging install")
 
 			res = self.stage_repository(self._update_link)
@@ -1187,9 +1175,9 @@ class Singleton_updater(object):
 
 		else:
 			if self._update_link == None:
-				if self.verbose: print("Update stopped, could not get link")
+				if self._verbose: print("Update stopped, could not get link")
 				return "Update stopped, could not get link"
-			if self.verbose: print("Forcing update")
+			if self._verbose: print("Forcing update")
 
 			res = self.stage_repository(self._update_link)
 			if res !=True:

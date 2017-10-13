@@ -62,7 +62,7 @@ class addon_updater_install_popup(bpy.types.Operator):
 	# updater folder/backup folder remains
 	clean_install = bpy.props.BoolProperty(
 		name="Clean install",
-		description="If enabled, completely cleare the addon's folder before isntalling new update, creating a fresh install",
+		description="If enabled, completely clear the addon's folder before installing new update, creating a fresh install",
 		default=False,
 		options={'HIDDEN'}
 	)
@@ -175,7 +175,7 @@ class addon_updater_update_now(bpy.types.Operator):
 	# updater folder/backup folder remains
 	clean_install = bpy.props.BoolProperty(
 		name="Clean install",
-		description="If enabled, completely cleare the addon's folder before isntalling new update, creating a fresh install",
+		description="If enabled, completely clear the addon's folder before installing new update, creating a fresh install",
 		default=False,
 		options={'HIDDEN'}
 	)
@@ -246,7 +246,7 @@ class addon_updater_update_target(bpy.types.Operator):
 	# updater folder/backup folder remains
 	clean_install = bpy.props.BoolProperty(
 		name="Clean install",
-		description="If enabled, completely cleare the addon's folder before isntalling new update, creating a fresh install",
+		description="If enabled, completely clear the addon's folder before installing new update, creating a fresh install",
 		default=False,
 		options={'HIDDEN'}
 	)
@@ -299,7 +299,7 @@ class addon_updater_install_manually(bpy.types.Operator):
 	bl_description = "Proceed to manually install update"
 
 	error = bpy.props.StringProperty(
-		name="Error Occured",
+		name="Error Occurred",
 		default="",
 		options={'HIDDEN'}
 		)
@@ -328,7 +328,7 @@ class addon_updater_install_manually(bpy.types.Operator):
 			col.label("Press the download button below and install")
 			col.label("the zip file like a normal addon.")
 
-		# if check hasn't happened, ie accidentally called this menu
+		# if check hasn't happened, i.e. accidentally called this menu
 		# allow to check here
 
 		row = layout.row()
@@ -361,7 +361,7 @@ class addon_updater_updated_successful(bpy.types.Operator):
 	bl_options = {'REGISTER', 'UNDO'}
 
 	error = bpy.props.StringProperty(
-		name="Error Occured",
+		name="Error Occurred",
 		default="",
 		options={'HIDDEN'}
 		)
@@ -380,7 +380,7 @@ class addon_updater_updated_successful(bpy.types.Operator):
 		if self.error != "":
 			col = layout.column()
 			col.scale_y = 0.7
-			col.label("Error occured, did not install", icon="ERROR")
+			col.label("Error occurred, did not install", icon="ERROR")
 			col.label(updater.error_msg, icon="BLANK1")
 			rw = col.row()
 			rw.scale_y = 2
@@ -577,7 +577,7 @@ def background_update_callback(update_ready):
 
 # a callback for once the updater has completed
 # Only makes sense to use this if "auto_reload_post_update" == False,
-# ie don't auto-restart the addon
+# i.e. don't auto-restart the addon
 def post_update_callback(res=None):
 
 	# in case of error importing updater
@@ -855,7 +855,7 @@ def update_settings_ui(self, context):
 		col.scale_y = 2
 		col.operator("wm.url_open",
 				"Download "+str(updater.update_version)).url=updater.website
-	else: # ie that updater.update_ready == False
+	else: # i.e. that updater.update_ready == False
 		subcol = col.row(align=True)
 		subcol.scale_y = 1
 		split = subcol.split(align=True)
@@ -908,10 +908,11 @@ def update_settings_ui(self, context):
 # input is a tag text, e.g. "v1.2.3"
 # output is True for skipping this tag number, 
 # False if the tag is allowed (default for all)
+# Note: here, "self" is the acting updater shared class instance
 def skip_tag_function(self, tag):
 
 	# in case of error importing updater
-	if updater.invalidupdater == True:
+	if self.invalidupdater == True:
 		return False
 
 	# ---- write any custom code here, return true to disallow version ---- #
@@ -921,22 +922,22 @@ def skip_tag_function(self, tag):
 	#	return True
 	# ---- write any custom code above, return true to disallow version --- #
 
-	if updater.include_branches == True:
-		for branch in updater.include_branch_list:
+	if self.include_branches == True:
+		for branch in self.include_branch_list:
 			if tag["name"].lower() == branch: return False
 
 	# function converting string to tuple, ignoring e.g. leading 'v'
-	tupled = updater.version_tuple_from_text(tag["name"])
+	tupled = self.version_tuple_from_text(tag["name"])
 	if type(tupled) != type( (1,2,3) ): return True
 	
 	# select the min tag version - change tuple accordingly
-	if updater.version_min_update != None:
-		if tupled < updater.version_min_update:
+	if self.version_min_update != None:
+		if tupled < self.version_min_update:
 			return True # skip if current version below this
 	
 	# select the max tag version
-	if updater.version_max_update != None:
-		if tupled >= updater.version_max_update:
+	if self.version_max_update != None:
+		if tupled >= self.version_max_update:
 			return True # skip if current version at or above this
 	
 	# in all other cases, allow showing the tag for updating/reverting
@@ -954,7 +955,7 @@ def register(bl_info):
 	# See output to verify this register function is working properly
 	# print("Running updater reg")
 
-	# updater.clear_state() # clear internal vars, avoids relaoding oddities
+	# updater.clear_state() # clear internal vars, avoids reloading oddities
 
 	# confirm your updater "engine" (Github is default if not specified)
 	updater.engine = "Github"
@@ -963,11 +964,9 @@ def register(bl_info):
 
 	# If using private repository, indicate the token here must be set
 	# after assigning the engine.
-	# **WARNING** Depending on the engine, this token can act like a password
-	# Only provide a token if the project is non-public, and furthermore
-	# assign a private key from a 'machine user' with read-only access to this
-	# repository and not any others. Reasearch and consider all risks before
-	# distributing addon with a token included. See readme for more information
+	# **WARNING** Depending on the engine, this token can act like a password!!
+	# Only provide a token if the project is *non-public*, see readme for
+	# other considerations and suggestions from a security standpoint
 	updater.private_token = None # "tokenstring"
 
 	# choose your own username
@@ -978,7 +977,7 @@ def register(bl_info):
 
 	#updater.addon = # define at top of module, MUST be done first
 
-	# Website for manual addon download, optional but reocmmended to set
+	# Website for manual addon download, optional but recommended to set
 	updater.website = "https://github.com/CGCookie/blender-addon-updater/"
 	
 	# used to check/compare versions
@@ -1012,17 +1011,17 @@ def register(bl_info):
 	# file and are also found in the currently installed addon. Note that
 	# by default, updates are installed in the same wave as blender: .py
 	# files are replaced, but other file types (e.g. json, txt, blend) 
-	# will NOT be overwritten if alreay present in current install. Thus
+	# will NOT be overwritten if already present in current install. Thus
 	# if you want to automatically update resources/non py files, add them
 	# as a part of the pattern list below so they will always be overwritten
 	# If a pattern file is not found in new update, no action is taken
-	updater.overwrite_patterns = ["*"]
+	updater.overwrite_patterns = ["*.png","README.md","LICENSE.txt"]
 	# updater.overwrite_patterns = []
 	# other examples:
 	# ["*"] means ALL files/folders will be overwritten by update, was the behavior pre updater v1.0.4
 	# [] or ["*.py","*.pyc"] matches default blender behavior, ie same effect if user installs update manually without deleting the existing addon first
 	#    e.g. if existing install and update both have a resource.blend file, the existing installed one will remain
-	# ["some.py"] means if some.py is found in addon update, it will overwrite any exisitng some.py in current addon install, if any
+	# ["some.py"] means if some.py is found in addon update, it will overwrite any existing some.py in current addon install, if any
 	# ["*.json"] means all josn files found in addon update will overwrite those of same name in current install
 
 	# Patterns for files to actively remove prior to running update
@@ -1032,13 +1031,13 @@ def register(bl_info):
 	# file name removed exists in the update, then it acts as if pattern
 	# is placed in the overwrite_patterns property. Note this is effectively
 	# ignored if clean=True in the run_update method
-	updater.remove_pre_update_patterns = ["__pycache__", "*.py","*.pyc"]
+	updater.remove_pre_update_patterns = ["*.py", "*.pyc"]
 	# Note setting ["*"] here is equivalent to always running updates with
 	# clean = True in the run_update method, ie the equivalent of a fresh,
 	# new install. This would also delete any resources or user-made/modified
 	# files setting ["__pycache__"] ensures the pycache folder is always removed
 	# The default of ["__pycache__", "*.py","*.pyc"] is a safe option as this
-	# will ensure no old python files/caches remain in event different adodn
+	# will ensure no old python files/caches remain in event different addon
 	# versions have different filenames or structures
 
 	# Allow branches like 'master' as an option to update to, regardless
@@ -1053,10 +1052,10 @@ def register(bl_info):
 	# updater.include_branch_list defaults to ['master'] branch if set to none
 	# example targeting another multiple branches allowed to pull from
 	# updater.include_branch_list = ['master', 'dev'] # example with two branches
-	updater.include_branch_list = None  # is the equvalent to setting ['master']
+	updater.include_branch_list = None  # is the equivalent to setting ['master']
 
 	# Only allow manual install, thus prompting the user to open
-	# the addon's webpage to download, specifically: updater.website
+	# the addon's web page to download, specifically: updater.website
 	# Useful if only wanting to get notification of updates but not
 	# directly install.
 	updater.manual_only = False

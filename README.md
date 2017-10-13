@@ -236,10 +236,27 @@ updater.addon = "addon_name"
   - Default: None
   - Notes: Used for no purpose other than allowing a user to manually install an addon and its update. It should be very clear from this webpage where to get the download, and thus may not be a typical landing page.
   - **backup_current** Create a backup of the current code when performing an update or reversion.
-- **backup_ignore_patterns:** A setting to ignore certain files or folders when performing a backup prior to installing an update/target version
+- **overwrite_patterns:** A list of patterns to match for which files of the local addon install should be overwritten by matching files in the downloaded version version
+  - Type: List of strings, each item follows a match pattern supported by the python module fnmatch
+  - Default: [], which is internally made equivalent to ["*.py","*.pyc"]
+  - Notes: You can use wild card patterns, see documentation for fnmatch.filter. The new default behavior introduced here is setting ["*.py","*.pyc"] means it matches the default behavior of blender. Also note this only describes patterns to allow *overwriting*, if a file in the new update doesn't already exist locally, then it will be installed to the local addon.
+  - Examples:
+    - ["some.py"] In this method, only files matching the name some.py would be overwritten via the update. Thus, even if the updated addon had a newer __init__.py file, it would not replace the local version. This method could be used to build a file replacement whitelist.
+    - ["*.json"] means all josn files found in addon update will overwrite those of same name in current install. This would be useful if the addon only has configuration, read-only data that should be always updated with the addon. Note that default blender behavior would not overwrite such json files if already present in the local install, this gets around that
+    - ["*"] means that all matching files found in the update would overwrite files in the local install. Note this was the behavior pre updater v1.0.4, this is also the safest option to use if you want to ensure all files always get updated with the newer version in the update, including resource files. Be mindful that any local or custom modified files may get overwritten.
+    // also note that this is a new setting as of v1.0.4 of the updater; the previous behavior of the updater was using the equivalent setting of ["*"] which would mean that all files found in the update would overwrite files in the local install. 
+    - [] or ["*.py","*.pyc"] matches default blender behavior, ie same effect if user installs update manually through blender interface without deleting the existing addon first
+- **remove_pre_update_patterns:** A list of patterns to match for which files of the currently installed addon should be removed prior to running the update
+  - Type: List of strings, each item follows a match pattern supported by the python module fnmatch
+  - Default: [], recommended/as configured in demo addon: ["*.pyc"]
+  - Notes: This explicitly will delete all files in the local addon install which match any of the rules, and will run after a backup is taken (so the backup is complete), but before the overwrite_patterns are applied. If the structure or files of an addon may change in the future, it may be wise to set remove_pre_update_patterns to ["*.py","*.pyc"] which would ensure all python files are always removed prior to the update, thus ensuring no longer used files aren't present. Using it in this fashion would also negate the need to specify the same patterns in the overwrite_patterns option. Note this option only deletes files, not folders.
+  - Examples:
+    - ["*"] means all files in the addon (except those under the dedicated udpater subfolder of the addon) will always be deleted prior to running the update. This is nearly equivalent to using clean=True in the run_update method (however that will also delete folders)
+    -  ["*.pyc"] means pycache files are always removed prior to update, which is a safe
+- **backup_ignore_patterns:** A setting to ignore certain files or folders when performing a backup prior to installing an update/target version, useful to avoid copying resources or large files that wouldn't be replaced by the update anyways (via not being included in the overwrite_patterns setting)
   - Type: List of strings
   - Default: None
-  - Notes: You can use wild card patterns, see documentation for shutil.copytree `ignore` input parameter as this is where the list is passed into.
+  - Notes: You can use wild card patterns, see documentation for shutil.copytree `ignore` input parameter as this is where the list is passed into. This is similar but slightly different to the patterns used in overwrite_patterns and remove_pre_update_patterns, except these will also apply to folders
 
 
 *User preference defined (ie optional but good to expose to user)*
@@ -362,6 +379,85 @@ To show all tags on your local git repository use `git tag`
 To create a new tag with the current local or pushed commit, use e.g. `git tag -a v0.0.1 -m "v0.0.1 release"` which will create an annotated tag. 
 
 To push this tag up to the server (which won't happen automatically via `git push`), use `git push origin v0.0.1` or whichever according tag name
+
+# Configuring what files are removed, overwritten, or left alone during update
+
+Since v1.0.4 of the updater module, logic exists to help control what is modified or left in place during the updating process. This is done through the overwrite_patterns and remove_pre_update_patterns settings detailed above. Below are the common scenarios or use cases
+
+**Addon contains only py files, no resources (e.g. json files, images, blends), and against better judgment, not even licenses or readme files**
+
+In this example, we only need to worry about replacing the python files with the new python files. By default, this demo addon is configured so that new py files and pyc files will overwrite old files with matching paths/names in the local install. This is accomplished by setting `updater.overwrite_patterns = ["*.py","*.pyc"]` in the operator file. You could also be more explicit and specify all files which may be overwritten via `updater.overwrite_patterns = ["__init__.py", "module.py", "*.pyc"]` for example (noting the "*.pyc" is still there to ensure all caches are flushed).
+
+Note that if in the future, a file is renamed e.g. from module.py to new_module.py, when the update runs (and assuming remove_pre_update_patterns has been left to it's empty list default), then the updater will copy in the new_module.py into the local install, while also leaving the previous version's module.py in place. The result will have both the module.py and new_module.py file in place.
+
+If you wanted to future proof your updater to ensure no old python files are left around due to a changes in structure or filenames, it would be safe to instead set `updater.remove_pre_update_patterns = ["*.py","*.pyc"]` meaning all python files and cached files will always be removed prior to updating. After the update completes, the only python files that will be present are those that came directly from the update itself.
+
+While you could also use `updater.remove_pre_update_patterns = ["*"]`, it is not recommended unless absolutely necessary. You never know when a user may try to place files in the addon subfolder, or if sometime down in the future you might want the updater to not clear everything out, so it's best to only explicitly delete the minimum which is needed, and be sure to plan ahead.
+
+**Addon contains py files and resource files, but no user/local configuration files**
+
+This is the more common use case. It is similar to the above, except now there are also additional files such as the readme.md, the license.txt, and perhaps a blend file with some models or other resources.
+
+If the user were to install the update manually through the blender UI with an older version of the addon in place, it would actually only overwrite the py files. The readme.md and licenses.txt that existed previously would not change, they would not be overwritten. However, any new files in the update not in the local install (such as a new blend file) will be moved into the local install folder. If a blend file is in the local install prior to updating but is not found in the new addon update, it would still be left in place. Essentially, blender's default behavior is to only overwrite and update python files, and when copying in new resources it favors the files already present in the local install.
+
+Instead of this default behavior, the following settings would be more appropriate for the situation of readme's and asset blends, since they may change between versions.
+
+```
+updater.overwrite_patterns = ["README.md", "*.blend"]
+```
+
+In this setup, the updater is told to always replace the readme file explicitly (note the case sensitivity). No other files are indicated to be overwritten, indicating for example the license file will never be overwritten with an update - that shouldn't be changing anyways. This setup would actually mean not even the python files are overwritten if the update has matching files to the local install. Not even the __init__.py file would be updated, which is where the next setting becomes useful. 
+
+The "*.blend" will result in any blend file being overwritten if matching locally to the update. e.g. /addonroot/assets/resources.blend will be replaced with the e.g. /addonroot/assets/resources.blend found in update repository. This would make sense if the blend file is static and not expected to be ever user modified.
+
+```
+updater.remove_pre_update_patterns = ["*.py","*.pyc"]
+```
+
+The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the overwrite_patterns, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, json etc will all be left alone. With the exception of blend files (as per overwrite_patterns above), they also won't be overwritten - even if there are updates.
+
+**Addon contains py files, resource files, and user/local configuration files**
+This is the most intricate setup, but layers on more useful behavior even in unique situations.
+
+Imagine an addon has a changing python code structure, assets which should be updated with each update, but also configuration files with default settings provided in the master repository, but local changes wanted to be kept. Furthermore, the user may install custom image textures saved in the addon folder so you will not know the names ahead of time, but you also want to ensure custom icon file updates can be made.
+
+```
+# example addon setup
+__init__.py
+module.py
+icons/custom_icon.png
+images/   # folder where custom png images will be installed
+README.md
+assets/default.blend
+assets/customizable.blend
+
+```
+
+To accomplish the mentioned behavior, use the below configuration.
+
+```
+updater.overwrite_patterns = ["README.md", "custom_icon.png"]
+updater.remove_pre_update_patterns = ["*.py","*.pyc", "default.blend"]
+```
+
+Breaking this down, we always specify to overwrite the README and custom_icon.png files explicitly. No need to remove either in pre update since we expect they will be found in the update, and the overwrite patterns ensures they always get overwritten and only those files. 
+
+Then, we specify to delete all python files before running the update, to ensure the only python files are part of the latest release. We also force delete the an files matching the name default.blend. If this was added as an overwrite pattern instead and the default.blend file name were ever renamed in the master repository, the updater would not end up removing this extra asset. And so we delete it directly, and presume the update will contain the appropriately named and updated blend file. 
+
+Just as importantly, note how the customizable.blend is not mentioned in either line. This means that there are no rules which would allow for this file to be overwritten or removed. This is desired since the user could have modified this file per their own needs, and we don't want to reset it. If the file was manually removed by the user or otherwise not present in a previous version of the addon, the update would still copy it over as found in the master repository. 
+
+
+**In conclusion**
+
+If you are planning to modify the overwrite_patterns or remove_pre_update_patterns settings, be sure to plan and test it works as you expect. It's important to have "*.py" in at least one of them, or alternatively individually name all python file basenames in either of the two settings.
+
+It is redundant to have the same rule in both settings, behavior of the remove_pre_update_patterns will supersede the more passive overwriting permission rules of overwrite_patterns
+
+The pattern matching is done on an "or" basis, meaning in the set ["*.py", "module.py"], the second list item is redundant as the "*.py" already 
+
+The patterns only match to filenames, so there is no use in including in paths like assets/icon.png or directory names.
+
+Finally, enabled verbose and check the console output after running an update! There are explicit printouts for when any files is "pre-removed", overwritten, or ignored for overwriting due to not matching a pattern. Use this to debug.
 
 
 # Security concerns with private repositories
