@@ -117,7 +117,7 @@ updater.check_for_update_now()
 
 # convenience returns, values also saved internally to updater object
 (update_ready, version, link) = updater.check_for_update()
-	
+  
 ```
 
 **Check for update** *(foreground using background thread, i.e. after pressing an explicit "check for update button")*
@@ -139,9 +139,9 @@ updater.check_for_update_async(background_update_callback)
 if updater.update_ready == True:
   res = updater.run_update(force=False, revert_tag=None, callback=function_obj)
   if res == 0:
-  	print("Update ran successfully, restart blender")
+    print("Update ran successfully, restart blender")
   else:
-  	print("Updater returned "+str(res)+", error occurred")
+    print("Updater returned "+str(res)+", error occurred")
 elif updater.update_ready == False:
   print("No update available")
 elif updater.update_ready == None:
@@ -154,9 +154,9 @@ elif updater.update_ready == None:
 tag_version = updater.tags[2] # or otherwise select a valid tag
 res = updater.run_update(force=False,revert_tag=None, callback=function_obj)
 if res == 0:
-	print("Update ran successfully, restart blender")
+  print("Update ran successfully, restart blender")
 else:
-	print("Updater returned "+str(res)+", error occurred")
+  print("Updater returned "+str(res)+", error occurred")
 ```
 
 
@@ -384,6 +384,39 @@ To push this tag up to the server (which won't happen automatically via `git pus
 
 Since v1.0.4 of the updater module, logic exists to help control what is modified or left in place during the updating process. This is done through the overwrite_patterns and remove_pre_update_patterns settings detailed above. Below are the common scenarios or use cases
 
+**I don't understand this feature and I just want to use the default configuration which matches blender's install behavior**
+
+Fair enough, in that case use the following settings - or just remove the lines entirely from the Operator File as these are the default values assigned to the updater class object.
+
+```
+# only overwrite matching python files found in the update, files like .txt or .blend will not be overwritten even if newer versions are in the update
+updater.overwrite_patterns = ["*.py","*.pyc"] 
+# don't delete any files files preemptively
+updater.remove_pre_update_patterns = [ ] 
+```
+
+If you wanted to instead match the default behavior of the addon updater pre v1.0.4, then use the following
+```
+# overwrite any file found in the local install which has a corresponding file in the update
+updater.overwrite_patterns = ["*"] 
+# don't delete any files files preemptively
+updater.remove_pre_update_patterns = [ ] 
+```
+
+**I want to shoot myself in the foot and make updating not work at all**
+
+Or in other words... *don't* use the following setup, as it effectively prevents the updater from updating anything at all!
+
+```
+# don't overwrite any files matching the local install in the update
+updater.overwrite_patterns = [ ] 
+# don't delete any files files preemptively
+updater.remove_pre_update_patterns = [ ] 
+```
+
+This would sill add in *new* files present in the update not present in the local install. For this reaosn, this actually may be a valid setup if used in conjunction with clean_install set to True, which simulates a fresh install. When clean_install = True, these patterns are effectively rendered pointless, so it's still better to not define them in the way above.
+
+
 **Addon contains only py files, no resources (e.g. json files, images, blends), and against better judgment, not even licenses or readme files**
 
 In this example, we only need to worry about replacing the python files with the new python files. By default, this demo addon is configured so that new py files and pyc files will overwrite old files with matching paths/names in the local install. This is accomplished by setting `updater.overwrite_patterns = ["*.py","*.pyc"]` in the operator file. You could also be more explicit and specify all files which may be overwritten via `updater.overwrite_patterns = ["__init__.py", "module.py", "*.pyc"]` for example (noting the "*.pyc" is still there to ensure all caches are flushed).
@@ -417,6 +450,7 @@ updater.remove_pre_update_patterns = ["*.py","*.pyc"]
 The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the overwrite_patterns, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, json etc will all be left alone. With the exception of blend files (as per overwrite_patterns above), they also won't be overwritten - even if there are updates.
 
 **Addon contains py files, resource files, and user/local configuration files**
+
 This is the most intricate setup, but layers on more useful behavior even in unique situations.
 
 Imagine an addon has a changing python code structure, assets which should be updated with each update, but also configuration files with default settings provided in the master repository, but local changes wanted to be kept. Furthermore, the user may install custom image textures saved in the addon folder so you will not know the names ahead of time, but you also want to ensure custom icon file updates can be made.
