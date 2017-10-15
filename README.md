@@ -117,7 +117,7 @@ updater.check_for_update_now()
 
 # convenience returns, values also saved internally to updater object
 (update_ready, version, link) = updater.check_for_update()
-	
+  
 ```
 
 **Check for update** *(foreground using background thread, i.e. after pressing an explicit "check for update button")*
@@ -139,9 +139,9 @@ updater.check_for_update_async(background_update_callback)
 if updater.update_ready == True:
   res = updater.run_update(force=False, revert_tag=None, callback=function_obj)
   if res == 0:
-  	print("Update ran successfully, restart blender")
+    print("Update ran successfully, restart blender")
   else:
-  	print("Updater returned "+str(res)+", error occurred")
+    print("Updater returned "+str(res)+", error occurred")
 elif updater.update_ready == False:
   print("No update available")
 elif updater.update_ready == None:
@@ -154,9 +154,9 @@ elif updater.update_ready == None:
 tag_version = updater.tags[2] # or otherwise select a valid tag
 res = updater.run_update(force=False,revert_tag=None, callback=function_obj)
 if res == 0:
-	print("Update ran successfully, restart blender")
+  print("Update ran successfully, restart blender")
 else:
-	print("Updater returned "+str(res)+", error occurred")
+  print("Updater returned "+str(res)+", error occurred")
 ```
 
 

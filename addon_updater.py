@@ -859,12 +859,9 @@ class Singleton_updater(object):
 
 				# decide whether to replace if file already exists, and copy new over
 				if os.path.isfile(destFile):
-					ptrns = self._overwrite_patterns
-					if ptrns==[]: ptrns=["*.py","*.pyc"]
-					
 					# otherwise, check each file to see if matches an overwrite pattern
 					replaced=False
-					for ptrn in ptrns:
+					for ptrn in self._overwrite_patterns:
 						if fnmatch.filter([destFile],ptrn):
 							replaced=True
 							break

@@ -955,8 +955,6 @@ def register(bl_info):
 	# See output to verify this register function is working properly
 	# print("Running updater reg")
 
-	# updater.clear_state() # clear internal vars, avoids reloading oddities
-
 	# confirm your updater "engine" (Github is default if not specified)
 	updater.engine = "Github"
 	# updater.engine = "GitLab"
@@ -969,10 +967,10 @@ def register(bl_info):
 	# other considerations and suggestions from a security standpoint
 	updater.private_token = None # "tokenstring"
 
-	# choose your own username
+	# choose your own username, must match website (not needed for GitLab)
 	updater.user = "cgcookie"
 
-	# choose your own repository, must match github name
+	# choose your own repository, must match git name
 	updater.repo = "blender-addon-updater"
 
 	#updater.addon = # define at top of module, MUST be done first
@@ -1023,6 +1021,7 @@ def register(bl_info):
 	#    e.g. if existing install and update both have a resource.blend file, the existing installed one will remain
 	# ["some.py"] means if some.py is found in addon update, it will overwrite any existing some.py in current addon install, if any
 	# ["*.json"] means all josn files found in addon update will overwrite those of same name in current install
+	# ["*.png","README.md","LICENSE.txt"] means the readme, license, and all pngs will be overwritten by update
 
 	# Patterns for files to actively remove prior to running update
 	# Useful if wanting to remove old code due to changes in filenames
@@ -1036,7 +1035,7 @@ def register(bl_info):
 	# clean = True in the run_update method, ie the equivalent of a fresh,
 	# new install. This would also delete any resources or user-made/modified
 	# files setting ["__pycache__"] ensures the pycache folder is always removed
-	# The default of ["__pycache__", "*.py","*.pyc"] is a safe option as this
+	# The configuration of ["*.py","*.pyc"] is a safe option as this
 	# will ensure no old python files/caches remain in event different addon
 	# versions have different filenames or structures
 
@@ -1109,7 +1108,7 @@ def unregister():
 	bpy.utils.unregister_class(addon_updater_end_background)
 
 	# clear global vars since they may persist if not restarting blender
-	# updater.clear_state() # clear internal vars, avoids reloading oddities
+	updater.clear_state() # clear internal vars, avoids reloading oddities
 
 	global ran_autocheck_install_popup
 	ran_autocheck_install_popup = False
