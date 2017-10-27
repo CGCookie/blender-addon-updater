@@ -56,6 +56,7 @@ class addon_updater_install_popup(bpy.types.Operator):
 	bl_label = "Update {x} addon".format(x=updater.addon)
 	bl_idname = updater.addon+".updater_install_popup"
 	bl_description = "Popup menu to check and display current updates available"
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	# if true, run clean install - ie remove all files before adding new
 	# equivalent to deleting the addon and reinstalling, except the
@@ -134,6 +135,7 @@ class addon_updater_check_now(bpy.types.Operator):
 	bl_idname = updater.addon+".updater_check_now"
 	bl_description = "Check now for an update to the {x} addon".format(
 														x=updater.addon)
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	def execute(self,context):
 
@@ -159,7 +161,7 @@ class addon_updater_check_now(bpy.types.Operator):
 		# input is an optional callback function
 		# this function should take a bool input, if true: update ready
 		# if false, no update ready
-		updater.check_for_update_now()
+		updater.check_for_update_now(ui_refresh)
 
 		return {'FINISHED'}
 
@@ -169,6 +171,7 @@ class addon_updater_update_now(bpy.types.Operator):
 	bl_idname = updater.addon+".updater_update_now"
 	bl_description = "Update to the latest version of the {x} addon".format(
 														x=updater.addon)
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	# if true, run clean install - ie remove all files before adding new
 	# equivalent to deleting the addon and reinstalling, except the
@@ -222,6 +225,7 @@ class addon_updater_update_target(bpy.types.Operator):
 	bl_idname = updater.addon+".updater_update_target"
 	bl_description = "Install a targeted version of the {x} addon".format(
 														x=updater.addon)
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	def target_version(self, context):
 		# in case of error importing updater
@@ -297,6 +301,7 @@ class addon_updater_install_manually(bpy.types.Operator):
 	bl_label = "Install update manually"
 	bl_idname = updater.addon+".updater_install_manually"
 	bl_description = "Proceed to manually install update"
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	error = bpy.props.StringProperty(
 		name="Error Occurred",
@@ -358,7 +363,7 @@ class addon_updater_updated_successful(bpy.types.Operator):
 	bl_label = "Installation Report"
 	bl_idname = updater.addon+".updater_update_successful"
 	bl_description = "Update installation response"
-	bl_options = {'REGISTER', 'UNDO'}
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	error = bpy.props.StringProperty(
 		name="Error Occurred",
@@ -426,6 +431,7 @@ class addon_updater_restore_backup(bpy.types.Operator):
 	bl_label = "Restore backup"
 	bl_idname = updater.addon+".updater_restore_backup"
 	bl_description = "Restore addon from backup"
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	@classmethod
 	def poll(cls, context):
@@ -447,6 +453,7 @@ class addon_updater_ignore(bpy.types.Operator):
 	bl_label = "Ignore update"
 	bl_idname = updater.addon+".updater_ignore"
 	bl_description = "Ignore update to prevent future popups"
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	@classmethod
 	def poll(cls, context):
@@ -471,6 +478,7 @@ class addon_updater_end_background(bpy.types.Operator):
 	bl_label = "End background check"
 	bl_idname = updater.addon+".end_background_check"
 	bl_description = "Stop checking for update in the background"
+	bl_options = {'REGISTER', 'INTERNAL'}
 
 	# @classmethod
 	# def poll(cls, context):
@@ -601,6 +609,13 @@ def post_update_callback(res=None):
 		getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT',error=res)
 	return
 
+def ui_refresh(update_status):
+	# find a way to just re-draw self?
+	# callback intended for trigger by async thread
+	for windowManager in bpy.data.window_managers:
+		for window in windowManager.windows:
+			for area in window.screen.areas:
+				area.tag_redraw()
 
 # function for asynchronous background check, which *could* be called on register
 def check_for_update_background():
@@ -700,7 +715,12 @@ def showReloadPopup():
 # -----------------------------------------------------------------------------
 
 
-# UI to place e.g. at the end of a UI panel where to notify update available
+
+# ----------------------
+# A) Panel Update Available panel
+# After a check for update has occurred, this function will draw a box
+# saying an update is ready, and give a button for: update now, open website,
+# or ignore popup. Ideal to be placed at the end / beginning of a panel
 def update_notice_box_ui(self, context):
 
 	# in case of error importing updater
