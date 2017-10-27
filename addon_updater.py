@@ -1316,11 +1316,12 @@ class Singleton_updater(object):
 		# 	self._error = "Error occurred"
 		# 	self._error_msg = "Encountered an error while checking for updates"
 
+		self._async_checking = False
+		self._check_thread = None
+
 		if self._verbose:
 			print("{} BG thread: Finished checking for update, doing callback".format(self._addon))
 		if callback != None: callback(self._update_ready)
-		self._async_checking = False
-		self._check_thread = None
 
 
 	def stop_async_check_update(self):
