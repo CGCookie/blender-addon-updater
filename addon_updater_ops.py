@@ -35,6 +35,15 @@ except Exception as e:
 			self.error = None
 			self.error_msg = None
 			self.async_checking = None
+		def clear_state(self):
+			self.addon = None
+			self.verbose = False
+			self.invalidupdater = True
+			self.error = None
+			self.error_msg = None
+			self.async_checking = None
+		def run_update(self): pass
+		def check_for_update(self): pass
 	updater = Singleton_updater_none()
 	updater.error = "Error initializing updater module"
 	updater.error_msg = str(e)
@@ -974,6 +983,11 @@ def register(bl_info):
 
 	# See output to verify this register function is working properly
 	# print("Running updater reg")
+
+	# safer failure in case of issue loading module
+	if updater.error != None:
+		print("Exiting updater registration, error return")
+		return
 
 	# confirm your updater "engine" (Github is default if not specified)
 	updater.engine = "Github"
