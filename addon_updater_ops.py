@@ -76,6 +76,16 @@ class addon_updater_install_popup(bpy.types.Operator):
 		default=False,
 		options={'HIDDEN'}
 	)
+	ignore_enum = bpy.props.EnumProperty(
+		name="Process update",
+		description="Decide to install, ignore, or defer new addon update",
+		items=[
+			("install","Install Now","Install update now"),
+			("ignore","Ignore", "Ignore this update to prevent future popups"),
+			("defer","Defer","Defer choice till next blender session")
+		],
+		options={'HIDDEN'}
+	)
 
 	def invoke(self, context, event):
 		return context.window_manager.invoke_props_dialog(self)
@@ -85,17 +95,16 @@ class addon_updater_install_popup(bpy.types.Operator):
 		if updater.invalidupdater == True:
 			layout.label("Updater module error")
 			return
-		if updater.update_ready == True:
+		elif updater.update_ready == True:
 			col = layout.column()
 			col.scale_y = 0.7
-			col.label("Update ready! Press OK to install "\
-						+str(updater.update_version),icon="LOOP_FORWARDS")
+			col.label("Update {} ready!".format(str(updater.update_version)),
+						icon="LOOP_FORWARDS")
+			col.label("Choose 'Update Now' & press OK to install, ",icon="BLANK1")
 			col.label("or click outside window to defer",icon="BLANK1")
-			# could offer to remove popups here, but window will not redraw
-			# so may be confusing to the user/look like a bug
-			# row = layout.row()
-			# row.label("Prevent future popups:")
-			# row.operator(addon_updater_ignore.bl_idname,text="Ignore update")
+			row = col.row()
+			row.prop(self,"ignore_enum",expand=True)
+			col.split()
 		elif updater.update_ready == False:
 			col = layout.column()
 			col.scale_y = 0.7
@@ -119,6 +128,15 @@ class addon_updater_install_popup(bpy.types.Operator):
 		if updater.manual_only==True:
 			bpy.ops.wm.url_open(url=updater.website)
 		elif updater.update_ready == True:
+
+			# action based on enum selection
+			if self.ignore_enum=='defer':
+				return {'FINISHED'}
+			elif self.ignore_enum=='ignore':
+				updater.ignore_update()
+				return {'FINISHED'}
+			#else: "install update now!"
+			
 			res = updater.run_update(
 							force=False,
 							callback=post_update_callback,

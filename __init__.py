@@ -52,7 +52,7 @@ class DemoUpdaterPanel(bpy.types.Panel):
 		# note: built-in checks ensure it runs at most once
 		# and will run in the background thread, not blocking
 		# or hanging blender
-		# Internal also checks to see if auto-check enabeld
+		# Internally also checks to see if auto-check enabled
 		# and if the time interval has passed
 		addon_updater_ops.check_for_update_background()
 
