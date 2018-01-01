@@ -372,7 +372,7 @@ class addon_updater_updated_successful(bpy.types.Operator):
 	bl_label = "Installation Report"
 	bl_idname = updater.addon+".updater_update_successful"
 	bl_description = "Update installation response"
-	bl_options = {'REGISTER', 'INTERNAL'}
+	bl_options = {'REGISTER', 'INTERNAL', 'UNDO'}
 
 	error = bpy.props.StringProperty(
 		name="Error Occurred",
@@ -1041,12 +1041,13 @@ def register(bl_info):
 
 	# Patterns for files to actively overwrite if found in new update
 	# file and are also found in the currently installed addon. Note that
-	# by default, updates are installed in the same wave as blender: .py
-	# files are replaced, but other file types (e.g. json, txt, blend) 
+	# by default (ie if set to []), updates are installed in the same way as blender: 
+	# .py files are replaced, but other file types (e.g. json, txt, blend) 
 	# will NOT be overwritten if already present in current install. Thus
 	# if you want to automatically update resources/non py files, add them
-	# as a part of the pattern list below so they will always be overwritten
-	# If a pattern file is not found in new update, no action is taken
+	# as a part of the pattern list below so they will always be overwritten by an
+	# update. If a pattern file is not found in new update, no action is taken
+	# This does NOT detele anything, only defines what is allowed to be overwritten
 	updater.overwrite_patterns = ["*.png","README.md","LICENSE.txt"]
 	# updater.overwrite_patterns = []
 	# other examples:
@@ -1054,7 +1055,7 @@ def register(bl_info):
 	# [] or ["*.py","*.pyc"] matches default blender behavior, ie same effect if user installs update manually without deleting the existing addon first
 	#    e.g. if existing install and update both have a resource.blend file, the existing installed one will remain
 	# ["some.py"] means if some.py is found in addon update, it will overwrite any existing some.py in current addon install, if any
-	# ["*.json"] means all josn files found in addon update will overwrite those of same name in current install
+	# ["*.json"] means all json files found in addon update will overwrite those of same name in current install
 	# ["*.png","README.md","LICENSE.txt"] means the readme, license, and all pngs will be overwritten by update
 
 	# Patterns for files to actively remove prior to running update

@@ -98,6 +98,7 @@ class DemoPreferences(bpy.types.AddonPreferences):
 		description="Number of days between checking for updates",
 		default=7,
 		min=0,
+		max=31
 		)
 	updater_intrval_hours = bpy.props.IntProperty(
 		name='Hours',
