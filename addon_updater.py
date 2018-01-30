@@ -23,6 +23,7 @@ https://github.com/CGCookie/blender-addon-updater
 
 """
 
+import ssl
 import urllib.request
 import urllib
 import os
@@ -576,6 +577,7 @@ class Singleton_updater(object):
 	def get_raw(self, url):
 		# print("Raw request:", url)
 		request = urllib.request.Request(url)
+		context = ssl._create_unverified_context()
 
 		# setup private request headers if appropriate
 		if self._engine.token != None:
@@ -586,7 +588,7 @@ class Singleton_updater(object):
 
 		# run the request
 		try:
-			result = urllib.request.urlopen(request)
+			result = urllib.request.urlopen(request,context=context)
 		except urllib.error.HTTPError as e:
 			self._error = "HTTP error"
 			self._error_msg = str(e.code)
@@ -655,6 +657,7 @@ class Singleton_updater(object):
 		if self._verbose: print("Starting download update zip")
 		try:
 			request = urllib.request.Request(url)
+			context = ssl._create_unverified_context()
 			
 			# setup private token if appropriate
 			if self._engine.token != None:
@@ -662,7 +665,7 @@ class Singleton_updater(object):
 					request.add_header('PRIVATE-TOKEN',self._engine.token)
 				else:
 					if self._verbose: print("Tokens not setup for selected engine yet")
-			self.urlretrieve(urllib.request.urlopen(request), self._source_zip)
+			self.urlretrieve(urllib.request.urlopen(request,context=context), self._source_zip)
 			# add additional checks on file size being non-zero
 			if self._verbose: print("Successfully downloaded update zip")
 			return True
