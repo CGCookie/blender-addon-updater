@@ -1,6 +1,6 @@
 # Blender Addon Updater
 
-With this python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either GitHub tags or releases. 
+With this Python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either GitHub tags or releases. 
 
 **This code is ready for production with public repositories, and for private use with GitLab repositories**
 
@@ -25,7 +25,7 @@ With this module, there are essentially 3 different configurations:
 - Connect an addon to GitHub that doesn't have any releases, and allow use to 1-click install to a default branch and select from other explicitly included branches to install (does not us any version checking, will alway pull the latest code even if the same)
 
 
-*Note the repository is not currently setup to be used with single python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*
+*Note the repository is not currently setup to be used with single Python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*
 
 # High level setup
 
@@ -35,7 +35,7 @@ This module works by utilizing git releases on a repository. When a [release](ht
 
 This repository contains a fully working example of an addon with the updater code, but to integrate into another or existing addon, only the `addon_updater.py` and `addon_updater_ops.py` files are needed. 
 
-`addon_updater.py` is an independent python module that is the brains of the updater. It is implemented as a singleton, so the module-level variables are the same wherever it is imported. This file should not need to be modified by a developer looking to integrate auto-updating into an addon. Local "private" variables starting with _ have corresponding @property interfaces for interacting with the singleton instance's variables.
+`addon_updater.py` is an independent Python module that is the brains of the updater. It is implemented as a singleton, so the module-level variables are the same wherever it is imported. This file should not need to be modified by a developer looking to integrate auto-updating into an addon. Local "private" variables starting with _ have corresponding @property interfaces for interacting with the singleton instance's variables.
 
 `addon_updater_ops.py` links the states and settings of the `addon_updater.py` module and displays the according interface. This file is expected to be modified accordingly to be integrated with into another addon, and serves mostly as a working example of how to implement the updater code. 
 
@@ -43,7 +43,7 @@ In this documentation, `addon_updater.py` is referred to by "the Python Module" 
 
 # About the example addon
 
-Included in this repository is an example addon which is integrates the auto-updater feature. It is currently linked to this repository and it's tags for testing. To use in your own addon, you only need the `addon_upder.py` and `addon_updater_ops.py` files. Then, you simply need to make the according function calls and create a release or tag on the corresponding GitHub repository.
+Included in this repository is an example addon which is integrates the auto-updater feature. It is currently linked to this repository and it's tags for testing. To use in your own addon, you only need the `addon_updater.py` and `addon_updater_ops.py` files. Then, you simply need to make the according function calls and create a release or tag on the corresponding GitHub repository.
 
 # Step-by-step as-is integration with existing addons
 
