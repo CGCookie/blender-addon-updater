@@ -80,7 +80,7 @@ class addon_updater_install_popup(bpy.types.Operator):
 		name="Process update",
 		description="Decide to install, ignore, or defer new addon update",
 		items=[
-			("install","Install Now","Install update now"),
+			("install","Update Now","Install update now"),
 			("ignore","Ignore", "Ignore this update to prevent future popups"),
 			("defer","Defer","Defer choice till next blender session")
 		],
@@ -136,7 +136,7 @@ class addon_updater_install_popup(bpy.types.Operator):
 				updater.ignore_update()
 				return {'FINISHED'}
 			#else: "install update now!"
-			
+
 			res = updater.run_update(
 							force=False,
 							callback=post_update_callback,
@@ -231,6 +231,8 @@ class addon_updater_update_now(bpy.types.Operator):
 					if res==0: print("Updater returned successful")
 					else: print("Updater returned "+str(res)+", error occurred")
 			except:
+				updater._error = "Error trying to run update"
+				updater._error_msg = str(e)
 				atr = addon_updater_install_manually.bl_idname.split(".")
 				getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 		elif updater.update_ready == None:
@@ -841,7 +843,6 @@ def update_settings_ui(self, context):
 	# checking / managing updates
 	row = box.row()
 	col = row.column()
-	movemosue = False
 	if updater.error != None:
 		subcol = col.row(align=True)
 		subcol.scale_y = 1
@@ -940,8 +941,6 @@ def update_settings_ui(self, context):
 	lastcheck = updater.json["last_check"]
 	if updater.error != None and updater.error_msg != None:
 		row.label(updater.error_msg)
-	elif movemosue == True:
-		row.label("Move mouse if button doesn't update")
 	elif lastcheck != "" and lastcheck != None:
 		lastcheck = lastcheck[0: lastcheck.index(".") ]
 		row.label("Last update check: " + lastcheck)

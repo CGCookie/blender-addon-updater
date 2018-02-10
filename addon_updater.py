@@ -682,9 +682,13 @@ class Singleton_updater(object):
 						os.pardir,
 						self._addon+"_updater_backup_temp")
 
-		if os.path.isdir(local) == True:
-			shutil.rmtree(local)
 		if self._verbose: print("Backup destination path: ",local)
+
+		if os.path.isdir(local) == True:
+			try:
+				shutil.rmtree(local)
+			except:
+				if self._verbose:print("Failed to removed previous backup folder, contininuing")
 
 		# make the copy
 		if self._backup_ignore_patterns != None:
