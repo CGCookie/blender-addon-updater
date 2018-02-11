@@ -600,6 +600,9 @@ def background_update_callback(update_ready):
 	if updater.invalidupdater == True:
 		return
 
+	if updater.showpopups == False:
+		return 
+
 	if update_ready != True:
 		return
 	
@@ -1114,6 +1117,14 @@ def register(bl_info):
 	# Used for development only, "pretend" to install an update to test
 	# reloading conditions
 	updater.fake_install = False # Set to true to test callback/reloading
+
+	# Show popups, ie if auto-check for update is enabled or a previous
+	# check for update in user preferences found a new version, show a popup
+	# (at most once per blender session, and it provides an option to ignore
+	# for future sessions); default behavior is set to True
+	updater.showpopups = True  
+	# note: if set to false, there will still be an "update ready" box drawn 
+	# using the `update_notice_box_ui` panel function. 
 
 	# Override with a custom function on what tags
 	# to skip showing for updater; see code for function above.

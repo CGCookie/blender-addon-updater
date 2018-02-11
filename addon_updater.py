@@ -116,7 +116,11 @@ class Singleton_updater(object):
 		self._error_msg = None
 		self._prefiltered_tag_count = 0
 
+		# UI code only, ie not used within this module but still useful
+		# properties to have
+
 		# to verify a valid import, in place of placeholder import
+		self.showpopups = True # used in UI to show or not show update popups
 		self.invalidupdater = False
 
 
