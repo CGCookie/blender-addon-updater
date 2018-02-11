@@ -1029,6 +1029,10 @@ def register(bl_info):
 	# Website for manual addon download, optional but recommended to set
 	updater.website = "https://github.com/CGCookie/blender-addon-updater/"
 	
+	# Addon subfolder path
+	# "sample/path/to/addon"
+	updater.subfolder_path = ""
+	
 	# used to check/compare versions
 	updater.current_version = bl_info["version"] 
 
