@@ -773,7 +773,10 @@ class Singleton_updater(object):
 		if os.path.isfile(os.path.join(unpath,"__init__.py")) == False:
 			dirlist = os.listdir(unpath)
 			if len(dirlist)>0:
-				unpath = os.path.join(unpath,dirlist[0],self._subfolder_path)
+				if self._subfolder_path == "" or self._subfolder_path == None:
+					unpath = os.path.join(unpath,dirlist[0])
+				else:	
+					unpath = os.path.join(unpath,dirlist[0],self._subfolder_path)
 
 			# smarter check for additional sub folders for a single folder
 			# containing __init__.py

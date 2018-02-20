@@ -1034,6 +1034,7 @@ def register(bl_info):
 	
 	# Addon subfolder path
 	# "sample/path/to/addon"
+	# default is "" or None, meaning root
 	updater.subfolder_path = ""
 	
 	# used to check/compare versions
