@@ -233,7 +233,6 @@ class Singleton_updater(object):
 		except:
 			raise ValueError("include_branch_autocheck must be a boolean value")
 
-
 	@property
 	def manual_only(self):
 		return self._manual_only
@@ -326,7 +325,6 @@ class Singleton_updater(object):
 				if self._verbose: print("Error trying to staging path")
 				return
 		self._updater_path = value
-
 
 	@property
 	def tags(self):
@@ -446,7 +444,6 @@ class Singleton_updater(object):
 			# potentially check entries are integers
 			self._version_min_update = value
 
-
 	@property
 	def version_max_update(self):
 		return self._version_max_update
@@ -534,7 +531,11 @@ class Singleton_updater(object):
 
 		# get all tags, internet call
 		all_tags = self._engine.parse_tags(self.get_api(request), self)
-		self._prefiltered_tag_count = len(all_tags)
+		if all_tags is not None:
+			self._prefiltered_tag_count = len(all_tags)
+		else:
+			self._prefiltered_tag_count = 0
+			all_tags = []
 
 		# pre-process to skip tags
 		if self.skip_tag != None:
@@ -562,8 +563,9 @@ class Singleton_updater(object):
 			return
 		elif self._prefiltered_tag_count == 0 and self._include_branches == False:
 			self._tag_latest = None
-			self._error = "No releases found"
-			self._error_msg = "No releases or tags found on this repository"
+			if self._error == None: # if not None, could have had no internet
+				self._error = "No releases found"
+				self._error_msg = "No releases or tags found on this repository"
 			if self._verbose: print("No releases or tags found on this repository")
 		elif self._prefiltered_tag_count == 0 and self._include_branches == True:
 			self._tag_latest = self._tags[0]
@@ -1416,6 +1418,8 @@ class GithubEngine(object):
 							"/zipball/",branch)
 
 	def parse_tags(self, response, updater):
+		if response == None:
+			return []
 		return response
 
 
