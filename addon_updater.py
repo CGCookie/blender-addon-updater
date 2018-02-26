@@ -23,6 +23,7 @@ https://github.com/CGCookie/blender-addon-updater
 
 """
 
+import ssl
 import urllib.request
 import urllib
 import os
@@ -64,6 +65,7 @@ class Singleton_updater(object):
 		self._repo = None
 		self._website = None
 		self._current_version = None
+		self._subfolder_path = None
 		self._tags = []
 		self._tag_latest = None
 		self._tag_names = []
@@ -117,7 +119,11 @@ class Singleton_updater(object):
 		self._error_msg = None
 		self._prefiltered_tag_count = 0
 
+		# UI code only, ie not used within this module but still useful
+		# properties to have
+
 		# to verify a valid import, in place of placeholder import
+		self.showpopups = True # used in UI to show or not show update popups
 		self.invalidupdater = False
 
 
@@ -238,7 +244,6 @@ class Singleton_updater(object):
 		except:
 			raise ValueError("include_branch_autocheck must be a boolean value")
 
-
 	@property
 	def manual_only(self):
 		return self._manual_only
@@ -332,7 +337,6 @@ class Singleton_updater(object):
 				return
 		self._updater_path = value
 
-
 	@property
 	def tags(self):
 		if self._tags == []:
@@ -340,17 +344,6 @@ class Singleton_updater(object):
 		tag_names = []
 		for tag in self._tags:
 			tag_names.append(tag["name"])
-
-		return tag_names
-
-	@property
-	def assets(self):
-		if self._assets == []:
-			return []
-		asset_names = []
-		for asset in self._asset:
-			asset_names.append(asset["name"])
-
 		return tag_names
 
 	@property
@@ -368,7 +361,15 @@ class Singleton_updater(object):
 	@property
 	def current_version(self):
 		return self._current_version
-
+	
+	@property
+	def subfolder_path(self):
+		return self._subfolder_path
+    
+	@subfolder_path.setter
+	def subfolder_path(self, value):
+		self._subfolder_path = value
+		
 	@property
 	def update_ready(self):
 		return self._update_ready
@@ -452,7 +453,6 @@ class Singleton_updater(object):
 		else:
 			# potentially check entries are integers
 			self._version_min_update = value
-
 
 	@property
 	def version_max_update(self):
@@ -542,8 +542,11 @@ class Singleton_updater(object):
 
 		# get all tags, internet call
 		all_tags = self._engine.parse_tags(self.get_api(request), self)
-		self._prefiltered_tag_count = len(all_tags)
-#		print("### %s \n" % all_tags)
+		if all_tags is not None:
+			self._prefiltered_tag_count = len(all_tags)
+		else:
+			self._prefiltered_tag_count = 0
+			all_tags = []
 
 		# pre-process to skip tags
 		if self.skip_tag != None:
@@ -560,7 +563,7 @@ class Singleton_updater(object):
 				request = self.form_branch_url(branch)
 				include = {
 					"name":branch.title(),
-#					"zipball_url":request
+					"zipball_url":request
 					"browser_download_url":request
 				}
 				self._tags = [include] + self._tags  # append to front
@@ -572,15 +575,16 @@ class Singleton_updater(object):
 			return
 		elif self._prefiltered_tag_count == 0 and self._include_branches == False:
 			self._tag_latest = None
-			self._error = "No releases found"
-			self._error_msg = "No releases or tags found on this repository"
+			if self._error == None: # if not None, could have had no internet
+				self._error = "No releases found"
+				self._error_msg = "No releases or tags found on this repository"
 			if self._verbose: print("No releases or tags found on this repository")
 		elif self._prefiltered_tag_count == 0 and self._include_branches == True:
 			self._tag_latest = self._tags[0]
 			if self._verbose:
 				branch = self._include_branch_list[0]
 				print("{} branch found, no releases".format(branch), self._tags[0])
-		elif len(self._tags) == 0 and self._prefiltered_tag_count > 0:
+		elif len(self._tags)-len(self._include_branch_list) == 0 and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
 			self._error = "No releases available"
 			self._error_msg = "No versions found within compatible version range"
@@ -600,6 +604,7 @@ class Singleton_updater(object):
 	def get_raw(self, url):
 		# print("Raw request:", url)
 		request = urllib.request.Request(url)
+		context = ssl._create_unverified_context()
 
 		# setup private request headers if appropriate
 		if self._engine.token != None:
@@ -610,7 +615,7 @@ class Singleton_updater(object):
 
 		# run the request
 		try:
-			result = urllib.request.urlopen(request)
+			result = urllib.request.urlopen(request,context=context)
 		except urllib.error.HTTPError as e:
 			self._error = "HTTP error"
 			self._error_msg = str(e.code)
@@ -679,6 +684,7 @@ class Singleton_updater(object):
 		if self._verbose: print("Starting download update zip")
 		try:
 			request = urllib.request.Request(url)
+			context = ssl._create_unverified_context()
 
 			# setup private token if appropriate
 			if self._engine.token != None:
@@ -686,7 +692,7 @@ class Singleton_updater(object):
 					request.add_header('PRIVATE-TOKEN',self._engine.token)
 				else:
 					if self._verbose: print("Tokens not setup for selected engine yet")
-			self.urlretrieve(urllib.request.urlopen(request), self._source_zip)
+			self.urlretrieve(urllib.request.urlopen(request,context=context), self._source_zip)
 			# add additional checks on file size being non-zero
 			if self._verbose: print("Successfully downloaded update zip")
 			return True
@@ -706,9 +712,13 @@ class Singleton_updater(object):
 						os.pardir,
 						self._addon+"_updater_backup_temp")
 
-		if os.path.isdir(local) == True:
-			shutil.rmtree(local)
 		if self._verbose: print("Backup destination path: ",local)
+
+		if os.path.isdir(local) == True:
+			try:
+				shutil.rmtree(local)
+			except:
+				if self._verbose:print("Failed to removed previous backup folder, contininuing")
 
 		# make the copy
 		if self._backup_ignore_patterns != None:
@@ -777,7 +787,10 @@ class Singleton_updater(object):
 		if os.path.isfile(os.path.join(unpath,"__init__.py")) == False:
 			dirlist = os.listdir(unpath)
 			if len(dirlist)>0:
-				unpath = os.path.join(unpath,dirlist[0])
+				if self._subfolder_path == "" or self._subfolder_path == None:
+					unpath = os.path.join(unpath,dirlist[0])
+				else:	
+					unpath = os.path.join(unpath,dirlist[0],self._subfolder_path)
 
 			# smarter check for additional sub folders for a single folder
 			# containing __init__.py
@@ -1050,7 +1063,7 @@ class Singleton_updater(object):
 			if self._verbose:
 				print("fake_install = True, setting fake version as ready")
 			self._update_ready = True
-			self._update_version = "(999,999,999)" #999,999,999
+			self._update_version = "(999,999,999)"
 			self._update_link = "http://127.0.0.1"
 
 			return (self._update_ready, self._update_version, self._update_link)
@@ -1079,11 +1092,15 @@ class Singleton_updater(object):
 			if len(self._tags)==n:
 				# effectively means no tags found on repo
 				# so provide the first one as default
-				link = self._tags[0]["zipball_url"]  # potentially other sources
-			if self._include_releases:
-				link = self._tags[n]["assets"][0]["browser_download_url"]
+				if self._include_releases:
+					link = self._tags[0]["assets"][0]["browser_download_url"]
+				else:
+					link = self._tags[0]["zipball_url"]  # potentially other sources
 			else:
-				link = self._tags[n]["zipball_url"]  # potentially other sources
+				if self._include_releases:
+					link = self._tags[n]["assets"][0]["browser_download_url"]
+				else:
+					link = self._tags[n]["zipball_url"]  # potentially other sources
 
 		if new_version == ():
 			self._update_ready = False
@@ -1144,9 +1161,11 @@ class Singleton_updater(object):
 			raise ValueError("Version tag not found: "+revert_tag)
 		new_version = self.version_tuple_from_text(self.tag_latest)
 		self._update_version = new_version
-#		self._update_link = tg["zipball_url"]
-		self._update_link = tg["browser_download_url"]
-		print("## Find releas: %s" % tg)
+		self._update_link = tg["zipball_url"]
+		if self._include_releases:
+			self._update_link = tg["browser_download_url"]
+		else:
+			self._update_link = tg["zipball_url"]
 
 
 	def run_update(self,force=False,revert_tag=None,clean=False,callback=None):
@@ -1347,11 +1366,12 @@ class Singleton_updater(object):
 		# 	self._error = "Error occurred"
 		# 	self._error_msg = "Encountered an error while checking for updates"
 
+		self._async_checking = False
+		self._check_thread = None
+
 		if self._verbose:
 			print("{} BG thread: Finished checking for update, doing callback".format(self._addon))
 		if callback != None: callback(self._update_ready)
-		self._async_checking = False
-		self._check_thread = None
 
 
 	def stop_async_check_update(self):
@@ -1431,6 +1451,8 @@ class GithubEngine(object):
 
 
 	def parse_tags(self, response, updater):
+		if response == None:
+			return []
 		return response
 
 
