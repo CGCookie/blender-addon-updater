@@ -78,7 +78,7 @@ class Singleton_updater(object):
 		# by default, backup current addon if new is being loaded
 		self._backup_current = True
 		self._backup_ignore_patterns = None
-		
+
 		# set patterns for what files to overwrite on update
 		self._overwrite_patterns = ["*.py","*.pyc"]
 		self._remove_pre_update_patterns = []
@@ -119,6 +119,8 @@ class Singleton_updater(object):
 		# to verify a valid import, in place of placeholder import
 		self.invalidupdater = False
 
+		# maximum directory level for searching __init__.py recursively
+		self._max_directory_level = 1
 
 	# -------------------------------------------------------------------------
 	# Getters and setters
@@ -471,6 +473,19 @@ class Singleton_updater(object):
 		else:
 			self._backup_ignore_patterns = value
 
+	@property
+	def max_directory_level(self):
+		return self._max_directory_level
+	@max_directory_level.setter
+	def max_directory_level(self, value):
+		if value == None:
+			self._max_directory_level = 1
+			return
+		elif type(value) != type(0):
+			raise ValueError("Max directory level must be in int format")
+		else:
+			self._max_directory_level = value
+
 	# -------------------------------------------------------------------------
 	# Parameter validation related functions
 	# -------------------------------------------------------------------------
@@ -655,7 +670,7 @@ class Singleton_updater(object):
 		if self._verbose: print("Starting download update zip")
 		try:
 			request = urllib.request.Request(url)
-			
+
 			# setup private token if appropriate
 			if self._engine.token != None:
 				if self._engine.name == "gitlab":
@@ -749,21 +764,25 @@ class Singleton_updater(object):
 		if self._verbose: print("Extracted source")
 
 		# either directly in root of zip, or one folder level deep
-		unpath = os.path.join(self._updater_path,"source")
-		if os.path.isfile(os.path.join(unpath,"__init__.py")) == False:
-			dirlist = os.listdir(unpath)
-			if len(dirlist)>0:
-				unpath = os.path.join(unpath,dirlist[0])
+		def search_init_py(level, dir_path):
+			if level < 0:
+				return None
+			if os.path.isfile(os.path.join(dir_path, "__init__.py")) == False:
+				dirlist = os.listdir(dir_path)
+				for item in dirlist:
+					item_path = os.path.join(dir_path, item)
+					if os.path.isfile(item_path) == False:
+						result = search_init_py(level - 1, os.path.join(dir_path, item_path))
+						if result:
+							return result
+				return None
 
-			# smarter check for additional sub folders for a single folder
-			# containing __init__.py
-			if os.path.isfile(os.path.join(unpath,"__init__.py")) == False:
-				if self._verbose:
-					print("not a valid addon found")
-					print("Paths:")
-					print(dirlist)
+			return dir_path
 
-				raise ValueError("__init__ file not found in new source")
+		unpath = os.path.join(self._updater_path, "source")
+		path = search_init_py(self._max_directory_level, unpath)
+		if not path:
+			raise ValueError("__init__ file not found in new source")
 
 		# now commence merging in the two locations:
 		# note this MAY not be accurate, as updater files could be placed elsewhere
@@ -771,7 +790,7 @@ class Singleton_updater(object):
 
 		# merge code with running addon directory, using blender default behavior
 		# plus any modifiers indicated by user (e.g. force remove/keep)
-		self.deepMergeDirectory(origpath,unpath,clean)
+		self.deepMergeDirectory(origpath,path,clean)
 
 		# Now save the json state
 		#  Change to True, to trigger the handler on other side
@@ -882,7 +901,7 @@ class Singleton_updater(object):
 		except:
 			error = "Error: Failed to remove existing staging directory, consider manually removing "+staging_path
 			if self._verbose: print(error)
-					
+
 
 	def reload_addon(self):
 		# if post_update false, skip this function
@@ -1272,7 +1291,7 @@ class Singleton_updater(object):
 		self._json["update_ready"] = False
 		self._json["version_text"] = {}
 		self.save_updater_json()
-	
+
 	def json_reset_restore(self):
 		self._json["just_restored"] = False
 		self._json["update_ready"] = False
