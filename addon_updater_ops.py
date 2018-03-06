@@ -230,7 +230,7 @@ class addon_updater_update_now(bpy.types.Operator):
 				if updater.verbose:
 					if res==0: print("Updater returned successful")
 					else: print("Updater returned "+str(res)+", error occurred")
-			except:
+			except Exception as e:
 				updater._error = "Error trying to run update"
 				updater._error_msg = str(e)
 				atr = addon_updater_install_manually.bl_idname.split(".")

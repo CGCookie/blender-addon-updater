@@ -572,7 +572,9 @@ class Singleton_updater(object):
 			if self._verbose:
 				branch = self._include_branch_list[0]
 				print("{} branch found, no releases".format(branch), self._tags[0])
-		elif len(self._tags)-len(self._include_branch_list) == 0 and self._prefiltered_tag_count > 0:
+		elif (len(self._tags)-len(self._include_branch_list)==0 and self._include_branches==True) \
+				or (len(self._tags)==0 and self._include_branches==False) \
+				and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
 			self._error = "No releases available"
 			self._error_msg = "No versions found within compatible version range"
