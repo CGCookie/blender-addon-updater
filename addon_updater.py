@@ -568,7 +568,7 @@ class Singleton_updater(object):
 				self._error_msg = "No releases or tags found on this repository"
 			if self._verbose: print("No releases or tags found on this repository")
 		elif self._prefiltered_tag_count == 0 and self._include_branches == True:
-			self._tag_latest = self._tags[0]
+			if not self._error: self._tag_latest = self._tags[0]
 			if self._verbose:
 				branch = self._include_branch_list[0]
 				print("{} branch found, no releases".format(branch), self._tags[0])
