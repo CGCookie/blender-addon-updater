@@ -70,6 +70,7 @@ class Singleton_updater(object):
 		self._tag_latest = None
 		self._tag_names = []
 		self._latest_release = None
+		self._include_releases = False
 		self._include_branches = False
 		self._include_branch_list = ['master']
 		self._include_branch_autocheck = False
@@ -80,7 +81,7 @@ class Singleton_updater(object):
 		# by default, backup current addon if new is being loaded
 		self._backup_current = True
 		self._backup_ignore_patterns = None
-		
+
 		# set patterns for what files to overwrite on update
 		self._overwrite_patterns = ["*.py","*.pyc"]
 		self._remove_pre_update_patterns = []
@@ -182,6 +183,16 @@ class Singleton_updater(object):
 			self._include_branches = bool(value)
 		except:
 			raise ValueError("include_branches must be a boolean value")
+
+	@property
+	def include_releases(self):
+		return self._include_releases
+	@include_releases.setter
+	def include_releases(self, value):
+		try:
+			self._include_releases = bool(value)
+		except:
+			raise ValueError("include_releases must be a boolean value")
 
 	@property
 	def include_branch_list(self):
@@ -333,7 +344,6 @@ class Singleton_updater(object):
 		tag_names = []
 		for tag in self._tags:
 			tag_names.append(tag["name"])
-
 		return tag_names
 
 	@property
@@ -501,6 +511,7 @@ class Singleton_updater(object):
 			tag_names.append(tag["name"])
 		return tag_names
 
+
 	# declare how the class gets printed
 
 	def __repr__(self):
@@ -553,6 +564,7 @@ class Singleton_updater(object):
 				include = {
 					"name":branch.title(),
 					"zipball_url":request
+					"browser_download_url":request
 				}
 				self._tags = [include] + self._tags  # append to front
 
@@ -680,7 +692,7 @@ class Singleton_updater(object):
 		try:
 			request = urllib.request.Request(url)
 			context = ssl._create_unverified_context()
-			
+
 			# setup private token if appropriate
 			if self._engine.token != None:
 				if self._engine.name == "gitlab":
@@ -914,7 +926,7 @@ class Singleton_updater(object):
 		except:
 			error = "Error: Failed to remove existing staging directory, consider manually removing "+staging_path
 			if self._verbose: print(error)
-					
+
 
 	def reload_addon(self):
 		# if post_update false, skip this function
@@ -1077,16 +1089,25 @@ class Singleton_updater(object):
 			self._update_version = None
 			self._update_link = None
 			return (False, None, None)
-		elif self._include_branches == False:
-			link = self._tags[0]["zipball_url"]  # potentially other sources
+		if self._include_branches == False:
+			if self._include_releases:
+				link = self._tags[0]["assets"][0]["browser_download_url"]
+			else:
+				link = self._tags[0]["zipball_url"]  # potentially other sources
 		else:
 			n = len(self._include_branch_list)
 			if len(self._tags)==n:
 				# effectively means no tags found on repo
 				# so provide the first one as default
-				link = self._tags[0]["zipball_url"]  # potentially other sources
+				if self._include_releases:
+					link = self._tags[0]["assets"][0]["browser_download_url"]
+				else:
+					link = self._tags[0]["zipball_url"]  # potentially other sources
 			else:
-				link = self._tags[n]["zipball_url"]  # potentially other sources
+				if self._include_releases:
+					link = self._tags[n]["assets"][0]["browser_download_url"]
+				else:
+					link = self._tags[n]["zipball_url"]  # potentially other sources
 
 		if new_version == ():
 			self._update_ready = False
@@ -1148,6 +1169,10 @@ class Singleton_updater(object):
 		new_version = self.version_tuple_from_text(self.tag_latest)
 		self._update_version = new_version
 		self._update_link = tg["zipball_url"]
+		if self._include_releases:
+			self._update_link = tg["browser_download_url"]
+		else:
+			self._update_link = tg["zipball_url"]
 
 
 	def run_update(self,force=False,revert_tag=None,clean=False,callback=None):
@@ -1304,7 +1329,7 @@ class Singleton_updater(object):
 		self._json["update_ready"] = False
 		self._json["version_text"] = {}
 		self.save_updater_json()
-	
+
 	def json_reset_restore(self):
 		self._json["just_restored"] = False
 		self._json["update_ready"] = False
@@ -1415,14 +1440,22 @@ class GithubEngine(object):
 								"/",updater.repo)
 
 	def form_tags_url(self, updater):
-		return "{}{}".format(self.form_repo_url(updater),"/tags")
+		if updater.include_releases:
+			return "{}{}".format(self.form_repo_url(updater),"/releases")
+		else:
+			return "{}{}".format(self.form_repo_url(updater),"/tags")
 
 	def form_branch_list_url(self, updater):
 		return "{}{}".format(self.form_repo_url(updater),"/branches")
 
 	def form_branch_url(self, branch, updater):
-		return "{}{}{}".format(self.form_repo_url(updater),
-							"/zipball/",branch)
+		if updater.include_releases:
+			return "{}{}{}".format(self.form_repo_url(updater),
+								"/releases/download/",branch)
+		else:
+			return "{}{}{}".format(self.form_repo_url(updater),
+								"/zipball/",branch)
+
 
 	def parse_tags(self, response, updater):
 		if response == None:
