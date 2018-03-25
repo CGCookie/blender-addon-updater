@@ -269,7 +269,7 @@ class addon_updater_update_target(bpy.types.Operator):
 		return ret
 
 	target = bpy.props.EnumProperty(
-		name="Target version",
+		name="Target version to install",
 		description="Select the version to install",
 		items=target_version
 		)
@@ -1019,8 +1019,8 @@ def register(bl_info):
 	# updater.engine = "GitLab"
 	# updater.engine = "Bitbucket"
 
-	# If using private repository, indicate the token here must be set
-	# after assigning the engine.
+	# If using private repository, indicate the token here
+	# Must be set after assigning the engine.
 	# **WARNING** Depending on the engine, this token can act like a password!!
 	# Only provide a token if the project is *non-public*, see readme for
 	# other considerations and suggestions from a security standpoint
