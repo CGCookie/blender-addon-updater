@@ -371,7 +371,7 @@ class addon_updater_install_manually(bpy.types.Operator):
 			row.operator("wm.url_open",text="Direct download").url=\
 					updater.update_link
 		else:
-			row.operator("wm.url_open",text="(failed to retrieve)")
+			row.operator("wm.url_open",text="(failed to retrieve direct download)")
 			row.enabled = False
 
 			if updater.website != None:
@@ -798,7 +798,7 @@ def update_notice_box_ui(self, context):
 
 
 # create a function that can be run inside user preferences panel for prefs UI
-# place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
+# Place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
 # or by: addon_updater_ops.updaterSettingsUI(context)
 def update_settings_ui(self, context):
 
@@ -850,9 +850,14 @@ def update_settings_ui(self, context):
 		subcol = col.row(align=True)
 		subcol.scale_y = 1
 		split = subcol.split(align=True)
-		split.enabled = False
 		split.scale_y = 2
-		split.operator(addon_updater_check_now.bl_idname,
+		if "ssl" in updater.error_msg.lower():
+			split.enabled = True
+			split.operator(addon_updater_install_manually.bl_idname,
+						updater.error)
+		else:
+			split.enabled = False
+			split.operator(addon_updater_check_now.bl_idname,
 						updater.error)
 		split = subcol.split(align=True)
 		split.scale_y = 2

@@ -611,8 +611,13 @@ class Singleton_updater(object):
 			self._error_msg = str(e.code)
 			self._update_ready = None
 		except urllib.error.URLError as e:
-			self._error = "URL error, check internet connection"
-			self._error_msg = str(e.reason)
+			reason = str(e.reason)
+			if "TLSV1_ALERT" in reason or "SSL" in reason:
+				self._error = "Connection rejected, download manually"
+				self._error_msg = reason
+			else:
+				self._error = "URL error, check internet connection"
+				self._error_msg = reason
 			self._update_ready = None
 			return None
 		else:
