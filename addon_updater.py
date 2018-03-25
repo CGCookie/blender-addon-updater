@@ -580,11 +580,13 @@ class Singleton_updater(object):
 				self._error_msg = "No releases or tags found on this repository"
 			if self._verbose: print("No releases or tags found on this repository")
 		elif self._prefiltered_tag_count == 0 and self._include_branches == True:
-			self._tag_latest = self._tags[0]
+			if not self._error: self._tag_latest = self._tags[0]
 			if self._verbose:
 				branch = self._include_branch_list[0]
 				print("{} branch found, no releases".format(branch), self._tags[0])
-		elif len(self._tags)-len(self._include_branch_list) == 0 and self._prefiltered_tag_count > 0:
+		elif (len(self._tags)-len(self._include_branch_list)==0 and self._include_branches==True) \
+				or (len(self._tags)==0 and self._include_branches==False) \
+				and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
 			self._error = "No releases available"
 			self._error_msg = "No versions found within compatible version range"
@@ -621,8 +623,13 @@ class Singleton_updater(object):
 			self._error_msg = str(e.code)
 			self._update_ready = None
 		except urllib.error.URLError as e:
-			self._error = "URL error, check internet connection"
-			self._error_msg = str(e.reason)
+			reason = str(e.reason)
+			if "TLSV1_ALERT" in reason or "SSL" in reason:
+				self._error = "Connection rejected, download manually"
+				self._error_msg = reason
+			else:
+				self._error = "URL error, check internet connection"
+				self._error_msg = reason
 			self._update_ready = None
 			return None
 		else:

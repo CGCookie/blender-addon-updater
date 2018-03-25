@@ -233,7 +233,7 @@ class addon_updater_update_now(bpy.types.Operator):
 				if updater.verbose:
 					if res==0: print("Updater returned successful")
 					else: print("Updater returned "+str(res)+", error occurred")
-			except:
+			except Exception as e:
 				updater._error = "Error trying to run update"
 				updater._error_msg = str(e)
 				atr = addon_updater_install_manually.bl_idname.split(".")
@@ -272,7 +272,7 @@ class addon_updater_update_target(bpy.types.Operator):
 		return ret
 
 	target = bpy.props.EnumProperty(
-		name="Target version",
+		name="Target version to install",
 		description="Select the version to install",
 		items=target_version
 		)
@@ -374,7 +374,7 @@ class addon_updater_install_manually(bpy.types.Operator):
 			row.operator("wm.url_open",text="Direct download").url=\
 					updater.update_link
 		else:
-			row.operator("wm.url_open",text="(failed to retrieve)")
+			row.operator("wm.url_open",text="(failed to retrieve direct download)")
 			row.enabled = False
 
 			if updater.website != None:
@@ -806,7 +806,7 @@ def update_notice_box_ui(self, context):
 
 
 # create a function that can be run inside user preferences panel for prefs UI
-# place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
+# Place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
 # or by: addon_updater_ops.updaterSettingsUI(context)
 def update_settings_ui(self, context):
 
@@ -858,9 +858,14 @@ def update_settings_ui(self, context):
 		subcol = col.row(align=True)
 		subcol.scale_y = 1
 		split = subcol.split(align=True)
-		split.enabled = False
 		split.scale_y = 2
-		split.operator(addon_updater_check_now.bl_idname,
+		if "ssl" in updater.error_msg.lower():
+			split.enabled = True
+			split.operator(addon_updater_install_manually.bl_idname,
+						updater.error)
+		else:
+			split.enabled = False
+			split.operator(addon_updater_check_now.bl_idname,
 						updater.error)
 		split = subcol.split(align=True)
 		split.scale_y = 2
@@ -1022,8 +1027,8 @@ def register(bl_info):
 	# updater.engine = "GitLab"
 	# updater.engine = "Bitbucket"
 
-	# If using private repository, indicate the token here must be set
-	# after assigning the engine.
+	# If using private repository, indicate the token here
+	# Must be set after assigning the engine.
 	# **WARNING** Depending on the engine, this token can act like a password!!
 	# Only provide a token if the project is *non-public*, see readme for
 	# other considerations and suggestions from a security standpoint
