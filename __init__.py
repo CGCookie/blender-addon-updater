@@ -20,7 +20,7 @@ bl_info = {
 	"name":        "Addon Updater Demo",
 	"description": "Demo addon for showcasing the blender-addon-updater module",
 	"author":      "Patrick W. Crawford",
-	"version":     (1, 0, 4),
+	"version":     (1, 0, 5),
 	"blender":     (2, 7, 8),
 	"location":    "View 3D > Tool Shelf > Demo Updater",
 	"warning":     "",  # used for warning icon and text in addons panel
@@ -52,7 +52,7 @@ class DemoUpdaterPanel(bpy.types.Panel):
 		# note: built-in checks ensure it runs at most once
 		# and will run in the background thread, not blocking
 		# or hanging blender
-		# Internal also checks to see if auto-check enabeld
+		# Internally also checks to see if auto-check enabled
 		# and if the time interval has passed
 		addon_updater_ops.check_for_update_background()
 
@@ -98,6 +98,7 @@ class DemoPreferences(bpy.types.AddonPreferences):
 		description="Number of days between checking for updates",
 		default=7,
 		min=0,
+		max=31
 		)
 	updater_intrval_hours = bpy.props.IntProperty(
 		name='Hours',

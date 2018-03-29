@@ -2,7 +2,10 @@
 
 With this Python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either GitHub tags or releases. 
 
-**This code is ready for production with public repositories, and for private use with GitLab repositories**
+![alt](/images/demo_gif.gif)
+
+
+:warning: **Please [see this page on known issues](https://github.com/CGCookie/blender-addon-updater/issues?q=is%3Aissue+is%3Aopen+label%3A%22Known+Issue%22), including available workarounds**
 
 *Want to add this code to your addon? [See this tutorial here](http://theduckcow.com/2016/addon-updater-tutorial/)*
 
@@ -10,7 +13,7 @@ With this Python module, developers can create auto-checking for updates with th
 # Key Features
 *From the user perspective*
 
-- Uses GitHub, Gitlab or Bitbucket repositories for source of versions and code
+- Uses [GitHub](https://github.com/), [GitLab](http://gitlab.com/) or [Bitbucket](https://bitbucket.org) repositories for source of versions and code
   - All mentions of GitHub hereafter also apply to GitLab and Bitbucket unless called out separately
 - One-click to check if update is available
 - Auto-check: Ability to automatically check for updates in the background (user must enable)
@@ -20,16 +23,16 @@ With this Python module, developers can create auto-checking for updates with th
 - Ability to install other (e.g. older or dev) versions of the addon
 
 With this module, there are essentially 3 different configurations:
-- Connect an addon to GitHub releases & be notified when new releases are out and allow 1-click install (with an option to install master or another branch if enabled)
-- Connect an addon to GitHub releases & be notified when new releases are out, but direct user to website or specific download page instead of one-click installing
-- Connect an addon to GitHub that doesn't have any releases, and allow use to 1-click install to a default branch and select from other explicitly included branches to install (does not us any version checking, will alway pull the latest code even if the same)
+- Connect an addon to a repository's releases & be notified when new releases are out and allow 1-click install (with an option to install master or another branch if enabled)
+- Connect an addon to a repository's releases & be notified when new releases are out, but direct user to website or specific download page instead of one-click installing (code doesn't even need to be hosted in connected repo in this scenario, as it's only using the releases metadata)
+- Connect an addon to a repository that doesn't have any releases, and allow use to 1-click install to a default branch and select from other explicitly included branches to install (does not us any version checking, will alway pull the latest code even if the same)
 
 
 *Note the repository is not currently setup to be used with single Python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*
 
 # High level setup
 
-This module works by utilizing git releases on a repository. When a [release](https://github.com/CGCookie/blender-addon-updater/releases) or [tag](https://github.com/CGCookie/blender-addon-updater/tags) is created on GitHub, the addon can check for and update to the code included in that tag. The local addon version number is checked against the versions on GitHub based on the name of the release or tag itself. 
+This module works by utilizing git releases on a repository. When a [release](https://github.com/CGCookie/blender-addon-updater/releases) or [tag](https://github.com/CGCookie/blender-addon-updater/tags) is created on GitHub/Bitbucket/Gitlab, the addon can check against the name of the tags/releases to know if an update is ready. The local addon version (in `bl_info`) is used to compare against that online name to know whether a more recent release is ready. 
 
 ![alt](/images/file_diagram.png)
 
@@ -43,7 +46,7 @@ In this documentation, `addon_updater.py` is referred to by "the Python Module" 
 
 # About the example addon
 
-Included in this repository is an example addon which is integrates the auto-updater feature. It is currently linked to this repository and it's tags for testing. To use in your own addon, you only need the `addon_updater.py` and `addon_updater_ops.py` files. Then, you simply need to make the according function calls and create a release or tag on the corresponding GitHub repository.
+Included in this repository is an example addon which is integrates the auto-updater feature. It is currently linked to this repository and it's tags for testing. To use in your own addon, you only need the `addon_updater.py` and `addon_updater_ops.py` files. Then, you simply need to make the according function calls and create a release or tag on the corresponding repository.
 
 # Step-by-step as-is integration with existing addons
 
@@ -60,7 +63,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 
 4) Edit the according fields in the register function of the `addon_updater_ops.py` file. See the documentation below on these options, but at the bare minimum set the GitHub username and repository. 
   - Note that many of the settings are assigned in the `addon_updater_ops.py: register()` function to avoid having excess updater-related code in the addon's `__init__.py:register()` function, however because the updater module is shared across the addon, these settings could be made in either place.
-  - If using Gitlab or Bitbucket, then you must also assign the according engine value, the rest is the same setup.
+  - If using GitLab or Bitbucket, then you must also assign the according engine value, the rest is the same setup.
 
 5) To get the updater UI in the preferences draw panel and show all settings, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function.
   - Be sure to import the Operator File if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
@@ -104,7 +107,7 @@ If interested in implementing a purely customized UI implementation of this code
 
 ```
 from .addon_updater import Updater as updater # for example
-# updater.engine left at default assumes github api/structure
+# updater.engine left at default assumes GitHub api/structure
 updater.user = "cgcookie"
 updater.repo = "blender-addon-updater"
 updater.current_version = bl_info["version"]
@@ -192,9 +195,9 @@ updater.addon = "addon_name"
 - **repo:** The name of the repository as found in the GitHub link
   - Type: String, e.g. "blender-addon-updater"
   - Note: Make sure to use the correct repo name based on the api engine used; {repo_name} is found in the following places:
-    - Github: Retrieved from the url of the repository link. Example: https://github.com/cgcookie/{repo_name}
+    - GitHub: Retrieved from the url of the repository link. Example: https://github.com/cgcookie/{repo_name}
     - Bitbucket: Retrieved from the url of the repository link. Example: https://bitbucket.org/cgcookie/{repo_name}
-    - Gitlab: You must go to the repository settings page, and use the *project ID* provided; note that this is a (string-formated) number, not a readable name. Example url where found: https://gitlab.com/TheDuckCow/test-updater-gitlab/edit, only visible to owner/editors.
+    - GitLab: You must go to the repository settings page, and use the *project ID* provided; note that this is a (string-formated) number, not a readable name. Example url where found: https://gitlab.com/TheDuckCow/test-updater-gitlab/edit, only visible to owner/editors.
 - **user:** The name of the user the repository belongs to
   - Type: String, e.g. "cgcookie"
   - Note: Required but not actually used with GitLab engine enabled
@@ -202,13 +205,13 @@ updater.addon = "addon_name"
 *Optional settings*
 
 - **engine:**
-  - Type: String, one of: ["github","gitlab","bitbucket"]
+  - Type: String, one of: ["github","gitlab","bitbucket"], not case sensitive
   - Default: "github"
-  - This selection sets the api backend for retreiving the code. Note that 
+  - This selection sets the api backend for retreiving the code. This must be set to match the appropriate online repository where releases/tags are hosted
 - **private_token:**
   - Type: String
   - Default: None
-  - Currently only supports private tokens for gitlab. Used only for granting access to private repositories for updating.
+  - Currently only supports private tokens for GitLab. Used only for granting access to private repositories for updating.
   - WARNING: Before providing or using a personal token, [PLEASE READ SECURITY COCNERN SECTION BELOW](https://github.com/CGCookie/blender-addon-updater/tree/dev#security-concerns-with-private-repositories)
 - **addon:**
   - Type: String, e.g. "demo_addon_updater"
@@ -257,7 +260,39 @@ updater.addon = "addon_name"
   - Type: List of strings
   - Default: None
   - Notes: You can use wild card patterns, see documentation for shutil.copytree `ignore` input parameter as this is where the list is passed into. This is similar but slightly different to the patterns used in overwrite_patterns and remove_pre_update_patterns, except these will also apply to folders
-
+- **manual_only:** A setting which will permit only manual installs and not one-click updates
+  - Type: Bool, e.g. False
+  - Default: False
+  - Notes: This is useful if you always want to direct the user to a specific download page, but still want them to receive update notifications.
+- **showpopups:** A setting which when enabled will allow for popup notifications for new updates
+  - Type: Bool, e.g. False
+  - Default: True
+  - Notes: This setting was introduced in v1.0.5, where previous functionality was equivalent to the setting being equal to True. Note that popups will only work if the proper configuration is provided to trigger them, ie triggering a background check for update in the appropriate location. 
+- **version_min_update:** A setting which sets the minimum allowable version to target installing, so that any earlier numbered releases will not appear in the target install dropdown or appear as notifications for updating
+  - Type: Tuple e.g. (1,2) or (1,2,3), should match the number of separators in bl_info
+  - Default: None
+  - Notes:
+    - This behaves as an "equal to or greater", example: if `version_min_update` is set to (1,1,1), then (1,1,1) and (1,1,2) are valid targets, but (1,1,0) would not be listed as an available install target.
+    - This also impacts what is considered as an update. Example: if the current addon version locally is v1.5 with `version_min_update` set to be (1,8), the addon will not perceive v1.6 as an update and thus would not notify the user.
+    - The most logical use for this setting is to assign the earliest addon version with a functional updater, so that users cannot downgrade to a version before there was an updater and thus not be able to easily revert back.
+- **version_max_update:** A setting which sets the maximum allowable version to target installing, so the target version and any higher numbered releases will not appear in the target install dropdown or appear as notifications for updating
+  - Type: Tuple e.g. (1,2) or (1,2,3), should match the number of separators in bl_info
+  - Default: None
+  - Notes:
+    - This behaves as an "equal to or greater". Example: if `version_max_update` is set to (1,1,1), then (1,1,1) and (1,1,2) will be ignored targets (won't appear in target install dropdowns and won't trigger update notifications), but (1,1,0) would still be recognized as an available target and trigger update notifications.
+     - This also impacts what is considered as an update. Example: if the current addon version locally is v1.5 with `version_max_update` set to be (1,6), the addon will not perceive v1.6 or v1.7 online as an update and thus would not notify the user.
+- **skip_tag:** A setting which defines how to pre-process tag names
+  - Type: Function, see example method `skip_tag_function` in the Operator File
+  - Default: `skip_tag_function` defined in `addon_updater_ops.py`
+  - Notes: This is where the `version_min_update` and `version_max_update` settings are utilized. Additionally, the source function `skip_tag_function` could be modified e.g. to parse out any tags including the text "dev" or similar such rules to limit what is counted as an available update and also what is listed in the target install dropdown.
+- **subfolder_path:** Define the root location of the `__init__.py` file in the repository
+  - Type: String
+  - Default: "", meaning the root repository folder
+  - Notes: Not required if your `__init__.py` file is in the root level of the addon. Otherwise, use this setting to indicate where it is located so the updater knows which folder to take updated files from
+- **use_releases:** (GitHub only) Choose to pull updates from releases only instead of tags, and use release names instead of tag numbers in target-install dropdowns
+  - Type: Bool
+  - Default: False
+  - Notes: If true, any tags that are not "annotated" (ie have release notes or attachments) will be filtered out, as tags are not necessarily releases. Additional note: if set to false, cannot pull release notes for GitHub repository (whereas BitBucket and GitLab do have release notes available via tags). This means that if in the future in-line release notes are included in the UI, this setting will need to be set to True in order to show release logs (not yet implemented as of v1.0.5)
 
 *User preference defined (ie optional but good to expose to user)*
 
@@ -414,7 +449,7 @@ updater.overwrite_patterns = [ ]
 updater.remove_pre_update_patterns = [ ] 
 ```
 
-This would sill add in *new* files present in the update not present in the local install. For this reaosn, this actually may be a valid setup if used in conjunction with clean_install set to True, which simulates a fresh install. When clean_install = True, these patterns are effectively rendered pointless, so it's still better to not define them in the way above.
+This would sill add in *new* files present in the update not present in the local install. For this reason, this actually may be a valid setup if used in conjunction with clean_install set to True, which simulates a fresh install. When clean_install = True, these patterns are effectively rendered pointless, so it's still better to not define them in the way above.
 
 
 **Addon contains only py files, no resources (e.g. json files, images, blends), and against better judgment, not even licenses or readme files**
@@ -496,10 +531,10 @@ Finally, enabled verbose and check the console output after running an update! T
 
 # Security concerns with private repositories
 
-Support for private repositories are being added to bitbucket and github, while already available for GitLab. At this time, they are only supported via authentication through personal or private tokens. These are assigned to an individual user and while can be restricted what access they do or don't have, they can **effectively act as an alternate to a password.** While this updater module is configured to only *read/download* code, a private token would allow both read and write capabilities to anyone who knows how to use the according api. By nature of python modules, this private token is easily read in source code or can be reverse compiled in pyc code and used for malicious or unintended purposes. 
+Support for private repositories is still a work in progress for Bitbucket and GitHub, while already available for GitLab. At this time, they are only supported via authentication through personal or private tokens. These are assigned to an individual user and while can be restricted what access they do or don't have, they can **effectively act as an alternate to a password.** While this updater module is configured to only *read/download* code, a private token would allow both read and write capabilities to anyone who knows how to use the according api. By nature of python modules, this private token is easily read in source code or can be reverse compiled in pyc code and used for malicious or unintended purposes. 
 
 For this reason, it is very important to be aware and setup tokens accordingly. As the authentication implementation advances here, the recommendations may change but in the meantime:
-- Gitlab: Supported through Personal Tokens
+- GitLab: Supported through Personal Tokens
   - Tokens are not needed and should not be used for public repositories
   - Personal access tokens can be [viewed and created here](https://gitlab.com/profile/personal_access_tokens)
   - These tokens require an expiration date. Once expired any existing installs using the token will no longer successfully pull updates from private repositories. Therefore, if a user has the updater-enabled addon installed but leverages an expired token, they will not be able to update.
