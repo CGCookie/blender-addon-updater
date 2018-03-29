@@ -286,6 +286,10 @@ updater.addon = "addon_name"
   - Type: String
   - Default: "", meaning the root repository folder
   - Notes: Not required if your `__init__.py` file is in the root level of the addon. Otherwise, use this setting to indicate where it is located so the updater knows which folder to take updated files from
+- **use_releases:** (GitHub only) Choose to pull updates from releases only instead of tags, and use release names instead of tag numbers in target-install dropdowns
+  - Type: Bool
+  - Default: False
+  - Notes: If true, any tags that are not "annotated" (ie have release notes or attachments) will be filtered out, as tags are not necessarily releases. Additional note: if set to false, cannot pull release notes for GitHub repository (whereas BitBucket and GitLab do have release notes available via tags). This means that if in the future in-line release notes are included in the UI, this setting will need to be set to True in order to show release logs (not yet implemented as of v1.0.5)
 
 *User preference defined (ie optional but good to expose to user)*
 

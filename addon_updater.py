@@ -70,7 +70,7 @@ class Singleton_updater(object):
 		self._tag_latest = None
 		self._tag_names = []
 		self._latest_release = None
-		self._include_releases = False
+		self._use_releases = False
 		self._include_branches = False
 		self._include_branch_list = ['master']
 		self._include_branch_autocheck = False
@@ -106,7 +106,8 @@ class Singleton_updater(object):
 		self._update_version = None
 		self._source_zip = None
 		self._check_thread = None
-		self._skip_tag = None
+		self.skip_tag = None
+		self.select_link = None
 
 		# get from module data
 		self._addon = __package__.lower()
@@ -185,14 +186,14 @@ class Singleton_updater(object):
 			raise ValueError("include_branches must be a boolean value")
 
 	@property
-	def include_releases(self):
-		return self._include_releases
-	@include_releases.setter
-	def include_releases(self, value):
+	def use_releases(self):
+		return self._use_releases
+	@use_releases.setter
+	def use_releases(self, value):
 		try:
-			self._include_releases = bool(value)
+			self._use_releases = bool(value)
 		except:
-			raise ValueError("include_releases must be a boolean value")
+			raise ValueError("use_releases must be a boolean value")
 
 	@property
 	def include_branch_list(self):
@@ -555,7 +556,7 @@ class Singleton_updater(object):
 			self._tags = all_tags
 
 		# get additional branches too, if needed, and place in front
-		# does NO checking here whether branch is valid
+		# Does NO checking here whether branch is valid
 		if self._include_branches == True:
 			temp_branches = self._include_branch_list.copy()
 			temp_branches.reverse()
@@ -564,7 +565,6 @@ class Singleton_updater(object):
 				include = {
 					"name":branch.title(),
 					"zipball_url":request
-					"browser_download_url":request
 				}
 				self._tags = [include] + self._tags  # append to front
 
@@ -1090,24 +1090,15 @@ class Singleton_updater(object):
 			self._update_link = None
 			return (False, None, None)
 		if self._include_branches == False:
-			if self._include_releases:
-				link = self._tags[0]["assets"][0]["browser_download_url"]
-			else:
-				link = self._tags[0]["zipball_url"]  # potentially other sources
+			link = self.select_link(self, self._tags[0])
 		else:
 			n = len(self._include_branch_list)
 			if len(self._tags)==n:
 				# effectively means no tags found on repo
 				# so provide the first one as default
-				if self._include_releases:
-					link = self._tags[0]["assets"][0]["browser_download_url"]
-				else:
-					link = self._tags[0]["zipball_url"]  # potentially other sources
+				link = self.select_link(self, self._tags[0])
 			else:
-				if self._include_releases:
-					link = self._tags[n]["assets"][0]["browser_download_url"]
-				else:
-					link = self._tags[n]["zipball_url"]  # potentially other sources
+				link = self.select_link(self, self._tags[n])
 
 		if new_version == ():
 			self._update_ready = False
@@ -1168,11 +1159,7 @@ class Singleton_updater(object):
 			raise ValueError("Version tag not found: "+revert_tag)
 		new_version = self.version_tuple_from_text(self.tag_latest)
 		self._update_version = new_version
-		self._update_link = tg["zipball_url"]
-		if self._include_releases:
-			self._update_link = tg["browser_download_url"]
-		else:
-			self._update_link = tg["zipball_url"]
+		self._update_link = self.select_link(self, tg)
 
 
 	def run_update(self,force=False,revert_tag=None,clean=False,callback=None):
@@ -1440,7 +1427,7 @@ class GithubEngine(object):
 								"/",updater.repo)
 
 	def form_tags_url(self, updater):
-		if updater.include_releases:
+		if updater.use_releases:
 			return "{}{}".format(self.form_repo_url(updater),"/releases")
 		else:
 			return "{}{}".format(self.form_repo_url(updater),"/tags")
@@ -1449,13 +1436,8 @@ class GithubEngine(object):
 		return "{}{}".format(self.form_repo_url(updater),"/branches")
 
 	def form_branch_url(self, branch, updater):
-		if updater.include_releases:
-			return "{}{}{}".format(self.form_repo_url(updater),
-								"/releases/download/",branch)
-		else:
-			return "{}{}{}".format(self.form_repo_url(updater),
-								"/zipball/",branch)
-
+		return "{}{}{}".format(self.form_repo_url(updater),
+							"/zipball/",branch)
 
 	def parse_tags(self, response, updater):
 		if response == None:

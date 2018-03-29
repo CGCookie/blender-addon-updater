@@ -1005,6 +1005,34 @@ def skip_tag_function(self, tag):
 	# in all other cases, allow showing the tag for updating/reverting
 	return False
 
+# Only customize if trying to leverage "attachments" in *GitHub* releases
+# A way to select from one or multiple attached donwloadable files from the
+# server, instead of downloading the default release/tag source code
+# Note: this demo 
+def select_link_function(self, tag):
+	link = ""
+	
+	# -- Default, universal case (and is the only option for GitLab/Bitbucket)
+	link = tag["zipball_url"]
+
+	# -- Example: select the first (or only) asset instead source code --
+	#if "assets" in tag and "browser_download_url" in tag["assets"][0]:
+	#	link = tag["assets"][0]["browser_download_url"]
+
+	# -- Example: select asset based on OS, where multiple builds exist --
+	# # not tested/no error checking, modify to fit your own needs!
+	# # assume each release has three attached builds:
+	# #		release_windows.zip, release_OSX.zip, release_linux.zip
+	# # This also would logically not be used with "branches" enabled
+	# if platform.system() == "Darwin": # ie OSX
+	#	link = [asset for asset in tag["assets"] if 'OSX' in asset][0]
+	# elif platform.system() == "Windows":
+	#	link = [asset for asset in tag["assets"] if 'windows' in asset][0]
+	# elif platform.system() == "Linux":
+	#	link = [asset for asset in tag["assets"] if 'linux' in asset][0]
+
+	return link
+
 
 # -----------------------------------------------------------------------------
 # Register, should be run in the register module itself
@@ -1121,11 +1149,15 @@ def register(bl_info):
 	# the "install {branch}/older version" operator.
 	updater.include_branches = True
 
-	# This options allows the user to use releases instead of just tags for data,
-	# which enables pulling down release logs as well as specifying installs from 
-	# release-attached zips (isntead of just the auot-packaged code generated with
-	# a release/tag)
-	updater.include_releases = False
+	# (GitHub only) This options allows the user to use releases over tags for data,
+	# which enables pulling down release logs/notes, as well as specify installs from 
+	# release-attached zips (instead of just the auto-packaged code generated with
+	# a release/tag). Setting has no impact on BitBucket or GitLab repos
+	updater.use_releases = False
+	# note: Releases always have a tag, but a tag may not always be a release
+	# Therefore, setting True above will filter out any non-annoted tags
+	# note 2: Using this option will also display the release name instead of
+	# just the tag name, bear this in mind given the skip_tag_function filtering above
 
 	# if using "include_branches",
 	# updater.include_branch_list defaults to ['master'] branch if set to none
@@ -1163,7 +1195,11 @@ def register(bl_info):
 	# updater.version_max_update = (9,9,9)
 	updater.version_max_update = None  # if not wanting to define a max
 
+	# Function defined above, customize as appropriate per repository
 	updater.skip_tag = skip_tag_function # min and max used in this function
+
+	# Function defined above, customize as appropriate per repository; not required
+	updater.select_link = select_link_function
 
 	# The register line items for all operators/panels
 	# If using bpy.utils.register_module(__name__) to register elsewhere
