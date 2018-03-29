@@ -2,6 +2,9 @@
 
 With this Python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either GitHub tags or releases. 
 
+![alt](/images/demo_gif.gif)
+
+
 :warning: **Please [see this page on known issues](https://github.com/CGCookie/blender-addon-updater/issues?q=is%3Aissue+is%3Aopen+label%3A%22Known+Issue%22), including available workarounds**
 
 *Want to add this code to your addon? [See this tutorial here](http://theduckcow.com/2016/addon-updater-tutorial/)*
