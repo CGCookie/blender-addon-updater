@@ -68,6 +68,9 @@ Included in this repository is an example addon which is integrates the auto-upd
 5) To get the updater UI in the preferences draw panel and show all settings, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function.
   - Be sure to import the Operator File if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
 
+-  Alternatively, a more condensed version of the UI preferences code may be draw with the sample function `addon_updater_ops.update_settings_ui_condensed(self, context, col)` instead of the above function.
+-  Note that the `col` input is optional, but allows you to add this function into an existing structure of rows/columns. This condensed UI doesn't show settings for interval (just an auto-check toggle, will use default interval) nor does it provide the backup-restoring or target-install operations. 
+
 6) Add the needed blender properties to make the sample updater preferences UI work by copying over the blender properties from the sample demo addon's `DemoPreferences` class, located in the `__init__` file. Change the defaults as desired.
 
 ```
@@ -368,7 +371,11 @@ This is the code which acts as a bridge between the pure python addon_updater.py
 
 ![Alt](/images/updater_preferences.png)
 
-Most of the key settings for the user are available in the user preferences of the addon, including the ability to restore the addon, force check for an update now, and allowing the addon to check for an update in the background
+Most of the key settings for the user are available in the user preferences of the addon, including the ability to restore the addon, force check for an update now, and allowing the user to immediately check for an update (still runs in the background)
+
+![Alt](/images/condensed_ui.png)
+
+This is an alternate, more condensed preferences UI example which removes more granular options such as settings for the intervals between update checks, restoring from backups, and targeting versions to install
 
 ### Integrated panel UI
 

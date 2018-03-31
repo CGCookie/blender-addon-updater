@@ -806,8 +806,9 @@ def update_notice_box_ui(self, context):
 # Create a function that can be run inside user preferences panel for prefs UI
 # Place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
 # or by: addon_updater_ops.updaterSettingsUI(context)
-def update_settings_ui(self, context, element):
+def update_settings_ui(self, context, element=None):
 	# element is a UI element, such as layout, a row, column, or box
+	if element==None: element = self.layout
 	box = element.box()
 
 	# in case of error importing updater
@@ -962,8 +963,9 @@ def update_settings_ui(self, context, element):
 
 # Preferences - Condensed drawing within preferences
 # alternate draw for user preferences or other places, does not draw a box
-def update_settings_ui_condensed(self, context, element):
+def update_settings_ui_condensed(self, context, element=None):
 	# element is a UI element, such as layout, a row, column, or box
+	if element==None: element = self.layout
 	row = element.row()
 
 	# in case of error importing updater
