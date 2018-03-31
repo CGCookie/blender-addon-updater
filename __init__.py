@@ -117,9 +117,16 @@ class DemoPreferences(bpy.types.AddonPreferences):
 
 	def draw(self, context):
 		layout = self.layout
+		col = layout.column() # works best if a column, or even just self.layout
 
 		# updater draw function
-		addon_updater_ops.update_settings_ui(self, context)
+		addon_updater_ops.update_settings_ui(self, context, col)
+
+		# Alternate draw function, which is more condensed and can be 
+		# placed within an existing draw function. Only contains:
+		#   1) check for update/update now buttons
+		#   2) toggle for auto-check (interval will be as the developer sets above)
+		# addon_updater_ops.update_settings_ui_condensed(self, context, col)
 
 
 def register():
