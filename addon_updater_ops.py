@@ -604,7 +604,7 @@ def background_update_callback(update_ready):
 		return
 
 	if updater.showpopups == False:
-		return 
+		return
 
 	if update_ready != True:
 		return
@@ -783,16 +783,16 @@ def update_notice_box_ui(self, context):
 	col = box.column(align=True)
 	col.label("Update ready!",icon="ERROR")
 	col.separator()
-	row = col.row()
-	split = row.split()
+	row = col.row(align=True)
+	split = row.split(align=True)
 	colL = split.column(align=True)
-
-	colL.operator(addon_updater_ignore.bl_idname,icon="X")
+	colL.scale_y = 1.5
+	colL.operator(addon_updater_ignore.bl_idname,icon="X",text="Ignore")
 	colR = split.column(align=True)
-	col.separator()
+	colR.scale_y = 1.5
 	if updater.manual_only==False:
 		colR.operator(addon_updater_update_now.bl_idname,
-						"Update now", icon="LOOP_FORWARDS")
+						"Update", icon="LOOP_FORWARDS")
 		col.operator("wm.url_open", text="Open website").url = updater.website
 		#col.operator("wm.url_open",text="Direct download").url=updater.update_link
 		col.operator(addon_updater_install_manually.bl_idname, "Install manually")
@@ -1121,10 +1121,9 @@ def skip_tag_function(self, tag):
 # Only customize if trying to leverage "attachments" in *GitHub* releases
 # A way to select from one or multiple attached donwloadable files from the
 # server, instead of downloading the default release/tag source code
-# Note: this demo 
 def select_link_function(self, tag):
 	link = ""
-	
+
 	# -- Default, universal case (and is the only option for GitLab/Bitbucket)
 	link = tag["zipball_url"]
 
@@ -1185,12 +1184,12 @@ def register(bl_info):
 
 	# Website for manual addon download, optional but recommended to set
 	updater.website = "https://github.com/CGCookie/blender-addon-updater/"
-	
+
 	# Addon subfolder path
 	# "sample/path/to/addon"
 	# default is "" or None, meaning root
 	updater.subfolder_path = ""
-	
+
 	# used to check/compare versions
 	updater.current_version = bl_info["version"]
 
@@ -1221,8 +1220,8 @@ def register(bl_info):
 	# Patterns for files to actively overwrite if found in new update
 	# file and are also found in the currently installed addon. Note that
 
-	# by default (ie if set to []), updates are installed in the same way as blender: 
-	# .py files are replaced, but other file types (e.g. json, txt, blend) 
+	# by default (ie if set to []), updates are installed in the same way as blender:
+	# .py files are replaced, but other file types (e.g. json, txt, blend)
 	# will NOT be overwritten if already present in current install. Thus
 	# if you want to automatically update resources/non py files, add them
 	# as a part of the pattern list below so they will always be overwritten by an
@@ -1263,7 +1262,7 @@ def register(bl_info):
 	updater.include_branches = True
 
 	# (GitHub only) This options allows the user to use releases over tags for data,
-	# which enables pulling down release logs/notes, as well as specify installs from 
+	# which enables pulling down release logs/notes, as well as specify installs from
 	# release-attached zips (instead of just the auto-packaged code generated with
 	# a release/tag). Setting has no impact on BitBucket or GitLab repos
 	updater.use_releases = False
@@ -1292,9 +1291,9 @@ def register(bl_info):
 	# check for update in user preferences found a new version, show a popup
 	# (at most once per blender session, and it provides an option to ignore
 	# for future sessions); default behavior is set to True
-	updater.showpopups = True  
-	# note: if set to false, there will still be an "update ready" box drawn 
-	# using the `update_notice_box_ui` panel function. 
+	updater.showpopups = True
+	# note: if set to false, there will still be an "update ready" box drawn
+	# using the `update_notice_box_ui` panel function.
 
 	# Override with a custom function on what tags
 	# to skip showing for updater; see code for function above.

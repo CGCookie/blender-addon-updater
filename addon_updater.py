@@ -362,15 +362,15 @@ class Singleton_updater(object):
 	@property
 	def current_version(self):
 		return self._current_version
-	
+
 	@property
 	def subfolder_path(self):
 		return self._subfolder_path
-    
+
 	@subfolder_path.setter
 	def subfolder_path(self, value):
 		self._subfolder_path = value
-		
+
 	@property
 	def update_ready(self):
 		return self._update_ready
@@ -796,7 +796,7 @@ class Singleton_updater(object):
 			if len(dirlist)>0:
 				if self._subfolder_path == "" or self._subfolder_path == None:
 					unpath = os.path.join(unpath,dirlist[0])
-				else:	
+				else:
 					unpath = os.path.join(unpath,dirlist[0],self._subfolder_path)
 
 			# smarter check for additional sub folders for a single folder
@@ -1000,7 +1000,7 @@ class Singleton_updater(object):
 	# called for running check in a background thread
 	def check_for_update_async(self, callback=None):
 
-		if self._json != None and "update_ready" in self._json:
+		if self._json != None and "update_ready" in self._json and self._json["version_text"]!={}:
 			if self._json["update_ready"] == True:
 				self._update_ready = True
 				self._update_link = self._json["version_text"]["link"]
