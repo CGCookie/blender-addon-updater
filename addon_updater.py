@@ -721,13 +721,19 @@ class Singleton_updater(object):
 
 		if self._verbose: print("Backup destination path: ",local)
 
-		if os.path.isdir(local) == True:
+		if os.path.isdir(local):
 			try:
 				shutil.rmtree(local)
 			except:
 				if self._verbose:print("Failed to removed previous backup folder, contininuing")
 
-		# make the copy
+		# remove the temp folder; shouldn't exist but could if previously interrupted
+		if os.path.isdir(tempdest):
+			try:
+				shutil.rmtree(tempdest)
+			except:
+				if self._verbose:print("Failed to remove existing temp folder, contininuing")
+		# make the full addon copy, which temporarily places outside the addon folder
 		if self._backup_ignore_patterns != None:
 			shutil.copytree(
 				self._addon_root,tempdest,
