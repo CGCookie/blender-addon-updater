@@ -68,6 +68,9 @@ Included in this repository is an example addon which is integrates the auto-upd
 5) To get the updater UI in the preferences draw panel and show all settings, add the line `addon_updater_ops.update_settings_ui(self,context)` to the end of the preferences class draw function.
   - Be sure to import the Operator File if preferences are defined in a file other than the addon's `__init__.py` where already imported, e.g. via `from . import addon_updater_ops` like before
 
+-  Alternatively, a more condensed version of the UI preferences code may be draw with the sample function `addon_updater_ops.update_settings_ui_condensed(self, context, col)` instead of the above function.
+-  Note that the `col` input is optional, but allows you to add this function into an existing structure of rows/columns. This condensed UI doesn't show settings for interval (just an auto-check toggle, will use default interval) nor does it provide the backup-restoring or target-install operations. 
+
 6) Add the needed blender properties to make the sample updater preferences UI work by copying over the blender properties from the sample demo addon's `DemoPreferences` class, located in the `__init__` file. Change the defaults as desired.
 
 ```
@@ -368,7 +371,11 @@ This is the code which acts as a bridge between the pure python addon_updater.py
 
 ![Alt](/images/updater_preferences.png)
 
-Most of the key settings for the user are available in the user preferences of the addon, including the ability to restore the addon, force check for an update now, and allowing the addon to check for an update in the background
+Most of the key settings for the user are available in the user preferences of the addon, including the ability to restore the addon, force check for an update now, and allowing the user to immediately check for an update (still runs in the background)
+
+![Alt](/images/condensed_ui.png)
+
+This is an alternate, more condensed preferences UI example which removes more granular options such as settings for the intervals between update checks, restoring from backups, and targeting versions to install
 
 ### Integrated panel UI
 
@@ -426,7 +433,7 @@ Fair enough, in that case use the following settings - or just remove the lines 
 ```
 # only overwrite matching python files found in the update, files like .txt or .blend will not be overwritten even if newer versions are in the update
 updater.overwrite_patterns = ["*.py","*.pyc"] 
-# don't delete any files files preemptively
+# don't delete any files preemptively
 updater.remove_pre_update_patterns = [ ] 
 ```
 
@@ -449,14 +456,14 @@ updater.overwrite_patterns = [ ]
 updater.remove_pre_update_patterns = [ ] 
 ```
 
-This would sill add in *new* files present in the update not present in the local install. For this reason, this actually may be a valid setup if used in conjunction with clean_install set to True, which simulates a fresh install. When clean_install = True, these patterns are effectively rendered pointless, so it's still better to not define them in the way above.
+This would still add in *new* files present in the update not present in the local install. For this reason, this actually may be a valid setup if used in conjunction with clean_install set to True, which simulates a fresh install. When clean_install = True, these patterns are effectively rendered pointless, so it's still better to not define them in the way above.
 
 
 **Addon contains only py files, no resources (e.g. json files, images, blends), and against better judgment, not even licenses or readme files**
 
 In this example, we only need to worry about replacing the python files with the new python files. By default, this demo addon is configured so that new py files and pyc files will overwrite old files with matching paths/names in the local install. This is accomplished by setting `updater.overwrite_patterns = ["*.py","*.pyc"]` in the operator file. You could also be more explicit and specify all files which may be overwritten via `updater.overwrite_patterns = ["__init__.py", "module.py", "*.pyc"]` for example (noting the "*.pyc" is still there to ensure all caches are flushed).
 
-Note that if in the future, a file is renamed e.g. from module.py to new_module.py, when the update runs (and assuming remove_pre_update_patterns has been left to it's empty list default), then the updater will copy in the new_module.py into the local install, while also leaving the previous version's module.py in place. The result will have both the module.py and new_module.py file in place.
+Note that if in the future, a file is renamed e.g. from module.py to new_module.py, when the update runs (and assuming `remove_pre_update_patterns` has been left to it's empty list default), then the updater will copy in the new_module.py into the local install, while also leaving the previous version's module.py in place. The result will have both the module.py and new_module.py file in place.
 
 If you wanted to future proof your updater to ensure no old python files are left around due to a changes in structure or filenames, it would be safe to instead set `updater.remove_pre_update_patterns = ["*.py","*.pyc"]` meaning all python files and cached files will always be removed prior to updating. After the update completes, the only python files that will be present are those that came directly from the update itself.
 
@@ -482,7 +489,7 @@ The "*.blend" will result in any blend file being overwritten if matching locall
 updater.remove_pre_update_patterns = ["*.py","*.pyc"]
 ```
 
-The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the overwrite_patterns, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, json etc will all be left alone. With the exception of blend files (as per overwrite_patterns above), they also won't be overwritten - even if there are updates.
+The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the `overwrite_patterns`, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, json etc will all be left alone. With the exception of blend files (as per `overwrite_patterns` above), they also won't be overwritten - even if there are updates.
 
 **Addon contains py files, resource files, and user/local configuration files**
 
@@ -511,16 +518,16 @@ updater.remove_pre_update_patterns = ["*.py","*.pyc", "default.blend"]
 
 Breaking this down, we always specify to overwrite the README and custom_icon.png files explicitly. No need to remove either in pre update since we expect they will be found in the update, and the overwrite patterns ensures they always get overwritten and only those files. 
 
-Then, we specify to delete all python files before running the update, to ensure the only python files are part of the latest release. We also force delete the an files matching the name default.blend. If this was added as an overwrite pattern instead and the default.blend file name were ever renamed in the master repository, the updater would not end up removing this extra asset. And so we delete it directly, and presume the update will contain the appropriately named and updated blend file. 
+Then, we specify to delete all python files before running the update, to ensure the only python files are part of the latest release. We also force delete the file matching the name *default.blend.* If this was added as an overwrite pattern instead and the default.blend file name were ever renamed in the master repository, the updater would not end up removing this extra asset. And so we delete it directly, and presume the update will contain the appropriately named and updated blend file. 
 
 Just as importantly, note how the customizable.blend is not mentioned in either line. This means that there are no rules which would allow for this file to be overwritten or removed. This is desired since the user could have modified this file per their own needs, and we don't want to reset it. If the file was manually removed by the user or otherwise not present in a previous version of the addon, the update would still copy it over as found in the master repository. 
 
 
 **In conclusion**
 
-If you are planning to modify the overwrite_patterns or remove_pre_update_patterns settings, be sure to plan and test it works as you expect. It's important to have "*.py" in at least one of them, or alternatively individually name all python file basenames in either of the two settings.
+If you are planning to modify the `overwrite_patterns` or `remove_pre_update_patterns` settings, be sure to plan and test it works as you expect. It's important to have "*.py" in at least one of them, or alternatively individually name all python file basenames in either of the two settings.
 
-It is redundant to have the same rule in both settings, behavior of the remove_pre_update_patterns will supersede the more passive overwriting permission rules of overwrite_patterns
+It is redundant to have the same rule in both settings, behavior of the `remove_pre_update_patterns` will supersede the more passive overwriting permission rules of `overwrite_patterns`
 
 The pattern matching is done on an "or" basis, meaning in the set ["*.py", "module.py"], the second list item is redundant as the "*.py" already 
 

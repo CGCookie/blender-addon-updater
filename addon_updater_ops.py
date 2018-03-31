@@ -750,9 +750,7 @@ def showReloadPopup():
 # -----------------------------------------------------------------------------
 
 
-
-# ----------------------
-# A) Panel Update Available panel
+# Panel - Update Available for placement at end/beginning of panel
 # After a check for update has occurred, this function will draw a box
 # saying an update is ready, and give a button for: update now, open website,
 # or ignore popup. Ideal to be placed at the end / beginning of a panel
@@ -804,14 +802,14 @@ def update_notice_box_ui(self, context):
 				updater.website
 
 
-
-# create a function that can be run inside user preferences panel for prefs UI
+# Preferences - for drawing with full width inside user preferences
+# Create a function that can be run inside user preferences panel for prefs UI
 # Place inside UI draw using: addon_updater_ops.updaterSettingsUI(self, context)
 # or by: addon_updater_ops.updaterSettingsUI(context)
-def update_settings_ui(self, context):
-
-	layout = self.layout
-	box = layout.box()
+def update_settings_ui(self, context, element=None):
+	# element is a UI element, such as layout, a row, column, or box
+	if element==None: element = self.layout
+	box = element.box()
 
 	# in case of error importing updater
 	if updater.invalidupdater == True:
@@ -849,7 +847,6 @@ def update_settings_ui(self, context):
 	checkcol.prop(settings,"updater_intrval_hours")
 	checkcol = subrow.column(align=True)
 	checkcol.prop(settings,"updater_intrval_minutes")
-
 
 	# checking / managing updates
 	row = box.row()
@@ -961,7 +958,123 @@ def update_settings_ui(self, context):
 		lastcheck = lastcheck[0: lastcheck.index(".") ]
 		row.label("Last update check: " + lastcheck)
 	else:
-		row.label("Last update check: None")
+		row.label("Last update check: Never")
+
+
+# Preferences - Condensed drawing within preferences
+# alternate draw for user preferences or other places, does not draw a box
+def update_settings_ui_condensed(self, context, element=None):
+	# element is a UI element, such as layout, a row, column, or box
+	if element==None: element = self.layout
+	row = element.row()
+
+	# in case of error importing updater
+	if updater.invalidupdater == True:
+		row.label("Error initializing updater code:")
+		row.label(updater.error_msg)
+		return
+
+	settings = context.user_preferences.addons[__package__].preferences
+
+	# special case to tell user to restart blender, if set that way
+	if updater.auto_reload_post_update == False:
+		saved_state = updater.json
+		if "just_updated" in saved_state and saved_state["just_updated"] == True:
+			row.label("Restart blender to complete update", icon="ERROR")
+			return
+
+	col = row.column()
+	if updater.error != None:
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		if "ssl" in updater.error_msg.lower():
+			split.enabled = True
+			split.operator(addon_updater_install_manually.bl_idname,
+						updater.error)
+		else:
+			split.enabled = False
+			split.operator(addon_updater_check_now.bl_idname,
+						updater.error)
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						text = "", icon="FILE_REFRESH")
+
+	elif updater.update_ready == None and updater.async_checking == False:
+		col.scale_y = 2
+		col.operator(addon_updater_check_now.bl_idname)
+	elif updater.update_ready == None: # async is running
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.enabled = False
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						"Checking...")
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_end_background.bl_idname,
+						text = "", icon="X")
+
+	elif updater.include_branches==True and \
+			len(updater.tags)==len(updater.include_branch_list) and \
+			updater.manual_only==False:
+		# no releases found, but still show the appropriate branch
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_update_now.bl_idname,
+					"Update directly to "+str(updater.include_branch_list[0]))
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						text = "", icon="FILE_REFRESH")
+
+	elif updater.update_ready==True and updater.manual_only==False:
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_update_now.bl_idname,
+					"Update now to "+str(updater.update_version))
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						text = "", icon="FILE_REFRESH")
+
+	elif updater.update_ready==True and updater.manual_only==True:
+		col.scale_y = 2
+		col.operator("wm.url_open",
+				"Download "+str(updater.update_version)).url=updater.website
+	else: # i.e. that updater.update_ready == False
+		subcol = col.row(align=True)
+		subcol.scale_y = 1
+		split = subcol.split(align=True)
+		split.enabled = False
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						"Addon is up to date")
+		split = subcol.split(align=True)
+		split.scale_y = 2
+		split.operator(addon_updater_check_now.bl_idname,
+						text = "", icon="FILE_REFRESH")
+
+	row = element.row()
+	row.prop(settings, "auto_check_update")
+
+	row = element.row()
+	row.scale_y = 0.7
+	lastcheck = updater.json["last_check"]
+	if updater.error != None and updater.error_msg != None:
+		row.label(updater.error_msg)
+	elif lastcheck != "" and lastcheck != None:
+		lastcheck = lastcheck[0: lastcheck.index(".") ]
+		row.label("Last check: " + lastcheck)
+	else:
+		row.label("Last check: Never")
 
 
 # a global function for tag skipping
