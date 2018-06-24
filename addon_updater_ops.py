@@ -1154,8 +1154,8 @@ def select_link_function(self, tag):
 def register(bl_info):
 
 	# safer failure in case of issue loading module
-	if updater.error != None:
-		print("Exiting updater registration, error return")
+	if updater.error:
+		print("Exiting updater registration, " + updater.error)
 		return
 	updater.clear_state() # clear internal vars, avoids reloading oddities
 
