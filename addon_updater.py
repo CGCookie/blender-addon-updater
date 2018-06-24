@@ -106,8 +106,8 @@ class Singleton_updater(object):
 		self._update_version = None
 		self._source_zip = None
 		self._check_thread = None
+		self._select_link = None
 		self.skip_tag = None
-		self.select_link = None
 
 		# get from module data
 		self._addon = __package__.lower()
@@ -127,34 +127,17 @@ class Singleton_updater(object):
 		self.showpopups = True # used in UI to show or not show update popups
 		self.invalidupdater = False
 
+		# pre-assign basic select-link function
+		def select_link_function(self, tag):
+			return tag["zipball_url"]
+
+		self._select_link = select_link_function
+
 
 	# -------------------------------------------------------------------------
 	# Getters and setters
 	# -------------------------------------------------------------------------
 
-	@property
-	def engine(self):
-		return self._engine.name
-	@engine.setter
-	def engine(self, value):
-		if value.lower()=="github":
-			self._engine = GithubEngine()
-		elif value.lower()=="gitlab":
-			self._engine = GitlabEngine()
-		elif value.lower()=="bitbucket":
-			self._engine = BitbucketEngine()
-		else:
-			raise ValueError("Invalid engine selection")
-
-	@property
-	def private_token(self):
-		return self._engine.token
-	@private_token.setter
-	def private_token(self, value):
-		if value==None:
-			self._engine.token = None
-		else:
-			self._engine.token = str(value)
 
 	@property
 	def addon(self):
@@ -162,156 +145,6 @@ class Singleton_updater(object):
 	@addon.setter
 	def addon(self, value):
 		self._addon = str(value)
-
-	@property
-	def verbose(self):
-		return self._verbose
-	@verbose.setter
-	def verbose(self, value):
-		try:
-			self._verbose = bool(value)
-			if self._verbose == True:
-				print(self._addon+" updater verbose is enabled")
-		except:
-			raise ValueError("Verbose must be a boolean value")
-
-	@property
-	def include_branches(self):
-		return self._include_branches
-	@include_branches.setter
-	def include_branches(self, value):
-		try:
-			self._include_branches = bool(value)
-		except:
-			raise ValueError("include_branches must be a boolean value")
-
-	@property
-	def use_releases(self):
-		return self._use_releases
-	@use_releases.setter
-	def use_releases(self, value):
-		try:
-			self._use_releases = bool(value)
-		except:
-			raise ValueError("use_releases must be a boolean value")
-
-	@property
-	def include_branch_list(self):
-		return self._include_branch_list
-	@include_branch_list.setter
-	def include_branch_list(self, value):
-		try:
-			if value == None:
-				self._include_branch_list = ['master']
-			elif type(value) != type(['master']) or value==[]:
-				raise ValueError("include_branch_list should be a list of valid branches")
-			else:
-				self._include_branch_list = value
-		except:
-			raise ValueError("include_branch_list should be a list of valid branches")
-
-	@property
-	def overwrite_patterns(self):
-		return self._overwrite_patterns
-	@overwrite_patterns.setter
-	def overwrite_patterns(self, value):
-		if value == None:
-			self._overwrite_patterns = ["*.py","*.pyc"]
-		elif type(value) != type(['']):
-			raise ValueError("overwrite_patterns needs to be in a list format")
-		else:
-			self._overwrite_patterns = value
-
-	@property
-	def remove_pre_update_patterns(self):
-		return self._remove_pre_update_patterns
-	@remove_pre_update_patterns.setter
-	def remove_pre_update_patterns(self, value):
-		if value == None:
-			self._remove_pre_update_patterns = []
-		elif type(value) != type(['']):
-			raise ValueError("remove_pre_update_patterns needs to be in a list format")
-		else:
-			self._remove_pre_update_patterns = value
-
-	# not currently used
-	@property
-	def include_branch_autocheck(self):
-		return self._include_branch_autocheck
-	@include_branch_autocheck.setter
-	def include_branch_autocheck(self, value):
-		try:
-			self._include_branch_autocheck = bool(value)
-		except:
-			raise ValueError("include_branch_autocheck must be a boolean value")
-
-	@property
-	def manual_only(self):
-		return self._manual_only
-	@manual_only.setter
-	def manual_only(self, value):
-		try:
-			self._manual_only = bool(value)
-		except:
-			raise ValueError("manual_only must be a boolean value")
-
-	@property
-	def auto_reload_post_update(self):
-		return self._auto_reload_post_update
-	@auto_reload_post_update.setter
-	def auto_reload_post_update(self, value):
-		try:
-			self._auto_reload_post_update = bool(value)
-		except:
-			raise ValueError("Must be a boolean value")
-
-	@property
-	def fake_install(self):
-		return self._fake_install
-	@fake_install.setter
-	def fake_install(self, value):
-		if type(value) != type(False):
-			raise ValueError("fake_install must be a boolean value")
-		self._fake_install = bool(value)
-
-	@property
-	def user(self):
-		return self._user
-	@user.setter
-	def user(self, value):
-		try:
-			self._user = str(value)
-		except:
-			raise ValueError("User must be a string value")
-
-	@property
-	def json(self):
-		if self._json == {}:
-			self.set_updater_json()
-		return self._json
-
-	@property
-	def repo(self):
-		return self._repo
-	@repo.setter
-	def repo(self, value):
-		try:
-			self._repo = str(value)
-		except:
-			raise ValueError("User must be a string")
-
-	@property
-	def website(self):
-		return self._website
-	@website.setter
-	def website(self, value):
-		if self.check_is_url(value) == False:
-			raise ValueError("Not a valid URL: " + value)
-		self._website = value
-
-	@property
-	def async_checking(self):
-		return self._async_checking
 
 	@property
 	def api_url(self):
@@ -323,151 +156,18 @@ class Singleton_updater(object):
 		self._engine.api_url = value
 
 	@property
-	def stage_path(self):
-		return self._updater_path
-	@stage_path.setter
-	def stage_path(self, value):
-		if value == None:
-			if self._verbose: print("Aborting assigning stage_path, it's null")
-			return
-		elif value != None and not os.path.exists(value):
-			try:
-				os.makedirs(value)
-			except:
-				if self._verbose: print("Error trying to staging path")
-				return
-		self._updater_path = value
+	def async_checking(self):
+		return self._async_checking
 
 	@property
-	def tags(self):
-		if self._tags == []:
-			return []
-		tag_names = []
-		for tag in self._tags:
-			tag_names.append(tag["name"])
-		return tag_names
-
-	@property
-	def tag_latest(self):
-		if self._tag_latest == None:
-			return None
-		return self._tag_latest["name"]
-
-	@property
-	def latest_release(self):
-		if self._releases_latest == None:
-			return None
-		return self._latest_release
-
-	@property
-	def current_version(self):
-		return self._current_version
-
-	@property
-	def subfolder_path(self):
-		return self._subfolder_path
-
-	@subfolder_path.setter
-	def subfolder_path(self, value):
-		self._subfolder_path = value
-
-	@property
-	def update_ready(self):
-		return self._update_ready
-
-	@property
-	def update_version(self):
-		return self._update_version
-
-	@property
-	def update_link(self):
-		return self._update_link
-
-	@current_version.setter
-	def current_version(self, tuple_values):
-		if tuple_values==None:
-			self._current_version = None
-			return
-		elif type(tuple_values) is not tuple:
-			try:
-				tuple(tuple_values)
-			except:
-				raise ValueError(
-				"Not a tuple! current_version must be a tuple of integers")
-		for i in tuple_values:
-			if type(i) is not int:
-				raise ValueError(
-				"Not an integer! current_version must be a tuple of integers")
-		self._current_version = tuple(tuple_values)
-
-	def set_check_interval(self,enable=False,months=0,days=14,hours=0,minutes=0):
-		# enabled = False, default initially will not check against frequency
-		# if enabled, default is then 2 weeks
-
-		if type(enable) is not bool:
-			raise ValueError("Enable must be a boolean value")
-		if type(months) is not int:
-			raise ValueError("Months must be an integer value")
-		if type(days) is not int:
-			raise ValueError("Days must be an integer value")
-		if type(hours) is not int:
-			raise ValueError("Hours must be an integer value")
-		if type(minutes) is not int:
-			raise ValueError("Minutes must be an integer value")
-
-		if enable==False:
-			self._check_interval_enable = False
-		else:
-			self._check_interval_enable = True
-
-		self._check_interval_months = months
-		self._check_interval_days = days
-		self._check_interval_hours = hours
-		self._check_interval_minutes = minutes
-
-	@property
-	def check_interval(self):
-		return (self._check_interval_enable,
-				self._check_interval_months,
-				self._check_interval_days,
-				self._check_interval_hours,
-				self._check_interval_minutes)
-
-	@property
-	def error(self):
-		return self._error
-
-	@property
-	def error_msg(self):
-		return self._error_msg
-
-	@property
-	def version_min_update(self):
-		return self._version_min_update
-	@version_min_update.setter
-	def version_min_update(self, value):
-		if value == None:
-			self._version_min_update = None
-			return
-		if type(value) != type((1,2,3)):
-			raise ValueError("Version minimum must be a tuple")
-		else:
-			# potentially check entries are integers
-			self._version_min_update = value
-
-	@property
-	def version_max_update(self):
-		return self._version_max_update
-	@version_max_update.setter
-	def version_max_update(self, value):
-		if value == None:
-			self._version_max_update = None
-			return
-		if type(value) != type((1,2,3)):
-			raise ValueError("Version maximum must be a tuple")
-		else:
-			# potentially check entries are integers
-			self._version_max_update = value
+	def auto_reload_post_update(self):
+		return self._auto_reload_post_update
+	@auto_reload_post_update.setter
+	def auto_reload_post_update(self, value):
+		try:
+			self._auto_reload_post_update = bool(value)
+		except:
+			raise ValueError("Must be a boolean value")
 
 	@property
 	def backup_current(self):
@@ -493,6 +193,300 @@ class Singleton_updater(object):
 		else:
 			self._backup_ignore_patterns = value
 
+	@property
+	def check_interval(self):
+		return (self._check_interval_enable,
+				self._check_interval_months,
+				self._check_interval_days,
+				self._check_interval_hours,
+				self._check_interval_minutes)
+
+	@property
+	def current_version(self):
+		return self._current_version
+	@current_version.setter
+	def current_version(self, tuple_values):
+		if tuple_values==None:
+			self._current_version = None
+			return
+		elif type(tuple_values) is not tuple:
+			try:
+				tuple(tuple_values)
+			except:
+				raise ValueError(
+				"Not a tuple! current_version must be a tuple of integers")
+		for i in tuple_values:
+			if type(i) is not int:
+				raise ValueError(
+				"Not an integer! current_version must be a tuple of integers")
+		self._current_version = tuple(tuple_values)
+
+	@property
+	def engine(self):
+		return self._engine.name
+	@engine.setter
+	def engine(self, value):
+		if value.lower()=="github":
+			self._engine = GithubEngine()
+		elif value.lower()=="gitlab":
+			self._engine = GitlabEngine()
+		elif value.lower()=="bitbucket":
+			self._engine = BitbucketEngine()
+		else:
+			raise ValueError("Invalid engine selection")
+
+	@property
+	def error(self):
+		return self._error
+
+	@property
+	def error_msg(self):
+		return self._error_msg
+
+	@property
+	def fake_install(self):
+		return self._fake_install
+	@fake_install.setter
+	def fake_install(self, value):
+		if type(value) != type(False):
+			raise ValueError("fake_install must be a boolean value")
+		self._fake_install = bool(value)
+
+	# not currently used
+	@property
+	def include_branch_autocheck(self):
+		return self._include_branch_autocheck
+	@include_branch_autocheck.setter
+	def include_branch_autocheck(self, value):
+		try:
+			self._include_branch_autocheck = bool(value)
+		except:
+			raise ValueError("include_branch_autocheck must be a boolean value")
+
+	@property
+	def include_branch_list(self):
+		return self._include_branch_list
+	@include_branch_list.setter
+	def include_branch_list(self, value):
+		try:
+			if value == None:
+				self._include_branch_list = ['master']
+			elif type(value) != type(['master']) or value==[]:
+				raise ValueError("include_branch_list should be a list of valid branches")
+			else:
+				self._include_branch_list = value
+		except:
+			raise ValueError("include_branch_list should be a list of valid branches")
+
+	@property
+	def include_branches(self):
+		return self._include_branches
+	@include_branches.setter
+	def include_branches(self, value):
+		try:
+			self._include_branches = bool(value)
+		except:
+			raise ValueError("include_branches must be a boolean value")
+
+	@property
+	def json(self):
+		if self._json == {}:
+			self.set_updater_json()
+		return self._json
+
+	@property
+	def latest_release(self):
+		if self._releases_latest == None:
+			return None
+		return self._latest_release
+
+	@property
+	def manual_only(self):
+		return self._manual_only
+	@manual_only.setter
+	def manual_only(self, value):
+		try:
+			self._manual_only = bool(value)
+		except:
+			raise ValueError("manual_only must be a boolean value")
+
+	@property
+	def overwrite_patterns(self):
+		return self._overwrite_patterns
+	@overwrite_patterns.setter
+	def overwrite_patterns(self, value):
+		if value == None:
+			self._overwrite_patterns = ["*.py","*.pyc"]
+		elif type(value) != type(['']):
+			raise ValueError("overwrite_patterns needs to be in a list format")
+		else:
+			self._overwrite_patterns = value
+
+	@property
+	def private_token(self):
+		return self._engine.token
+	@private_token.setter
+	def private_token(self, value):
+		if value==None:
+			self._engine.token = None
+		else:
+			self._engine.token = str(value)
+
+	@property
+	def remove_pre_update_patterns(self):
+		return self._remove_pre_update_patterns
+	@remove_pre_update_patterns.setter
+	def remove_pre_update_patterns(self, value):
+		if value == None:
+			self._remove_pre_update_patterns = []
+		elif type(value) != type(['']):
+			raise ValueError("remove_pre_update_patterns needs to be in a list format")
+		else:
+			self._remove_pre_update_patterns = value
+
+	@property
+	def repo(self):
+		return self._repo
+	@repo.setter
+	def repo(self, value):
+		try:
+			self._repo = str(value)
+		except:
+			raise ValueError("User must be a string")
+
+	@property
+	def select_link(self):
+		return self._select_link
+	@select_link.setter
+	def select_link(self, value):
+		# ensure it is a function assignment, with signature:
+		# input self, tag; returns link name
+		if not hasattr(value, "__call__"):
+			raise ValueError("select_link must be a function")
+		self._select_link = value
+
+	@property
+	def stage_path(self):
+		return self._updater_path
+	@stage_path.setter
+	def stage_path(self, value):
+		if value == None:
+			if self._verbose: print("Aborting assigning stage_path, it's null")
+			return
+		elif value != None and not os.path.exists(value):
+			try:
+				os.makedirs(value)
+			except:
+				if self._verbose: print("Error trying to staging path")
+				return
+		self._updater_path = value
+
+	@property
+	def subfolder_path(self):
+		return self._subfolder_path
+	@subfolder_path.setter
+	def subfolder_path(self, value):
+		self._subfolder_path = value
+
+	@property
+	def tags(self):
+		if self._tags == []:
+			return []
+		tag_names = []
+		for tag in self._tags:
+			tag_names.append(tag["name"])
+		return tag_names
+
+	@property
+	def tag_latest(self):
+		if self._tag_latest == None:
+			return None
+		return self._tag_latest["name"]
+
+	@property
+	def update_link(self):
+		return self._update_link
+
+	@property
+	def update_ready(self):
+		return self._update_ready
+
+	@property
+	def update_version(self):
+		return self._update_version
+
+	@property
+	def use_releases(self):
+		return self._use_releases
+	@use_releases.setter
+	def use_releases(self, value):
+		try:
+			self._use_releases = bool(value)
+		except:
+			raise ValueError("use_releases must be a boolean value")
+
+	@property
+	def user(self):
+		return self._user
+	@user.setter
+	def user(self, value):
+		try:
+			self._user = str(value)
+		except:
+			raise ValueError("User must be a string value")
+
+	@property
+	def verbose(self):
+		return self._verbose
+	@verbose.setter
+	def verbose(self, value):
+		try:
+			self._verbose = bool(value)
+			if self._verbose == True:
+				print(self._addon+" updater verbose is enabled")
+		except:
+			raise ValueError("Verbose must be a boolean value")
+
+	@property
+	def version_max_update(self):
+		return self._version_max_update
+	@version_max_update.setter
+	def version_max_update(self, value):
+		if value == None:
+			self._version_max_update = None
+			return
+		if type(value) != type((1,2,3)):
+			raise ValueError("Version maximum must be a tuple")
+		for subvalue in value:
+			if type(subvalue) != int:
+				raise ValueError("Version elements must be integers")
+		self._version_max_update = value
+
+	@property
+	def version_min_update(self):
+		return self._version_min_update
+	@version_min_update.setter
+	def version_min_update(self, value):
+		if value == None:
+			self._version_min_update = None
+			return
+		if type(value) != type((1,2,3)):
+			raise ValueError("Version minimum must be a tuple")
+		for subvalue in value:
+			if type(subvalue) != int:
+				raise ValueError("Version elements must be integers")
+		self._version_min_update = value
+
+	@property
+	def website(self):
+		return self._website
+	@website.setter
+	def website(self, value):
+		if self.check_is_url(value) == False:
+			raise ValueError("Not a valid URL: " + value)
+		self._website = value
+
+
 	# -------------------------------------------------------------------------
 	# Parameter validation related functions
 	# -------------------------------------------------------------------------
@@ -512,6 +506,30 @@ class Singleton_updater(object):
 			tag_names.append(tag["name"])
 		return tag_names
 
+	def set_check_interval(self,enable=False,months=0,days=14,hours=0,minutes=0):
+		# enabled = False, default initially will not check against frequency
+		# if enabled, default is then 2 weeks
+
+		if type(enable) is not bool:
+			raise ValueError("Enable must be a boolean value")
+		if type(months) is not int:
+			raise ValueError("Months must be an integer value")
+		if type(days) is not int:
+			raise ValueError("Days must be an integer value")
+		if type(hours) is not int:
+			raise ValueError("Hours must be an integer value")
+		if type(minutes) is not int:
+			raise ValueError("Minutes must be an integer value")
+
+		if enable==False:
+			self._check_interval_enable = False
+		else:
+			self._check_interval_enable = True
+
+		self._check_interval_months = months
+		self._check_interval_days = days
+		self._check_interval_hours = hours
+		self._check_interval_minutes = minutes
 
 	# declare how the class gets printed
 
@@ -1459,7 +1477,7 @@ class GitlabEngine(object):
 		self.name = "gitlab"
 
 	def form_repo_url(self, updater):
-		return "{}{}{}".format(self.api_url,"/api/v3/projects/",updater.repo)
+		return "{}{}{}".format(self.api_url,"/api/v4/projects/",updater.repo)
 
 	def form_tags_url(self, updater):
 		return "{}{}".format(self.form_repo_url(updater),"/repository/tags")
