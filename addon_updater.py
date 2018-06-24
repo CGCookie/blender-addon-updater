@@ -1459,7 +1459,7 @@ class GitlabEngine(object):
 		self.name = "gitlab"
 
 	def form_repo_url(self, updater):
-		return "{}{}{}".format(self.api_url,"/api/v3/projects/",updater.repo)
+		return "{}{}{}".format(self.api_url,"/api/v4/projects/",updater.repo)
 
 	def form_tags_url(self, updater):
 		return "{}{}".format(self.form_repo_url(updater),"/repository/tags")
