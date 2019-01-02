@@ -146,16 +146,19 @@ class addon_updater_install_popup(bpy.types.Operator):
 							clean=self.clean_install)
 			# should return 0, if not something happened
 			if updater.verbose:
-				if res==0: print("Updater returned successful")
-				else: print("Updater returned "+str(res)+", error occurred")
+				if res==0:
+					print("Updater returned successful")
+				else:
+					print("Updater returned {}, error occurred".format(res))
 		elif updater.update_ready == None:
-			(update_ready, version, link) = updater.check_for_update(now=True)
+			_ = updater.check_for_update(now=True)
 
 			# re-launch this dialog
 			atr = addon_updater_install_popup.bl_idname.split(".")
 			getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 		else:
-			if updater.verbose:print("Doing nothing, not ready for update")
+			if updater.verbose:
+				print("Doing nothing, not ready for update")
 		return {'FINISHED'}
 
 
@@ -320,9 +323,12 @@ class addon_updater_update_target(bpy.types.Operator):
 						clean=self.clean_install)
 
 		# should return 0, if not something happened
-		if updater.verbose:
-			if res==0: print("Updater returned successful")
-			else: print("Updater returned "+str(res)+", error occurred")
+		if res==0:
+			if updater.verbose:
+				print("Updater returned successful")
+		else:
+			if updater.verbose:
+				print("Updater returned "+str(res)+", error occurred")
 			return {'CANCELLED'}
 
 		return {'FINISHED'}
@@ -700,7 +706,13 @@ def check_for_update_nonthreaded(self, context):
 	# only check if it's ready, ie after the time interval specified
 	# should be the async wrapper call here
 
-	settings = context.user_preferences.addons[__package__].preferences
+	addon_prefs = bpy.context.user_preferences.addons.get(__package__, None)
+	if not addon_prefs:
+		if updater.verbose:
+			print("Could not get {} preferences, update check skipped".format(
+				__package__))
+		return
+	settings = addon_prefs.preferences
 	updater.set_check_interval(enable=settings.auto_check_update,
 				months=settings.updater_intrval_months,
 				days=settings.updater_intrval_days,
@@ -1302,7 +1314,7 @@ def register(bl_info):
 
 	# max install (<) will install strictly anything lower
 	# updater.version_max_update = (9,9,9)
-	updater.version_max_update = None  # if not wanting to define a max
+	updater.version_max_update = (1,1,0)  # set to None if not wanting to set max
 
 	# Function defined above, customize as appropriate per repository
 	updater.skip_tag = skip_tag_function # min and max used in this function
