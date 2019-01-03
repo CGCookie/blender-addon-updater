@@ -21,7 +21,7 @@ bl_info = {
 	"description": "Demo addon for showcasing the blender-addon-updater module",
 	"author":      "Patrick W. Crawford",
 	"version":     (1, 0, 6),
-	"blender":     (2, 7, 8),
+	"blender":     (2, 80, 0),
 	"location":    "View 3D > Tool Shelf > Demo Updater",
 	"warning":     "",  # used for warning icon and text in addons panel
 	"wiki_url":    "https://github.com/CGCookie/blender-addon-updater",
@@ -41,7 +41,7 @@ class DemoUpdaterPanel(bpy.types.Panel):
 	bl_label = "Updater Demo Panel"
 	bl_idname = "OBJECT_PT_hello"
 	bl_space_type = 'VIEW_3D'
-	bl_region_type = 'TOOLS'
+	bl_region_type = 'TOOLS' if bpy.app.version < (2, 80) else 'UI'
 	bl_context = "objectmode"
 	bl_category = "Tools"
 
@@ -57,26 +57,27 @@ class DemoUpdaterPanel(bpy.types.Panel):
 		addon_updater_ops.check_for_update_background()
 
 
-		layout.label("Demo Updater Addon")
-		layout.label("")
+		layout.label(text="Demo Updater Addon")
+		layout.label(text="")
 
 		col = layout.column()
 		col.scale_y = 0.7
-		col.label("If an update is ready,")
-		col.label("popup triggered by opening")
-		col.label("this panel, plus a box ui")
+		col.label(text="If an update is ready,")
+		col.label(text="popup triggered by opening")
+		col.label(text="this panel, plus a box ui")
 
 		# could also use your own custom drawing
 		# based on shared variables
 		if addon_updater_ops.updater.update_ready == True:
-			layout.label("Custom update message", icon="INFO")
-		layout.label("")
+			layout.label(text="Custom update message", icon="INFO")
+		layout.label(text="")
 
 		# call built-in function with draw code/checks
 		addon_updater_ops.update_notice_box_ui(self, context)
 
 
 # demo bare-bones preferences
+@addon_updater_ops.make_annotations
 class DemoPreferences(bpy.types.AddonPreferences):
 	bl_idname = __package__
 
