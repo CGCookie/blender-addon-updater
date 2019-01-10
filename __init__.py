@@ -21,7 +21,7 @@ bl_info = {
 	"description": "Demo addon for showcasing the blender-addon-updater module",
 	"author":      "Patrick W. Crawford",
 	"version":     (1, 0, 6),
-	"blender":     (2, 7, 8),
+	"blender":     (2, 80, 0),
 	"location":    "View 3D > Tool Shelf > Demo Updater",
 	"warning":     "",  # used for warning icon and text in addons panel
 	"wiki_url":    "https://github.com/CGCookie/blender-addon-updater",
@@ -36,12 +36,12 @@ import bpy
 from . import addon_updater_ops
 
 
-class DemoUpdaterPanel(bpy.types.Panel):
+class OBJECT_PT_DemoUpdaterPanel(bpy.types.Panel):
 	"""Panel to demo popup notice and ignoring functionality"""
 	bl_label = "Updater Demo Panel"
 	bl_idname = "OBJECT_PT_hello"
 	bl_space_type = 'VIEW_3D'
-	bl_region_type = 'TOOLS'
+	bl_region_type = 'UI'
 	bl_context = "objectmode"
 	bl_category = "Tools"
 
@@ -57,20 +57,20 @@ class DemoUpdaterPanel(bpy.types.Panel):
 		addon_updater_ops.check_for_update_background()
 
 
-		layout.label("Demo Updater Addon")
-		layout.label("")
+		layout.label(text="Demo Updater Addon")
+		layout.label(text="")
 
 		col = layout.column()
 		col.scale_y = 0.7
-		col.label("If an update is ready,")
-		col.label("popup triggered by opening")
-		col.label("this panel, plus a box ui")
+		col.label(text="If an update is ready,")
+		col.label(text="popup triggered by opening")
+		col.label(text="this panel, plus a box ui")
 
 		# could also use your own custom drawing
 		# based on shared variables
 		if addon_updater_ops.updater.update_ready == True:
-			layout.label("Custom update message", icon="INFO")
-		layout.label("")
+			layout.label(text="Custom update message", icon="INFO")
+		layout.label(text="")
 
 		# call built-in function with draw code/checks
 		addon_updater_ops.update_notice_box_ui(self, context)
@@ -82,32 +82,32 @@ class DemoPreferences(bpy.types.AddonPreferences):
 
 	# addon updater preferences
 
-	auto_check_update = bpy.props.BoolProperty(
+	auto_check_update: bpy.props.BoolProperty(
 		name="Auto-check for Update",
 		description="If enabled, auto-check for updates using an interval",
 		default=False,
 		)
-	updater_intrval_months = bpy.props.IntProperty(
+	updater_intrval_months: bpy.props.IntProperty(
 		name='Months',
 		description="Number of months between checking for updates",
 		default=0,
 		min=0
 		)
-	updater_intrval_days = bpy.props.IntProperty(
+	updater_intrval_days: bpy.props.IntProperty(
 		name='Days',
 		description="Number of days between checking for updates",
 		default=7,
 		min=0,
 		max=31
 		)
-	updater_intrval_hours = bpy.props.IntProperty(
+	updater_intrval_hours: bpy.props.IntProperty(
 		name='Hours',
 		description="Number of hours between checking for updates",
 		default=0,
 		min=0,
 		max=23
 		)
-	updater_intrval_minutes = bpy.props.IntProperty(
+	updater_intrval_minutes: bpy.props.IntProperty(
 		name='Minutes',
 		description="Number of minutes between checking for updates",
 		default=0,
@@ -146,7 +146,7 @@ def register():
 
 	# register the example panel, to show updater buttons
 	bpy.utils.register_class(DemoPreferences)
-	bpy.utils.register_class(DemoUpdaterPanel)
+	bpy.utils.register_class(OBJECT_PT_DemoUpdaterPanel)
 
 
 def unregister():
@@ -156,4 +156,4 @@ def unregister():
 
 	# register the example panel, to show updater buttons
 	bpy.utils.unregister_class(DemoPreferences)
-	bpy.utils.unregister_class(DemoUpdaterPanel)
+	bpy.utils.unregister_class(OBJECT_PT_DemoUpdaterPanel)
