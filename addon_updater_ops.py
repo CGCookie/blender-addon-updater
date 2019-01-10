@@ -1413,7 +1413,7 @@ def register(bl_info):
 
 
 def unregister():
-	for cls in classes:
+	for cls in reversed(classes):
 		# comment out this line if using bpy.utils.unregister_module(__name__)
 		bpy.utils.unregister_class(cls)
 

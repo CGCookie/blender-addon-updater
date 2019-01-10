@@ -137,13 +137,14 @@ class DemoPreferences(bpy.types.AddonPreferences):
 		# col.scale_y = 2
 		# col.operator("wm.url_open","Open webpage ").url=addon_updater_ops.updater.website
 
+
 classes = (
 	DemoPreferences,
 	OBJECT_PT_DemoUpdaterPanel
 )
 
-def register():
 
+def register():
 	# addon updater code and configurations
 	# in case of broken version, try to register the updater first
 	# so that users can revert back to a working version
@@ -156,7 +157,6 @@ def register():
 
 
 def unregister():
-
 	# addon updater unregister
 	addon_updater_ops.unregister()
 
