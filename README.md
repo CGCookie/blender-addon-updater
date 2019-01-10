@@ -9,7 +9,7 @@ With this Python module, developers can create auto-checking for updates with th
 
 *Want to add this code to your addon? [See this tutorial here](http://theduckcow.com/2016/addon-updater-tutorial/)*
 
-This addon has been updated to work with both blender 2.7x and 2.8x simultaneously, see [this section below](https://github.com/CGCookie/blender-addon-updater#Blender-2.7-and-2.8).
+This addon has been updated to work with both blender 2.7x and 2.8x simultaneously, see [this section below](https://github.com/CGCookie/blender-addon-updater#Blender-27-and-28).
 
 
 # Key Features
@@ -545,18 +545,18 @@ This repository and example addon has been updated to work simultaneously for bo
 Note that, as an addon developer, you have different options for supporting Blender 2.7 and 2.8 while still using this updater system. These are:
 
 1) Make the addon work for 2.7x and 2.8x simultaneously (in the same way that this module and demo addon does).
-  - This requires some extra work, in particular note the workaround of annotations as accomplished by the `make_annotations` function.
+    - This requires some extra work, in particular note the workaround of annotations as accomplished by the `make_annotations` function.
 2) Have dedicated, separate releases for Blender 2.7x and 2.8x which are separated by a major version, and use min/max conversioning to isolate which users can update to which versions.
-  - For instance, if an existing addon is version 1.5 and works on blender 2.79, then a feature-parity version for Blender 2.8 could be released as addon version 2.0; this 2.0 addon with have a `version_min_update` set to be 2.0 for the blender 2.8 code, and the Blender 2.7x code would set `version_max_update` to be 2.0 as well as a ceiling.
-  - The next update to the Blender 2.79-compatible addon (released at the same time or earlier, to prevent 2.7x users from accidentally updating to breaking 2.8 code) should push this settings change to make sure users don't accidentally update to a version they shouldn't.
-  - Note in this scenario, you also prevent being able to update Blender 2.7x version numbers to or beyond 2.0. Note that there is no obligation to simultaneously update the Blender 2.7x and 2.8x versions at the same time as the version numbers themselves are not actually linked in any way.
-  - The 2.7x and 2.8x code would be kept in different branches, and tags would be made targeting those different branches accordingly. Given Blender 2.8x will be the long term future, it may make most sense to dedicate the master branch to be 2.8 and create a 2.7x branch for parallel legacy support, but the choice doesn't really matter as a tag is treated the same regardless of the source branch.
+    - For instance, if an existing addon is version 1.5 and works on blender 2.79, then a feature-parity version for Blender 2.8 could be released as addon version 2.0; this 2.0 addon with have a `version_min_update` set to be 2.0 for the blender 2.8 code, and the Blender 2.7x code would set `version_max_update` to be 2.0 as well as a ceiling.
+    - The next update to the Blender 2.79-compatible addon (released at the same time or earlier, to prevent 2.7x users from accidentally updating to breaking 2.8 code) should push this settings change to make sure users don't accidentally update to a version they shouldn't.
+    - Note in this scenario, you also prevent being able to update Blender 2.7x version numbers to or beyond 2.0. Note that there is no obligation to simultaneously update the Blender 2.7x and 2.8x versions at the same time as the version numbers themselves are not actually linked in any way.
+    - The 2.7x and 2.8x code would be kept in different branches, and tags would be made targeting those different branches accordingly. Given Blender 2.8x will be the long term future, it may make most sense to dedicate the master branch to be 2.8 and create a 2.7x branch for parallel legacy support, but the choice doesn't really matter as a tag is treated the same regardless of the source branch.
 3) Parallel version releases with build attachments for each new version.
-  - This method is in one way simple as the same version numbers would work for both Blender 2.7x and 2.8x code, while still having separate code in different branches so you don't have to make code (such as annotation syntax) compatible for both at the same time in the same files. You could even have everything in the same branch with just duplicate files (e.g. a ui.py and ui_28.py).
-  - The crux of this method is that instead of the updater pulling down the raw code associated with the tag/release, it uses release attachments instead. You would need to build
-  - This does require releasing the 2.7x and 2.8 code at the same time
-  - Extra logic will need to be programmed in the `addon_updater_ops.py: select_link_function` function to parse for the correct attachment given the running version of blender (instead of just the first release attachment, the default behavior), as well as enabling the `use_releases` setting in the ops file
-  - For reference, this is essentially the method developers use to maintain and distribute updates for operating-specific builds of addons
+    - This method is in one way simple as the same version numbers would work for both Blender 2.7x and 2.8x code, while still having separate code in different branches so you don't have to make code (such as annotation syntax) compatible for both at the same time in the same files. You could even have everything in the same branch with just duplicate files (e.g. a ui.py and ui_28.py).
+    - The crux of this method is that instead of the updater pulling down the raw code associated with the tag/release, it uses release attachments instead. You would need to build
+    - This does require releasing the 2.7x and 2.8 code at the same time
+    - Extra logic will need to be programmed in the `addon_updater_ops.py: select_link_function` function to parse for the correct attachment given the running version of blender (instead of just the first release attachment, the default behavior), as well as enabling the `use_releases` setting in the ops file
+    - For reference, this is essentially the method developers use to maintain and distribute updates for operating-specific builds of addons
 
 
 # Security concerns with private repositories
