@@ -59,11 +59,10 @@ updater.addon = "addon_updater_demo"
 # -----------------------------------------------------------------------------
 
 
-# Converts old annotations to new ones
 def make_annotations(cls):
-	if bpy.app.version < (2, 80):
+	"""Add annotation attribute to class fields to avoid Blender 2.8 warnings"""
+	if not hasattr(bpy.app, "version") or bpy.app.version < (2, 80):
 		return cls
-
 	bl_props = {k: v for k, v in cls.__dict__.items() if isinstance(v, tuple)}
 	if bl_props:
 		if '__annotations__' not in cls.__dict__:
@@ -72,7 +71,6 @@ def make_annotations(cls):
 		for k, v in bl_props.items():
 			annotations[k] = v
 			delattr(cls, k)
-
 	return cls
 
 
@@ -1205,6 +1203,18 @@ def select_link_function(self, tag):
 # -----------------------------------------------------------------------------
 
 
+classes = (
+	addon_updater_install_popup,
+	addon_updater_check_now,
+	addon_updater_update_now,
+	addon_updater_update_target,
+	addon_updater_install_manually,
+	addon_updater_updated_successful,
+	addon_updater_restore_backup,
+	addon_updater_ignore,
+	addon_updater_end_background
+)
+
 # registering the operators in this module
 def register(bl_info):
 
@@ -1357,7 +1367,7 @@ def register(bl_info):
 
 	# max install (<) will install strictly anything lower
 	# updater.version_max_update = (9,9,9)
-	updater.version_max_update = (1,1,0)  # set to None if not wanting to set max
+	updater.version_max_update = None # set to None if not wanting to set max
 
 	# Function defined above, customize as appropriate per repository
 	updater.skip_tag = skip_tag_function # min and max used in this function
@@ -1368,15 +1378,11 @@ def register(bl_info):
 	# The register line items for all operators/panels
 	# If using bpy.utils.register_module(__name__) to register elsewhere
 	# in the addon, delete these lines (also from unregister)
-	bpy.utils.register_class(addon_updater_install_popup)
-	bpy.utils.register_class(addon_updater_check_now)
-	bpy.utils.register_class(addon_updater_update_now)
-	bpy.utils.register_class(addon_updater_update_target)
-	bpy.utils.register_class(addon_updater_install_manually)
-	bpy.utils.register_class(addon_updater_updated_successful)
-	bpy.utils.register_class(addon_updater_restore_backup)
-	bpy.utils.register_class(addon_updater_ignore)
-	bpy.utils.register_class(addon_updater_end_background)
+	for cls in classes:
+		# apply annotations to remove Blender 2.8 warnings, no effect on 2.7
+		make_annotations(cls)
+		# comment out this line if using bpy.utils.register_module(__name__)
+		bpy.utils.register_class(cls)
 
 	# special situation: we just updated the addon, show a popup
 	# to tell the user it worked
@@ -1385,15 +1391,9 @@ def register(bl_info):
 
 
 def unregister():
-	bpy.utils.unregister_class(addon_updater_install_popup)
-	bpy.utils.unregister_class(addon_updater_check_now)
-	bpy.utils.unregister_class(addon_updater_update_now)
-	bpy.utils.unregister_class(addon_updater_update_target)
-	bpy.utils.unregister_class(addon_updater_install_manually)
-	bpy.utils.unregister_class(addon_updater_updated_successful)
-	bpy.utils.unregister_class(addon_updater_restore_backup)
-	bpy.utils.unregister_class(addon_updater_ignore)
-	bpy.utils.unregister_class(addon_updater_end_background)
+	for cls in classes:
+		# comment out this line if using bpy.utils.unregister_module(__name__)
+		bpy.utils.unregister_class(cls)
 
 	# clear global vars since they may persist if not restarting blender
 	updater.clear_state() # clear internal vars, avoids reloading oddities

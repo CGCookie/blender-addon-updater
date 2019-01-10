@@ -36,7 +36,7 @@ import bpy
 from . import addon_updater_ops
 
 
-class DemoUpdaterPanel(bpy.types.Panel):
+class OBJECT_PT_DemoUpdaterPanel(bpy.types.Panel):
 	"""Panel to demo popup notice and ignoring functionality"""
 	bl_label = "Updater Demo Panel"
 	bl_idname = "OBJECT_PT_hello"
@@ -137,6 +137,10 @@ class DemoPreferences(bpy.types.AddonPreferences):
 		# col.scale_y = 2
 		# col.operator("wm.url_open","Open webpage ").url=addon_updater_ops.updater.website
 
+classes = (
+	DemoPreferences,
+	OBJECT_PT_DemoUpdaterPanel
+)
 
 def register():
 
@@ -146,8 +150,9 @@ def register():
 	addon_updater_ops.register(bl_info)
 
 	# register the example panel, to show updater buttons
-	bpy.utils.register_class(DemoPreferences)
-	bpy.utils.register_class(DemoUpdaterPanel)
+	for cls in classes:
+		addon_updater_ops.make_annotations(cls) # to avoid blender 2.8 warnings
+		bpy.utils.register_class(cls)
 
 
 def unregister():
@@ -156,5 +161,5 @@ def unregister():
 	addon_updater_ops.unregister()
 
 	# register the example panel, to show updater buttons
-	bpy.utils.unregister_class(DemoPreferences)
-	bpy.utils.unregister_class(DemoUpdaterPanel)
+	for cls in reversed(classes):
+		bpy.utils.register_class(cls)

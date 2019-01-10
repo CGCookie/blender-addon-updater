@@ -1308,10 +1308,26 @@ class Singleton_updater(object):
 				return False
 
 	def get_json_path(self):
-		return os.path.join(self._updater_path,
+		"""Returns the full path to the json state file used by this updater.
+
+		Will also rename old file paths to addon-specific path if found
+		"""
+		json_path = os.path.join(self._updater_path,
 			"{}_updater_status.json".format(self._addon_package))
+		old_json_path = os.path.join(self._updater_path, "updater_status.json")
+
+		# rename old file if it exists
+		try:
+			os.rename(old_json_path, json_path)
+		except FileNotFoundError:
+			pass
+		except Exception as err:
+			print("Other OS error occured while trying to rename old json")
+			print(err)
+		return json_path
 
 	def set_updater_json(self):
+		"""Load or initialize json dictionary data for updater state"""
 		if self._updater_path == None:
 			raise ValueError("updater_path is not defined")
 		elif os.path.isdir(self._updater_path) == False:
@@ -1321,7 +1337,9 @@ class Singleton_updater(object):
 		if os.path.isfile(jpath):
 			with open(jpath) as data_file:
 				self._json = json.load(data_file)
-				if self._verbose: print("{} Updater: Read in json settings from file".format(self._addon))
+				if self._verbose:
+					print("{} Updater: Read in json settings from file".format(
+						self._addon))
 		else:
 			# set data structure
 			self._json = {
@@ -1382,20 +1400,24 @@ class Singleton_updater(object):
 	# -------------------------------------------------------------------------
 
 	def start_async_check_update(self, now=False, callback=None):
-		if self._async_checking == True:
+		"""Start a background thread which will check for updates"""
+		if self._async_checking is True:
 			return
-		if self._verbose: print("{} updater: Starting background checking thread".format(self._addon))
+		if self._verbose:
+			print("{} updater: Starting background checking thread".format(
+				self._addon))
 		check_thread = threading.Thread(target=self.async_check_update,
 										args=(now,callback,))
 		check_thread.daemon = True
 		self._check_thread = check_thread
 		check_thread.start()
 
-		return True
-
 	def async_check_update(self, now, callback=None):
+		"""Perform update check, run as target of background thread"""
 		self._async_checking = True
-		if self._verbose: print("{} BG thread: Checking for update now in background".format(self._addon))
+		if self._verbose:
+			print("{} BG thread: Checking for update now in background".format(
+				self._addon))
 		# time.sleep(3)  # to test background, in case internet too fast to tell
 		# try:
 		self.check_for_update(now=now)
@@ -1413,18 +1435,23 @@ class Singleton_updater(object):
 
 		if self._verbose:
 			print("{} BG thread: Finished checking for update, doing callback".format(self._addon))
-		if callback != None: callback(self._update_ready)
-
+		if callback != None:
+			callback(self._update_ready)
 
 	def stop_async_check_update(self):
+		"""Method to give impression of stopping check for update.
+
+		Currently does nothing but allows user to retry/stop blocking UI from
+		hitting a refresh button. This does not actually stop the thread, as it
+		will complete after the connection timeout regardless. If the thread
+		does complete with a successful response, this will be still displayed
+		on next UI refresh (ie no update, or update available).
+		"""
 		if self._check_thread != None:
-			try:
-				if self._verbose: print("Thread will end in normal course.")
-				# however, "There is no direct kill method on a thread object."
-				# better to let it run its course
-				#self._check_thread.stop()
-			except:
-				pass
+			if self._verbose: print("Thread will end in normal course.")
+			# however, "There is no direct kill method on a thread object."
+			# better to let it run its course
+			#self._check_thread.stop()
 		self._async_checking = False
 		self._error = None
 		self._error_msg = None
@@ -1436,6 +1463,7 @@ class Singleton_updater(object):
 
 
 class BitbucketEngine(object):
+	"""Integration to Bitbucket API for git-formatted repositories"""
 
 	def __init__(self):
 		self.api_url = 'https://api.bitbucket.org'
@@ -1464,6 +1492,7 @@ class BitbucketEngine(object):
 
 
 class GithubEngine(object):
+	"""Integration to Github API"""
 
 	def __init__(self):
 		self.api_url = 'https://api.github.com'
@@ -1494,6 +1523,7 @@ class GithubEngine(object):
 
 
 class GitlabEngine(object):
+	"""Integration to GitLab API"""
 
 	def __init__(self):
 		self.api_url = 'https://gitlab.com'
