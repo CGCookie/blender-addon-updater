@@ -722,10 +722,9 @@ def check_for_update_background():
 		return
 
 	# apply the UI settings
-	addon_prefs = get_user_preferences(bpy.context)
-	if not addon_prefs:
+	settings = get_user_preferences(bpy.context)
+	if not settings:
 		return
-	settings = addon_prefs.preferences
 	updater.set_check_interval(enable=settings.auto_check_update,
 				months=settings.updater_intrval_months,
 				days=settings.updater_intrval_days,
@@ -751,13 +750,12 @@ def check_for_update_nonthreaded(self, context):
 	# only check if it's ready, ie after the time interval specified
 	# should be the async wrapper call here
 
-	addon_prefs = get_user_preferences(bpy.context)
-	if not addon_prefs:
+	settings = get_user_preferences(bpy.context)
+	if not settings:
 		if updater.verbose:
 			print("Could not get {} preferences, update check skipped".format(
 				__package__))
 		return
-	settings = addon_prefs.preferences
 	updater.set_check_interval(enable=settings.auto_check_update,
 				months=settings.updater_intrval_months,
 				days=settings.updater_intrval_days,
@@ -1237,9 +1235,9 @@ classes = (
 	addon_updater_end_background
 )
 
-# registering the operators in this module
-def register(bl_info):
 
+def register(bl_info):
+	"""Registering the operators in this module"""
 	# safer failure in case of issue loading module
 	if updater.error:
 		print("Exiting updater registration, " + updater.error)
