@@ -162,4 +162,4 @@ def unregister():
 
 	# register the example panel, to show updater buttons
 	for cls in reversed(classes):
-		bpy.utils.register_class(cls)
+		bpy.utils.unregister_class(cls)
