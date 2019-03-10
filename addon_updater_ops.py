@@ -682,7 +682,7 @@ def post_update_callback(module_name, res=None):
 
 	Arguments:
 		module_name: returns the module name from updater, but unused here
-		res: If an error occured, this is the detail string
+		res: If an error occurred, this is the detail string
 	"""
 
 	# in case of error importing updater
@@ -701,7 +701,7 @@ def post_update_callback(module_name, res=None):
 		global ran_update_sucess_popup
 		ran_update_sucess_popup = True
 	else:
-		# some kind of error occured and it was unable to install,
+		# some kind of error occurred and it was unable to install,
 		# offer manual download instead
 		atr = addon_updater_updated_successful.bl_idname.split(".")
 		getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT',error=res)

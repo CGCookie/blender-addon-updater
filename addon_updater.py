@@ -1398,7 +1398,7 @@ class Singleton_updater(object):
 				return False
 
 	def get_json_path(self):
-		"""Returns the full path to the json state file used by this updater.
+		"""Returns the full path to the JSON state file used by this updater.
 
 		Will also rename old file paths to addon-specific path if found
 		"""
@@ -1412,12 +1412,12 @@ class Singleton_updater(object):
 		except FileNotFoundError:
 			pass
 		except Exception as err:
-			print("Other OS error occured while trying to rename old json")
+			print("Other OS error occurred while trying to rename old JSON")
 			print(err)
 		return json_path
 
 	def set_updater_json(self):
-		"""Load or initialize json dictionary data for updater state"""
+		"""Load or initialize JSON dictionary data for updater state"""
 		if self._updater_path == None:
 			raise ValueError("updater_path is not defined")
 		elif os.path.isdir(self._updater_path) == False:
@@ -1428,7 +1428,7 @@ class Singleton_updater(object):
 			with open(jpath) as data_file:
 				self._json = json.load(data_file)
 				if self._verbose:
-					print("{} Updater: Read in json settings from file".format(
+					print("{} Updater: Read in JSON settings from file".format(
 						self._addon))
 		else:
 			# set data structure
@@ -1464,7 +1464,7 @@ class Singleton_updater(object):
 		outf.write(data_out)
 		outf.close()
 		if self._verbose:
-			print(self._addon+": Wrote out updater json settings to file, with the contents:")
+			print(self._addon+": Wrote out updater JSON settings to file, with the contents:")
 			print(self._json)
 
 	def json_reset_postupdate(self):
