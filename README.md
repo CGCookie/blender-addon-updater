@@ -27,7 +27,7 @@ This addon has been updated to work with both blender 2.7x and 2.8x simultaneous
 With this module, there are essentially 3 different configurations:
 - Connect an addon to a repository's releases & be notified when new releases are out and allow 1-click install (with an option to install master or another branch if enabled)
 - Connect an addon to a repository's releases & be notified when new releases are out, but direct user to website or specific download page instead of one-click installing (code doesn't even need to be hosted in connected repo in this scenario, as it's only using the releases metadata)
-- Connect an addon to a repository that doesn't have any releases, and allow use to 1-click install to a default branch and select from other explicitly included branches to install (does not us any version checking, will alway pull the latest code even if the same)
+- Connect an addon to a repository that doesn't have any releases, and allow use to 1-click install to a default branch and select from other explicitly included branches to install (does not us any version checking, will always pull the latest code even if the same)
 
 
 *Note the repository is not currently setup to be used with single Python file addons, this must be used with a zip-installed addon. It also assumes the use of the user preferences panel dedicated to the addon.*
@@ -232,7 +232,7 @@ updater.addon = "addon_name"
   - Type: Bool, e.g. False
   - Default: False
   - Notes: Should be only used for debugging, and always set to false for production
-- **updater_path:** Path location of stored json state file, backups, and staging of installing a new version
+- **updater_path:** Path location of stored JSON state file, backups, and staging of installing a new version
   - Type: String, absolute path location
   - Default: "{path to blender files}/addons/{addon name}/{addon name}_updater/"
 - **verbose:** A debugging setting that prints additional information to the console
@@ -250,7 +250,7 @@ updater.addon = "addon_name"
   - Notes: You can use wild card patterns, see documentation for fnmatch.filter. The new default behavior introduced here is setting ["*.py","*.pyc"] means it matches the default behavior of blender. Also note this only describes patterns to allow *overwriting*, if a file in the new update doesn't already exist locally, then it will be installed to the local addon.
   - Examples:
     - ["some.py"] In this method, only files matching the name some.py would be overwritten via the update. Thus, even if the updated addon had a newer __init__.py file, it would not replace the local version. This method could be used to build a file replacement whitelist.
-    - ["*.json"] means all josn files found in addon update will overwrite those of same name in current install. This would be useful if the addon only has configuration, read-only data that should be always updated with the addon. Note that default blender behavior would not overwrite such json files if already present in the local install, this gets around that
+    - ["*.json"] means all JSON files found in addon update will overwrite those of same name in current install. This would be useful if the addon only has configuration, read-only data that should be always updated with the addon. Note that default blender behavior would not overwrite such JSON files if already present in the local install, this gets around that
     - ["*"] means that all matching files found in the update would overwrite files in the local install. Note this was the behavior pre updater v1.0.4, this is also the safest option to use if you want to ensure all files always get updated with the newer version in the update, including resource files. Be mindful that any local or custom modified files may get overwritten.
     // also note that this is a new setting as of v1.0.4 of the updater; the previous behavior of the updater was using the equivalent setting of ["*"] which would mean that all files found in the update would overwrite files in the local install.
     - [] or ["*.py","*.pyc"] matches default blender behavior, ie same effect if user installs update manually through blender interface without deleting the existing addon first
@@ -259,7 +259,7 @@ updater.addon = "addon_name"
   - Default: [], recommended/as configured in demo addon: ["*.pyc"]
   - Notes: This explicitly will delete all files in the local addon install which match any of the rules, and will run after a backup is taken (so the backup is complete), but before the overwrite_patterns are applied. If the structure or files of an addon may change in the future, it may be wise to set remove_pre_update_patterns to ["*.py","*.pyc"] which would ensure all python files are always removed prior to the update, thus ensuring no longer used files aren't present. Using it in this fashion would also negate the need to specify the same patterns in the overwrite_patterns option. Note this option only deletes files, not folders.
   - Examples:
-    - ["*"] means all files in the addon (except those under the dedicated udpater subfolder of the addon) will always be deleted prior to running the update. This is nearly equivalent to using clean=True in the run_update method (however that will also delete folders)
+    - ["*"] means all files in the addon (except those under the dedicated updater subfolder of the addon) will always be deleted prior to running the update. This is nearly equivalent to using clean=True in the run_update method (however that will also delete folders)
     -  ["*.pyc"] means pycache files are always removed prior to update, which is a safe
 - **backup_ignore_patterns:** A setting to ignore certain files or folders when performing a backup prior to installing an update/target version, useful to avoid copying resources or large files that wouldn't be replaced by the update anyways (via not being included in the overwrite_patterns setting)
   - Type: List of strings
@@ -325,7 +325,7 @@ updater.addon = "addon_name"
 - **json:** Contains important state information about the updater
   - Type: Dictionary with string keys
   - Default: {}
-  - Notes: This is used by both the module and the operator file to store saved state information, such as when the last update is and caching update links / versions to prevent the need to check the internet more than necessary. The contents of this dictionary object are directly saved to a json file in the addon updater folder. The contents are periodically updated, such as to save timestamps after checking for update, or saving locally the update link of not updated immediately, or storing the "ignore update" decision by user.
+  - Notes: This is used by both the module and the operator file to store saved state information, such as when the last update is and caching update links / versions to prevent the need to check the internet more than necessary. The contents of this dictionary object are directly saved to a JSON file in the addon updater folder. The contents are periodically updated, such as to save timestamps after checking for update, or saving locally the update link of not updated immediately, or storing the "ignore update" decision by user.
 - **source_zip:** Once a version of the addon is downloaded directly from the server, this variable is set to the absolute path to the zip file created.
   - Type: String, OS path
   - Default: None
@@ -461,7 +461,7 @@ updater.remove_pre_update_patterns = [ ]
 This would still add in *new* files present in the update not present in the local install. For this reason, this actually may be a valid setup if used in conjunction with clean_install set to True, which simulates a fresh install. When clean_install = True, these patterns are effectively rendered pointless, so it's still better to not define them in the way above.
 
 
-**Addon contains only py files, no resources (e.g. json files, images, blends), and against better judgment, not even licenses or readme files**
+**Addon contains only py files, no resources (e.g. JSON files, images, blends), and against better judgment, not even licenses or readme files**
 
 In this example, we only need to worry about replacing the python files with the new python files. By default, this demo addon is configured so that new py files and pyc files will overwrite old files with matching paths/names in the local install. This is accomplished by setting `updater.overwrite_patterns = ["*.py","*.pyc"]` in the operator file. You could also be more explicit and specify all files which may be overwritten via `updater.overwrite_patterns = ["__init__.py", "module.py", "*.pyc"]` for example (noting the "*.pyc" is still there to ensure all caches are flushed).
 
@@ -491,7 +491,7 @@ The "*.blend" will result in any blend file being overwritten if matching locall
 updater.remove_pre_update_patterns = ["*.py","*.pyc"]
 ```
 
-The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the `overwrite_patterns`, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, json etc will all be left alone. With the exception of blend files (as per `overwrite_patterns` above), they also won't be overwritten - even if there are updates.
+The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the `overwrite_patterns`, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, JSON etc will all be left alone. With the exception of blend files (as per `overwrite_patterns` above), they also won't be overwritten - even if there are updates.
 
 **Addon contains py files, resource files, and user/local configuration files**
 
