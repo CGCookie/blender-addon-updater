@@ -16,6 +16,11 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+"""Blender UI integrations for the addon updater.
+
+Implements draw calls, popups, and operators that use the addon_updater.
+"""
+
 import os
 
 import bpy
@@ -296,8 +301,10 @@ class addon_updater_update_now(bpy.types.Operator):
 
 		elif updater.update_ready == False:
 			self.report({'INFO'}, "Nothing to update")
+			return {'CANCELLED'}
 		else:
 			self.report({'ERROR'}, "Encountered problem while trying to update")
+			return {'CANCELLED'}
 
 		return {'FINISHED'}
 
@@ -440,7 +447,6 @@ class addon_updater_install_manually(bpy.types.Operator):
 				row.label(text="See source website to download the update")
 
 	def execute(self,context):
-
 		return {'FINISHED'}
 
 
@@ -488,15 +494,23 @@ class addon_updater_updated_successful(bpy.types.Operator):
 			# tell user to restart blender
 			if "just_restored" in saved and saved["just_restored"] == True:
 				col = layout.column()
-				col.scale_y = 0.7
 				col.label(text="Addon restored", icon="RECOVER_LAST")
-				col.label(text="Restart blender to reload.",icon="BLANK1")
+				alert_row = col.row()
+				alert_row.alert = True
+				alert_row.operator(
+					"wm.quit_blender",
+					text="Restart blender to reload",
+					icon="BLANK1")
 				updater.json_reset_restore()
 			else:
 				col = layout.column()
-				col.scale_y = 0.7
 				col.label(text="Addon successfully installed", icon="FILE_TICK")
-				col.label(text="Restart blender to reload.", icon="BLANK1")
+				alert_row = col.row()
+				alert_row.alert = True
+				alert_row.operator(
+					"wm.quit_blender",
+					text="Restart blender to reload",
+					icon="BLANK1")
 
 		else:
 			# reload addon, but still recommend they restart blender
@@ -609,8 +623,12 @@ def updater_run_success_popup_handler(scene):
 		return
 
 	try:
-		bpy.app.handlers.scene_update_post.remove(
-				updater_run_success_popup_handler)
+		if "scene_update_post" in dir(bpy.app.handlers):
+			bpy.app.handlers.scene_update_post.remove(
+					updater_run_success_popup_handler)
+		else:
+			bpy.app.handlers.depsgraph_update_post.remove(
+					updater_run_success_popup_handler)
 	except:
 		pass
 
@@ -628,8 +646,12 @@ def updater_run_install_popup_handler(scene):
 		return
 
 	try:
-		bpy.app.handlers.scene_update_post.remove(
-				updater_run_install_popup_handler)
+		if "scene_update_post" in dir(bpy.app.handlers):
+			bpy.app.handlers.scene_update_post.remove(
+					updater_run_install_popup_handler)
+		else:
+			bpy.app.handlers.depsgraph_update_post.remove(
+					updater_run_install_popup_handler)
 	except:
 		pass
 
@@ -666,12 +688,25 @@ def background_update_callback(update_ready):
 		return
 	if update_ready != True:
 		return
-	if updater_run_install_popup_handler not in \
-				bpy.app.handlers.scene_update_post and \
-				ran_autocheck_install_popup==False:
+
+	# see if we need add to the update handler to trigger the popup
+	handlers = []
+	if "scene_update_post" in dir(bpy.app.handlers): # 2.7x
+		handlers = bpy.app.handlers.scene_update_post
+	else: # 2.8x
+		handlers = bpy.app.handlers.depsgraph_update_post
+	in_handles = updater_run_install_popup_handler in handlers
+
+	if in_handles or ran_autocheck_install_popup:
+		return
+
+	if "scene_update_post" in dir(bpy.app.handlers): # 2.7x
 		bpy.app.handlers.scene_update_post.append(
 				updater_run_install_popup_handler)
-		ran_autocheck_install_popup = True
+	else: # 2.8x
+		bpy.app.handlers.depsgraph_update_post.append(
+				updater_run_install_popup_handler)
+	ran_autocheck_install_popup = True
 
 
 def post_update_callback(module_name, res=None):
@@ -694,7 +729,6 @@ def post_update_callback(module_name, res=None):
 		# ie if "auto_reload_post_update" == True, comment out this code
 		if updater.verbose:
 			print("{} updater: Running post update callback".format(updater.addon))
-		#bpy.app.handlers.scene_update_post.append(updater_run_success_popup_handler)
 
 		atr = addon_updater_updated_successful.bl_idname.split(".")
 		getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
@@ -793,22 +827,37 @@ def showReloadPopup():
 	saved_state = updater.json
 	global ran_update_sucess_popup
 
-	a = saved_state != None
-	b = "just_updated" in saved_state
-	c = saved_state["just_updated"]
+	has_state = saved_state != None
+	just_updated = "just_updated" in saved_state
+	updated_info = saved_state["just_updated"]
 
-	if a and b and c:
-		updater.json_reset_postupdate() # so this only runs once
+	if not (has_state and just_updated and updated_info):
+		return
 
-		# no handlers in this case
-		if updater.auto_reload_post_update == False: return
+	updater.json_reset_postupdate() # so this only runs once
 
-		if updater_run_success_popup_handler not in \
-					bpy.app.handlers.scene_update_post \
-					and ran_update_sucess_popup==False:
-			bpy.app.handlers.scene_update_post.append(
-					updater_run_success_popup_handler)
-			ran_update_sucess_popup = True
+	# no handlers in this case
+	if updater.auto_reload_post_update == False:
+		return
+
+	# see if we need add to the update handler to trigger the popup
+	handlers = []
+	if "scene_update_post" in dir(bpy.app.handlers): # 2.7x
+		handlers = bpy.app.handlers.scene_update_post
+	else: # 2.8x
+		handlers = bpy.app.handlers.depsgraph_update_post
+	in_handles = updater_run_success_popup_handler in handlers
+
+	if in_handles or ran_update_sucess_popup is True:
+		return
+
+	if "scene_update_post" in dir(bpy.app.handlers): # 2.7x
+		bpy.app.handlers.scene_update_post.append(
+				updater_run_success_popup_handler)
+	else: # 2.8x
+		bpy.app.handlers.depsgraph_update_post.append(
+				updater_run_success_popup_handler)
+	ran_update_sucess_popup = True
 
 
 # -----------------------------------------------------------------------------
@@ -833,9 +882,14 @@ def update_notice_box_ui(self, context):
 			layout = self.layout
 			box = layout.box()
 			col = box.column()
-			col.scale_y = 0.7
-			col.label(text="Restart blender", icon="ERROR")
+			alert_row = col.row()
+			alert_row.alert = True
+			alert_row.operator(
+				"wm.quit_blender",
+				text="Restart blender",
+				icon="ERROR")
 			col.label(text="to complete update")
+
 			return
 
 	# if user pressed ignore, don't draw the box
@@ -899,10 +953,14 @@ def update_settings_ui(self, context, element=None):
 	if updater.auto_reload_post_update == False:
 		saved_state = updater.json
 		if "just_updated" in saved_state and saved_state["just_updated"] == True:
-			row.label(text="Restart blender to complete update", icon="ERROR")
+			row.alert = True
+			row.operator(
+				"wm.quit_blender",
+				text="Restart blender to complete update",
+				icon="ERROR")
 			return
 
-	split = layout_split(row, factor=0.3)
+	split = layout_split(row, factor=0.4)
 	subcol = split.column()
 	subcol.prop(settings, "auto_check_update")
 	subcol = split.column()
@@ -917,9 +975,11 @@ def update_settings_ui(self, context, element=None):
 	checkcol = subrow.column(align=True)
 	checkcol.prop(settings,"updater_intrval_days")
 	checkcol = subrow.column(align=True)
-	checkcol.prop(settings,"updater_intrval_hours")
-	checkcol = subrow.column(align=True)
-	checkcol.prop(settings,"updater_intrval_minutes")
+
+	# Consider un-commenting for local dev (e.g. to set shorter intervals)
+	# checkcol.prop(settings,"updater_intrval_hours")
+	# checkcol = subrow.column(align=True)
+	# checkcol.prop(settings,"updater_intrval_minutes")
 
 	# checking / managing updates
 	row = box.row()
@@ -1059,7 +1119,11 @@ def update_settings_ui_condensed(self, context, element=None):
 	if updater.auto_reload_post_update == False:
 		saved_state = updater.json
 		if "just_updated" in saved_state and saved_state["just_updated"] == True:
-			row.label(text="Restart blender to complete update", icon="ERROR")
+			row.alert = True # mark red
+			row.operator(
+				"wm.quit_blender",
+				text="Restart blender to complete update",
+				icon="ERROR")
 			return
 
 	col = row.column()

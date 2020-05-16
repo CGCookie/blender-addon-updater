@@ -23,7 +23,10 @@ https://github.com/CGCookie/blender-addon-updater
 
 """
 
+__version__ = "1.0.8"
+
 import errno
+import platform
 import ssl
 import urllib.request
 import urllib
@@ -637,6 +640,9 @@ class Singleton_updater(object):
 			else:
 				if self._verbose: print("Tokens not setup for engine yet")
 
+		# Always set user agent
+		request.add_header('User-Agent', "Python/"+str(platform.python_version()))
+
 		# run the request
 		try:
 			if context:
@@ -733,6 +739,10 @@ class Singleton_updater(object):
 					request.add_header('PRIVATE-TOKEN',self._engine.token)
 				else:
 					if self._verbose: print("Tokens not setup for selected engine yet")
+
+			# Always set user agent
+			request.add_header('User-Agent', "Python/"+str(platform.python_version()))
+
 			self.urlretrieve(urllib.request.urlopen(request,context=context), self._source_zip)
 			# add additional checks on file size being non-zero
 			if self._verbose: print("Successfully downloaded update zip")
@@ -1375,26 +1385,26 @@ class Singleton_updater(object):
 
 		if "last_check" not in self._json or self._json["last_check"] == "":
 			return True
-		else:
-			now = datetime.now()
-			last_check = datetime.strptime(self._json["last_check"],
-										"%Y-%m-%d %H:%M:%S.%f")
-			next_check = last_check
-			offset = timedelta(
-				days=self._check_interval_days + 30*self._check_interval_months,
-				hours=self._check_interval_hours,
-				minutes=self._check_interval_minutes
-				)
 
-			delta = (now - offset) - last_check
-			if delta.total_seconds() > 0:
-				if self._verbose:
-					print("{} Updater: Time to check for updates!".format(self._addon))
-				return True
-			else:
-				if self._verbose:
-					print("{} Updater: Determined it's not yet time to check for updates".format(self._addon))
-				return False
+		now = datetime.now()
+		last_check = datetime.strptime(self._json["last_check"],
+									"%Y-%m-%d %H:%M:%S.%f")
+		next_check = last_check
+		offset = timedelta(
+			days=self._check_interval_days + 30*self._check_interval_months,
+			hours=self._check_interval_hours,
+			minutes=self._check_interval_minutes
+			)
+
+		delta = (now - offset) - last_check
+		if delta.total_seconds() > 0:
+			if self._verbose:
+				print("{} Updater: Time to check for updates!".format(self._addon))
+			return True
+
+		if self._verbose:
+			print("{} Updater: Determined it's not yet time to check for updates".format(self._addon))
+		return False
 
 	def get_json_path(self):
 		"""Returns the full path to the JSON state file used by this updater.
