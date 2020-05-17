@@ -1,6 +1,6 @@
 # Blender Addon Updater
 
-With this Python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either GitHub tags or releases.
+With this Python module, developers can create auto-checking for updates with their blender addons as well as one-click version installs. Updates are retrieved using GitHub's, GitLab's, or Bitbucket's code api, so the addon must have it's updated code available on GitHub/GitLab/Bitbucket and be making use of either tags or releases.
 
 ![alt](/images/demo_gif.gif)
 
@@ -567,9 +567,9 @@ For this reason, it is very important to be aware and setup tokens accordingly. 
 - GitLab: Supported through Personal Tokens
   - Tokens are not needed and should not be used for public repositories
   - Personal access tokens can be [viewed and created here](https://gitlab.com/profile/personal_access_tokens)
-  - These tokens require an expiration date. Once expired any existing installs using the token will no longer successfully pull updates from private repositories. Therefore, if a user has the updater-enabled addon installed but leverages an expired token, they will not be able to update.
-  - Tokens should be enabled for api access only, to limit uses
-  - This token is *user* specific, *not* repository specific; therefore, anyone with the token is able to push, pull, merge, and everything else that is possible from the api to any repository this user has access to. **For this reason,** it is very important to **NOT USE YOUR PERSONAL ACCOUNT** to create a token. Rather, you are better suited to create a secondary "machine user" account which is used only for the purpose of api access. This 'user' should be assigned to the project as a "reporter" for minimum required capabilities.
+  - Consider whether to provide an expiration date. Once expired any existing installs using the token will no longer successfully pull updates from private repositories. Therefore, if a user has the updater-enabled addon installed but leverages an expired token, they will not be able to update.
+  - Tokens should be enabled for api *read access* only, to limit (mis) uses.
+  - This token is *user* specific, *not* repository specific; therefore, anyone with the token is able to read anything via the GitLab api to any repository this user has access to. **For this reason,** it is very important to **NOT USE YOUR PERSONAL ACCOUNT** to create a token. Rather, you are better suited to create a secondary "machine user" account which is used only for the purpose of api access. This 'user' should be assigned to the project as a "reporter" for minimum required capabilities.
   - Use at own risk and ensure to do according research to ensure there are no security risks or possible backlashes due to providing updating for private repositories on GitLab.
   - When in doubt, you can always revoke a personal token - but once revoked, it cannot be re-enabled and thus any existing installs using the token will no longer be able to pull from the private repo unless manually updating the addon themselves.
   - These are only recommendations. As indicated by the GPL license, software is provided as-is and developers are not held liable to mishandling which results in unwanted consequences such as malicious exploit of a badly implemented private repository updating.
