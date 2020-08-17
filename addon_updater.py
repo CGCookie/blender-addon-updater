@@ -169,7 +169,7 @@ class Singleton_updater(object):
 		try:
 			self._auto_reload_post_update = bool(value)
 		except:
-			raise ValueError("Must be a boolean value")
+			raise ValueError("auto_reload_post_update must be a boolean value")
 
 	@property
 	def backup_current(self):
@@ -354,7 +354,7 @@ class Singleton_updater(object):
 		try:
 			self._repo = str(value)
 		except:
-			raise ValueError("User must be a string")
+			raise ValueError("repo must be a string value")
 
 	@property
 	def select_link(self):
