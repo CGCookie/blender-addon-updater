@@ -22,6 +22,7 @@ Implements draw calls, popups, and operators that use the addon_updater.
 """
 
 import os
+import traceback
 
 import bpy
 from bpy.app.handlers import persistent
@@ -33,10 +34,12 @@ try:
 except Exception as e:
 	print("ERROR INITIALIZING UPDATER")
 	print(str(e))
+	traceback.print_exc()
 	class Singleton_updater_none(object):
 		def __init__(self):
 			self.addon = None
 			self.verbose = False
+			self.print_traces = True
 			self.invalidupdater = True # used to distinguish bad install
 			self.error = None
 			self.error_msg = None
@@ -291,6 +294,7 @@ class addon_updater_update_now(bpy.types.Operator):
 			except Exception as e:
 				updater._error = "Error trying to run update"
 				updater._error_msg = str(e)
+				if updater.print_traces: traceback.print_exc()
 				atr = addon_updater_install_manually.bl_idname.split(".")
 				getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 		elif updater.update_ready == None:
