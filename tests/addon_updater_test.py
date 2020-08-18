@@ -29,14 +29,14 @@ How to run inside blender interface (script editor):
 
 How to run from command line (run blender from within tests folder)
 	# Run all tests
-	blender -background -python addon_updater_test.py
+	blender -b -P addon_updater_test.py
 
 	# Run all tests within single class
-	blender -b -y addon_updater_test.py -- TestEngines
+	blender -b -P addon_updater_test.py -- TestEngines
 
 	# Run specific test
-	blender -b -y addon_updater_test.py -- TestEngines.test_gitlab
-	blender -b -y addon_updater_test.py -- TestFunctions.test_version_tuple_from_text
+	blender -b -P addon_updater_test.py -- TestEngines.test_gitlab
+	blender -b -P addon_updater_test.py -- TestFunctions.test_version_tuple_from_text
 
 Note! Running multiple tests in succession could lead to API rate limitations,
 which will manifest primarily as errors in the TestEngines unit tests.
@@ -210,8 +210,16 @@ class TestFunctions(unittest.TestCase):
 			res = updater.version_tuple_from_text(case[0])
 			self.assertEqual(res, case[1])
 
+	def test_reload_callbacl(self):
+		"""Test the reload function which disables and re-enables addon"""
+		updater = addon_updater.Singleton_updater()
+		updater.auto_reload_post_update = True
+		updater._addon_package = "blender-addon-updater-github" # test override
+		updater.reload_addon() # assert no error
+
 
 if __name__ == '__main__':
+	print("Running Updater Tests")
 	if QUIT_ON_COMPLETE:
 		# Running in command line, exclude blender startup args
 		test_args = (sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])

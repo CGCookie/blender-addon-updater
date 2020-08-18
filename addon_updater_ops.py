@@ -1470,6 +1470,11 @@ def register(bl_info):
 	# Function defined above, customize as appropriate per repository; not required
 	updater.select_link = select_link_function
 
+	# Recommended false to encourage blender restarts on update completion
+	# Setting this option to True is NOT as stable as false (could cause
+	# blender crashes)
+	updater.auto_reload_post_update = True
+
 	# The register line items for all operators/panels
 	# If using bpy.utils.register_module(__name__) to register elsewhere
 	# in the addon, delete these lines (also from unregister)
