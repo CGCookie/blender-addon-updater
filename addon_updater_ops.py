@@ -1473,7 +1473,7 @@ def register(bl_info):
 	# Recommended false to encourage blender restarts on update completion
 	# Setting this option to True is NOT as stable as false (could cause
 	# blender crashes)
-	updater.auto_reload_post_update = True
+	updater.auto_reload_post_update = False
 
 	# The register line items for all operators/panels
 	# If using bpy.utils.register_module(__name__) to register elsewhere
