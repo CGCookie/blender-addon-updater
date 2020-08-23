@@ -39,7 +39,7 @@ except Exception as e:
 		def __init__(self):
 			self.addon = None
 			self.verbose = False
-			self.print_traces = True
+			self.use_print_traces = True
 			self.invalidupdater = True # used to distinguish bad install
 			self.error = None
 			self.error_msg = None
@@ -294,7 +294,7 @@ class addon_updater_update_now(bpy.types.Operator):
 			except Exception as e:
 				updater._error = "Error trying to run update"
 				updater._error_msg = str(e)
-				if updater.print_traces: traceback.print_exc()
+				updater.print_trace()
 				atr = addon_updater_install_manually.bl_idname.split(".")
 				getattr(getattr(bpy.ops, atr[0]),atr[1])('INVOKE_DEFAULT')
 		elif updater.update_ready == None:
