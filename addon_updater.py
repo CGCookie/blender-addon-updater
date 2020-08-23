@@ -26,6 +26,7 @@ https://github.com/CGCookie/blender-addon-updater
 __version__ = "1.0.8"
 
 import errno
+import traceback
 import platform
 import ssl
 import urllib.request
@@ -101,6 +102,7 @@ class Singleton_updater(object):
 
 		# runtime variables, initial conditions
 		self._verbose = False
+		self._use_print_traces = True
 		self._fake_install = False
 		self._async_checking = False  # only true when async daemon started
 		self._update_ready = None
@@ -136,6 +138,13 @@ class Singleton_updater(object):
 		self._select_link = select_link_function
 
 
+	# called from except blocks, to print the exception details,
+	# according to the use_print_traces option
+	def print_trace():
+		if self._use_print_traces:
+			traceback.print_exc()
+
+
 	# -------------------------------------------------------------------------
 	# Getters and setters
 	# -------------------------------------------------------------------------
@@ -169,7 +178,7 @@ class Singleton_updater(object):
 		try:
 			self._auto_reload_post_update = bool(value)
 		except:
-			raise ValueError("Must be a boolean value")
+			raise ValueError("auto_reload_post_update must be a boolean value")
 
 	@property
 	def backup_current(self):
@@ -354,7 +363,7 @@ class Singleton_updater(object):
 		try:
 			self._repo = str(value)
 		except:
-			raise ValueError("User must be a string")
+			raise ValueError("repo must be a string value")
 
 	@property
 	def select_link(self):
@@ -380,6 +389,7 @@ class Singleton_updater(object):
 				os.makedirs(value)
 			except:
 				if self._verbose: print("Error trying to staging path")
+				self.print_trace()
 				return
 		self._updater_path = value
 
@@ -448,6 +458,16 @@ class Singleton_updater(object):
 				print(self._addon+" updater verbose is enabled")
 		except:
 			raise ValueError("Verbose must be a boolean value")
+
+	@property
+	def use_print_traces(self):
+		return self._use_print_traces
+	@use_print_traces.setter
+	def use_print_traces(self, value):
+		try:
+			self._use_print_traces = bool(value)
+		except:
+			raise ValueError("use_print_traces must be a boolean value")
 
 	@property
 	def version_max_update(self):
@@ -658,6 +678,7 @@ class Singleton_updater(object):
 				self._error = "HTTP error"
 				self._error_msg = str(e.code)
 				print(self._error, self._error_msg)
+			self.print_trace()
 			self._update_ready = None
 		except urllib.error.URLError as e:
 			reason = str(e.reason)
@@ -669,6 +690,7 @@ class Singleton_updater(object):
 				self._error = "URL error, check internet connection"
 				self._error_msg = reason
 				print(self._error, self._error_msg)
+			self.print_trace()
 			self._update_ready = None
 			return None
 		else:
@@ -690,6 +712,7 @@ class Singleton_updater(object):
 				self._error_msg = str(e.reason)
 				self._update_ready = None
 				print(self._error, self._error_msg)
+				self.print_trace()
 				return None
 		else:
 			return None
@@ -710,11 +733,13 @@ class Singleton_updater(object):
 				os.makedirs(local)
 			except:
 				error = "failed to remove existing staging directory"
+				self.print_trace()
 		else:
 			try:
 				os.makedirs(local)
 			except:
 				error = "failed to create staging directory"
+				self.print_trace()
 
 		if error != None:
 			if self._verbose: print("Error: Aborting update, "+error)
@@ -753,6 +778,7 @@ class Singleton_updater(object):
 			if self._verbose:
 				print("Error retrieving download, bad link?")
 				print("Error: {}".format(e))
+			self.print_trace()
 			return False
 
 
@@ -770,6 +796,7 @@ class Singleton_updater(object):
 				shutil.rmtree(local)
 			except:
 				if self._verbose:print("Failed to removed previous backup folder, contininuing")
+				self.print_trace()
 
 		# remove the temp folder; shouldn't exist but could if previously interrupted
 		if os.path.isdir(tempdest):
@@ -777,6 +804,7 @@ class Singleton_updater(object):
 				shutil.rmtree(tempdest)
 			except:
 				if self._verbose:print("Failed to remove existing temp folder, contininuing")
+				self.print_trace()
 		# make the full addon copy, which temporarily places outside the addon folder
 		if self._backup_ignore_patterns != None:
 			shutil.copytree(
@@ -829,7 +857,7 @@ class Singleton_updater(object):
 			if self._verbose:
 				print("Source folder cleared")
 		except:
-			pass
+			self.print_trace()
 
 		# Create parent directories if needed, would not be relevant unless
 		# installing addon into another location or via an addon manager
@@ -838,6 +866,7 @@ class Singleton_updater(object):
 		except Exception as err:
 			print("Error occurred while making extract dir:")
 			print(str(err))
+			self.print_trace()
 			self._error = "Install failed"
 			self._error_msg = "Failed to make extract directory"
 			return -1
@@ -879,6 +908,7 @@ class Singleton_updater(object):
 					if exc.errno != errno.EEXIST:
 						self._error = "Install failed"
 						self._error_msg = "Could not create folder from zip"
+						self.print_trace()
 						return -1
 			else:
 				with open(os.path.join(outdir, subpath), "wb") as outfile:
@@ -978,6 +1008,7 @@ class Singleton_updater(object):
 			except Exception as err:
 				error = "failed to create clean existing addon folder"
 				print(error, str(err))
+				self.print_trace()
 
 		# Walk through the base addon folder for rules on pre-removing
 		# but avoid removing/altering backup and updater file
@@ -993,6 +1024,7 @@ class Singleton_updater(object):
 							if self._verbose: print("Pre-removed file "+file)
 						except OSError:
 							print("Failed to pre-remove "+file)
+							self.print_trace()
 
 		# Walk through the temp addon sub folder for replacements
 		# this implements the overwrite rules, which apply after
@@ -1036,6 +1068,7 @@ class Singleton_updater(object):
 		except:
 			error = "Error: Failed to remove existing staging directory, consider manually removing "+staging_path
 			if self._verbose: print(error)
+			self.print_trace()
 
 
 	def reload_addon(self):
@@ -1430,6 +1463,7 @@ class Singleton_updater(object):
 		except Exception as err:
 			print("Other OS error occurred while trying to rename old JSON")
 			print(err)
+			self.print_trace()
 		return json_path
 
 	def set_updater_json(self):
@@ -1530,6 +1564,7 @@ class Singleton_updater(object):
 		except Exception as exception:
 			print("Checking for update error:")
 			print(exception)
+			self.print_trace()
 			if not self._error:
 				self._update_ready = False
 				self._update_version = None
