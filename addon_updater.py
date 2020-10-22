@@ -23,7 +23,7 @@ https://github.com/CGCookie/blender-addon-updater
 
 """
 
-__version__ = "1.0.8"
+__version__ = "1.0.9"
 
 import errno
 import traceback
@@ -138,9 +138,8 @@ class Singleton_updater(object):
 		self._select_link = select_link_function
 
 
-	# called from except blocks, to print the exception details,
-	# according to the use_print_traces option
-	def print_trace():
+	def print_trace(self):
+		"""Print handled exception details when use_print_traces is set"""
 		if self._use_print_traces:
 			traceback.print_exc()
 

@@ -361,7 +361,7 @@ class addon_updater_update_target(bpy.types.Operator):
 		if updater.invalidupdater == True:
 			layout.label(text="Updater error")
 			return
-		split = layout_split(layout, factor=0.66)
+		split = layout_split(layout, factor=0.5)
 		subcol = split.column()
 		subcol.label(text="Select install version")
 		subcol = split.column()
@@ -1338,7 +1338,8 @@ def register(bl_info):
 	# choose your own username, must match website (not needed for GitLab)
 	updater.user = "cgcookie"
 
-	# choose your own repository, must match git name
+	# choose your own repository, must match git name for GitHUb and Bitbucket,
+	# for GitLab use project ID (numbers only)
 	updater.repo = "blender-addon-updater"
 
 	#updater.addon = # define at top of module, MUST be done first

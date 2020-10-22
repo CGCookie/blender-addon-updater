@@ -210,7 +210,7 @@ class TestFunctions(unittest.TestCase):
 			res = updater.version_tuple_from_text(case[0])
 			self.assertEqual(res, case[1])
 
-	def test_reload_callbacl(self):
+	def test_reload_callback(self):
 		"""Test the reload function which disables and re-enables addon"""
 		updater = addon_updater.Singleton_updater()
 		updater.auto_reload_post_update = True
