@@ -142,7 +142,7 @@ class TestEngines(unittest.TestCase):
 		self.assertTrue(len(res)>0)
 
 		# Test the end to end get tag names request
-		tags = updater.get_tag_names()
+		tags = updater._get_tag_names()
 		self.assertTrue(len(tags)>0)
 		# print("Found {} tags".format(len(tags)))
 
