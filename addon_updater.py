@@ -20,7 +20,6 @@
 """
 See documentation for usage
 https://github.com/CGCookie/blender-addon-updater
-
 """
 
 __version__ = "1.0.10"
@@ -761,7 +760,8 @@ class Singleton_updater(object):
 				self.print_trace()
 
 		if error is not None:
-			if self._verbose: print("Error: Aborting update, "+error)
+			if self._verbose:
+				print("Error: Aborting update, "+error)
 			self._error = "Update aborted, staging path error"
 			self._error_msg = "Error: {}".format(error)
 			return False
