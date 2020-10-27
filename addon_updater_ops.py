@@ -369,10 +369,10 @@ class addon_updater_update_target(bpy.types.Operator):
 			layout.label(text="Updater error")
 			return
 		split = layout_split(layout, factor=0.5)
-		subcol = split.column()
-		subcol.label(text="Select install version")
-		subcol = split.column()
-		subcol.prop(self, "target", text="")
+		sub_col = split.column()
+		sub_col.label(text="Select install version")
+		sub_col = split.column()
+		sub_col.prop(self, "target", text="")
 
 	def execute(self, context):
 
@@ -976,33 +976,33 @@ def update_settings_ui(self, context, element=None):
 			return
 
 	split = layout_split(row, factor=0.4)
-	subcol = split.column()
-	subcol.prop(settings, "auto_check_update")
-	subcol = split.column()
+	sub_col = split.column()
+	sub_col.prop(settings, "auto_check_update")
+	sub_col = split.column()
 
 	if not settings.auto_check_update:
-		subcol.enabled = False
-	subrow = subcol.row()
-	subrow.label(text="Interval between checks")
-	subrow = subcol.row(align=True)
-	checkcol = subrow.column(align=True)
-	checkcol.prop(settings, "updater_intrval_months")
-	checkcol = subrow.column(align=True)
-	checkcol.prop(settings, "updater_intrval_days")
-	checkcol = subrow.column(align=True)
+		sub_col.enabled = False
+	sub_row = sub_col.row()
+	sub_row.label(text="Interval between checks")
+	sub_row = sub_col.row(align=True)
+	check_col = sub_row.column(align=True)
+	check_col.prop(settings, "updater_interval_months")
+	check_col = sub_row.column(align=True)
+	check_col.prop(settings, "updater_interval_days")
+	check_col = sub_row.column(align=True)
 
 	# Consider un-commenting for local dev (e.g. to set shorter intervals)
-	# checkcol.prop(settings,"updater_intrval_hours")
-	# checkcol = subrow.column(align=True)
-	# checkcol.prop(settings,"updater_intrval_minutes")
+	# check_col.prop(settings,"updater_interval_hours")
+	# check_col = sub_row.column(align=True)
+	# check_col.prop(settings,"updater_interval_minutes")
 
 	# checking / managing updates
 	row = box.row()
 	col = row.column()
 	if updater.error is not None:
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		if "ssl" in updater.error_msg.lower():
 			split.enabled = True
@@ -1012,7 +1012,7 @@ def update_settings_ui(self, context, element=None):
 			split.enabled = False
 			split.operator(addon_updater_check_now.bl_idname,
 						text=updater.error)
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
@@ -1021,14 +1021,14 @@ def update_settings_ui(self, context, element=None):
 		col.scale_y = 2
 		col.operator(addon_updater_check_now.bl_idname)
 	elif updater.update_ready is None:  # async is running
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.enabled = False
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="Checking...")
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_end_background.bl_idname,
 						text="", icon="X")
@@ -1037,25 +1037,25 @@ def update_settings_ui(self, context, element=None):
 			len(updater.tags) == len(updater.include_branch_list) and not \
 			updater.manual_only:
 		# no releases found, but still show the appropriate branch
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_update_now.bl_idname,
 					text="Update directly to " + str(updater.include_branch_list[0]))
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
 
 	elif updater.update_read and not updater.manual_only:
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_update_now.bl_idname,
 					text="Update now to "+str(updater.update_version))
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
@@ -1065,14 +1065,14 @@ def update_settings_ui(self, context, element=None):
 		col.operator("wm.url_open",
 				text="Download "+str(updater.update_version)).url = updater.website
 	else:  # i.e. that updater.update_ready == False
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.enabled = False
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="Addon is up to date")
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
@@ -1087,24 +1087,24 @@ def update_settings_ui(self, context, element=None):
 		else:
 			col.operator(addon_updater_update_target.bl_idname,
 					text="Reinstall / install old version")
-		lastdate = "none found"
-		backuppath = os.path.join(updater.stage_path, "backup")
-		if "backup_date" in updater.json and os.path.isdir(backuppath):
+		last_date = "none found"
+		backup_path = os.path.join(updater.stage_path, "backup")
+		if "backup_date" in updater.json and os.path.isdir(backup_path):
 			if updater.json["backup_date"] == "":
-				lastdate = "Date not found"
+				last_date = "Date not found"
 			else:
-				lastdate = updater.json["backup_date"]
-		backuptext = "Restore addon backup ({})".format(lastdate)
-		col.operator(addon_updater_restore_backup.bl_idname, text=backuptext)
+				last_date = updater.json["backup_date"]
+		backup_text = "Restore addon backup ({})".format(last_date)
+		col.operator(addon_updater_restore_backup.bl_idname, text=backup_text)
 
 	row = box.row()
 	row.scale_y = 0.7
-	lastcheck = updater.json["last_check"]
+	last_check = updater.json["last_check"]
 	if updater.error is not None and updater.error_msg is not None:
 		row.label(text=updater.error_msg)
-	elif lastcheck != "" and lastcheck is not None:
-		lastcheck = lastcheck[0: lastcheck.index(".")]
-		row.label(text="Last update check: " + lastcheck)
+	elif last_check is not "" and last_check is not None:
+		last_check = last_check[0: last_check.index(".")]
+		row.label(text="Last update check: " + last_check)
 	else:
 		row.label(text="Last update check: Never")
 
@@ -1143,9 +1143,9 @@ def update_settings_ui_condensed(self, context, element=None):
 
 	col = row.column()
 	if updater.error is not None:
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		if "ssl" in updater.error_msg.lower():
 			split.enabled = True
@@ -1155,7 +1155,7 @@ def update_settings_ui_condensed(self, context, element=None):
 			split.enabled = False
 			split.operator(addon_updater_check_now.bl_idname,
 						text=updater.error)
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
@@ -1164,13 +1164,13 @@ def update_settings_ui_condensed(self, context, element=None):
 		col.scale_y = 2
 		col.operator(addon_updater_check_now.bl_idname)
 	elif updater.update_ready is None:  # async is running
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.enabled = False
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname, text="Checking...")
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_end_background.bl_idname, text="", icon="X")
 
@@ -1178,25 +1178,25 @@ def update_settings_ui_condensed(self, context, element=None):
 			len(updater.tags) == len(updater.include_branch_list) and not \
 			updater.manual_only:
 		# no releases found, but still show the appropriate branch
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_update_now.bl_idname,
 					text="Update directly to " + str(updater.include_branch_list[0]))
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
 
 	elif updater.update_ready and not updater.manual_only:
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_update_now.bl_idname,
 					text="Update now to "+str(updater.update_version))
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
@@ -1206,14 +1206,14 @@ def update_settings_ui_condensed(self, context, element=None):
 		col.operator("wm.url_open",
 				text="Download "+str(updater.update_version)).url = updater.website
 	else:  # i.e. that updater.update_ready == False
-		subcol = col.row(align=True)
-		subcol.scale_y = 1
-		split = subcol.split(align=True)
+		sub_col = col.row(align=True)
+		sub_col.scale_y = 1
+		split = sub_col.split(align=True)
 		split.enabled = False
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="Addon is up to date")
-		split = subcol.split(align=True)
+		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(addon_updater_check_now.bl_idname,
 						text="", icon="FILE_REFRESH")
@@ -1223,12 +1223,12 @@ def update_settings_ui_condensed(self, context, element=None):
 
 	row = element.row()
 	row.scale_y = 0.7
-	lastcheck = updater.json["last_check"]
+	last_check = updater.json["last_check"]
 	if updater.error is not None and updater.error_msg is not None:
 		row.label(text=updater.error_msg)
-	elif lastcheck != "" and lastcheck is not None:
-		lastcheck = lastcheck[0: lastcheck.index(".")]
-		row.label(text="Last check: " + lastcheck)
+	elif last_check != "" and last_check is not None:
+		last_check = last_check[0: last_check.index(".")]
+		row.label(text="Last check: " + last_check)
 	else:
 		row.label(text="Last check: Never")
 
@@ -1281,7 +1281,7 @@ def skip_tag_function(self, tag):
 def select_link_function(self, tag):
 	"""Only customize if trying to leverage "attachments" in *GitHub* releases
 
-	A way to select from one or multiple attached donwloadable files from the
+	A way to select from one or multiple attached downloadable files from the
 	server, instead of downloading the default release/tag source code
 	"""
 
@@ -1396,7 +1396,7 @@ def register(bl_info):
 	# if you want to automatically update resources/non py files, add them
 	# as a part of the pattern list below so they will always be overwritten by an
 	# update. If a pattern file is not found in new update, no action is taken
-	# This does NOT detele anything, only defines what is allowed to be overwritten
+	# This does NOT delete anything, only defines what is allowed to be overwritten
 	updater.overwrite_patterns = ["*.png", "*.jpg", "README.md", "LICENSE.txt"]
 	# updater.overwrite_patterns = []
 	# other examples:
