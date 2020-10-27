@@ -1260,7 +1260,7 @@ def skip_tag_function(self, tag):
 
 	# function converting string to tuple, ignoring e.g. leading 'v'
 	tupled = self.version_tuple_from_text(tag["name"])
-	if type(tupled) != type((1, 2, 3)):
+	if not isinstance(tupled, tuple):
 		return True
 
 	# select the min tag version - change tuple accordingly
