@@ -72,7 +72,7 @@ class Singleton_updater(object):
 		self._use_releases = False
 		self._include_branches = False
 		self._include_branch_list = ['master']
-		self._include_branch_autocheck = False
+		self._include_branch_auto_check = False
 		self._manual_only = False
 		self._version_min_update = None
 		self._version_max_update = None
@@ -124,8 +124,8 @@ class Singleton_updater(object):
 		# properties to have
 
 		# to verify a valid import, in place of placeholder import
-		self.showpopups = True # used in UI to show or not show update popups
-		self.invalidupdater = False
+		self.show_popups = True  # used in UI to show or not show update popups
+		self.invalid_updater = False
 
 		# pre-assign basic select-link function
 		def select_link_function(self, tag):
@@ -265,12 +265,12 @@ class Singleton_updater(object):
 	# not currently used
 	@property
 	def include_branch_autocheck(self):
-		return self._include_branch_autocheck
+		return self._include_branch_auto_check
 
 	@include_branch_autocheck.setter
 	def include_branch_autocheck(self, value):
 		try:
-			self._include_branch_autocheck = bool(value)
+			self._include_branch_auto_check = bool(value)
 		except:
 			raise ValueError("include_branch_autocheck must be a boolean value")
 
