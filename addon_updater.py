@@ -195,7 +195,7 @@ class SingletonUpdater:
 		if value is None:
 			self._backup_ignore_patterns = None
 			return
-		elif type(value) is not type(['list']):
+		elif not isinstance(value, list):
 			raise ValueError("Backup pattern must be in list format")
 		else:
 			self._backup_ignore_patterns = value
@@ -258,7 +258,7 @@ class SingletonUpdater:
 
 	@fake_install.setter
 	def fake_install(self, value):
-		if type(value) is not type(False):
+		if not isinstance(value, bool):
 			raise ValueError("fake_install must be a boolean value")
 		self._fake_install = bool(value)
 
@@ -283,7 +283,7 @@ class SingletonUpdater:
 		try:
 			if value is None:
 				self._include_branch_list = ['master']
-			elif type(value) is not type(['master']) or value is []:
+			elif not isinstance(value, list) or len(value) == 0:
 				raise ValueError("include_branch_list should be a list of valid branches")
 			else:
 				self._include_branch_list = value
@@ -303,7 +303,7 @@ class SingletonUpdater:
 
 	@property
 	def json(self):
-		if self._json == {}:
+		if len(self._json) == 0:
 			self.set_updater_json()
 		return self._json
 
@@ -332,7 +332,7 @@ class SingletonUpdater:
 	def overwrite_patterns(self, value):
 		if value is None:
 			self._overwrite_patterns = ["*.py", "*.pyc"]
-		elif type(value) is not type(['']):
+		elif not isinstance(value, list):
 			raise ValueError("overwrite_patterns needs to be in a list format")
 		else:
 			self._overwrite_patterns = value
@@ -355,8 +355,8 @@ class SingletonUpdater:
 	@remove_pre_update_patterns.setter
 	def remove_pre_update_patterns(self, value):
 		if value is None:
-			self._remove_pre_update_patterns = []
-		elif type(value) is not type(['']):
+			self._remove_pre_update_patterns = list()
+		elif not isinstance(value, list):
 			raise ValueError("remove_pre_update_patterns needs to be in a list format")
 		else:
 			self._remove_pre_update_patterns = value
@@ -414,9 +414,9 @@ class SingletonUpdater:
 
 	@property
 	def tags(self):
-		if self._tags is []:
+		if len(self._tags) == 0:
 			return []
-		tag_names = []
+		tag_names = list()
 		for tag in self._tags:
 			tag_names.append(tag["name"])
 		return tag_names
@@ -470,7 +470,7 @@ class SingletonUpdater:
 		try:
 			self._verbose = bool(value)
 			if self._verbose:
-				print(self._addon+" updater verbose is enabled")
+				print(self._addon + " updater verbose is enabled")
 		except:
 			raise ValueError("Verbose must be a boolean value")
 
@@ -494,7 +494,7 @@ class SingletonUpdater:
 		if value is None:
 			self._version_max_update = None
 			return
-		if type(value) is not type((1, 2, 3)):
+		if not isinstance(value, tuple):
 			raise ValueError("Version maximum must be a tuple")
 		for subvalue in value:
 			if type(subvalue) is not int:
@@ -510,7 +510,7 @@ class SingletonUpdater:
 		if value is None:
 			self._version_min_update = None
 			return
-		if type(value) is not type((1, 2, 3)):
+		if not isinstance(value, tuple):
 			raise ValueError("Version minimum must be a tuple")
 		for subvalue in value:
 			if type(subvalue) != int:
@@ -642,7 +642,7 @@ class SingletonUpdater:
 			if self._verbose:
 				branch = self._include_branch_list[0]
 				print("{} branch found, no releases".format(branch), self._tags[0])
-		elif (len(self._tags)-len(self._include_branch_list) == 0 and self._include_branches) \
+		elif (len(self._tags) - len(self._include_branch_list) == 0 and self._include_branches) \
 				or (len(self._tags) == 0 and not self._include_branches) \
 				and self._prefiltered_tag_count > 0:
 			self._tag_latest = None
@@ -793,7 +793,7 @@ class SingletonUpdater:
 			# Always set user agent
 			request.add_header('User-Agent', "Python/" + str(platform.python_version()))
 
-			self.urlretrieve(urllib.request.urlopen(request, context=context), self._source_zip)
+			self.url_retrieve(urllib.request.urlopen(request, context=context), self._source_zip)
 			# add additional checks on file size being non-zero
 			if self._verbose:
 				print("Successfully downloaded update zip")
@@ -857,7 +857,7 @@ class SingletonUpdater:
 			print("Backing up current addon folder")
 		backuploc = os.path.join(self._updater_path, "backup")
 		tempdest = os.path.join(self._addon_root, os.pardir,
-						self._addon+"_updater_backup_temp")
+						self._addon + "_updater_backup_temp")
 		tempdest = os.path.abspath(tempdest)
 
 		# make the copy
@@ -1144,8 +1144,8 @@ class SingletonUpdater:
 		self._error_msg = None
 
 	# custom urlretrieve implementation
-	def urlretrieve(self, url_file, filepath):
-		chunk = 1024*8
+	def url_retrieve(self, url_file, filepath):
+		chunk = 1024 * 8
 		f = open(filepath, "wb")
 		while 1:
 			data = url_file.read(chunk)
@@ -1153,7 +1153,7 @@ class SingletonUpdater:
 				# print("done.")
 				break
 			f.write(data)
-			# print("Read %s bytes"%len(data))
+			# print("Read %s bytes" % len(data))
 		f.close()
 
 	def version_tuple_from_text(self, text):
@@ -1533,7 +1533,7 @@ class SingletonUpdater:
 	def save_updater_json(self):
 		# first save the state
 		if self._update_ready:
-			if type(self._update_version) == type((0, 0, 0)):
+			if isinstance(self._update_version, tuple):
 				self._json["update_ready"] = True
 				self._json["version_text"]["link"] = self._update_link
 				self._json["version_text"]["version"] = self._update_version
