@@ -156,7 +156,7 @@ def register():
 
 	# register the example panel, to show updater buttons
 	for cls in classes:
-		addon_updater_ops.make_annotations(cls) # to avoid blender 2.8 warnings
+		addon_updater_ops.make_annotations(cls)  # to avoid blender 2.8 warnings
 		bpy.utils.register_class(cls)
 
 

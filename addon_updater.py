@@ -594,7 +594,8 @@ class SingletonUpdater:
 
 	def get_tags(self):
 		request = self.form_tags_url()
-		if self._verbose: print("Getting tags from server")
+		if self._verbose:
+			print("Getting tags from server")
 
 		# get all tags, internet call
 		all_tags = self._engine.parse_tags(self.get_api(request), self)
@@ -636,7 +637,8 @@ class SingletonUpdater:
 			if self._verbose:
 				print("No releases or tags found on this repository")
 		elif self._prefiltered_tag_count == 0 and self._include_branches:
-			if not self._error: self._tag_latest = self._tags[0]
+			if not self._error:
+				self._tag_latest = self._tags[0]
 			if self._verbose:
 				branch = self._include_branch_list[0]
 				print("{} branch found, no releases".format(branch), self._tags[0])
@@ -924,15 +926,15 @@ class SingletonUpdater:
 		for name in zfile.namelist():
 			if zsep not in name:
 				continue
-			top_folder = name[:name.index(zsep)+1]
+			top_folder = name[:name.index(zsep) + 1]
 			if name == top_folder + zsep:
 				continue  # skip top level folder
-			subpath = name[name.index(zsep)+1:]
+			sub_path = name[name.index(zsep)+1:]
 			if name.endswith(zsep):
 				try:
-					os.mkdir(os.path.join(outdir, subpath))
+					os.mkdir(os.path.join(outdir, sub_path))
 					if self._verbose:
-						print("Extract - mkdir: ", os.path.join(outdir, subpath))
+						print("Extract - mkdir: ", os.path.join(outdir, sub_path))
 				except OSError as exc:
 					if exc.errno != errno.EEXIST:
 						self._error = "Install failed"
@@ -940,11 +942,11 @@ class SingletonUpdater:
 						self.print_trace()
 						return -1
 			else:
-				with open(os.path.join(outdir, subpath), "wb") as outfile:
+				with open(os.path.join(outdir, sub_path), "wb") as outfile:
 					data = zfile.read(name)
 					outfile.write(data)
 					if self._verbose:
-						print("Extract - create:", os.path.join(outdir, subpath))
+						print("Extract - create:", os.path.join(outdir, sub_path))
 
 		if self._verbose:
 			print("Extracted source")
@@ -982,7 +984,7 @@ class SingletonUpdater:
 
 		# merge code with running addon directory, using blender default behavior
 		# plus any modifiers indicated by user (e.g. force remove/keep)
-		self.deepMergeDirectory(self._addon_root, unpath, clean)
+		self.deep_merge_directory(self._addon_root, unpath, clean)
 
 		# Now save the json state
 		#  Change to True, to trigger the handler on other side
@@ -993,7 +995,7 @@ class SingletonUpdater:
 		self._update_ready = False
 		return 0
 
-	def deepMergeDirectory(self, base, merger, clean=False):
+	def deep_merge_directory(self, base, merger, clean=False):
 		"""Merge folder 'merger' into folder 'base' without deleting existing"""
 		if not os.path.exists(base):
 			if self._verbose:
@@ -1094,7 +1096,7 @@ class SingletonUpdater:
 					# file did not previously exist, simply move it over
 					os.rename(srcFile, dest_file)
 					if self._verbose:
-						print("New file "+os.path.basename(dest_file))
+						print("New file " + os.path.basename(dest_file))
 
 		# now remove the temp staging folder and downloaded zip
 		try:

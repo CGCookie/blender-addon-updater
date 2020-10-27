@@ -131,6 +131,7 @@ class AddonUpdaterInstallPopup(bpy.types.Operator):
 		default=False,
 		options={'HIDDEN'}
 	)
+
 	ignore_enum = bpy.props.EnumProperty(
 		name="Process update",
 		description="Decide to install, ignore, or defer new addon update",
@@ -342,7 +343,7 @@ class AddonUpdaterUpdateTarget(bpy.types.Operator):
 		name="Target version to install",
 		description="Select the version to install",
 		items=target_version
-		)
+	)
 
 	# if true, run clean install - ie remove all files before adding new
 	# equivalent to deleting the addon and reinstalling, except the
@@ -401,7 +402,7 @@ class AddonUpdaterUpdateTarget(bpy.types.Operator):
 class AddonUpdaterInstallManually(bpy.types.Operator):
 	"""As a fallback, direct the user to download the addon manually"""
 	bl_label = "Install update manually"
-	bl_idname = updater.addon+".updater_install_manually"
+	bl_idname = updater.addon + ".updater_install_manually"
 	bl_description = "Proceed to manually install update"
 	bl_options = {'REGISTER', 'INTERNAL'}
 
@@ -409,7 +410,7 @@ class AddonUpdaterInstallManually(bpy.types.Operator):
 		name="Error Occurred",
 		default="",
 		options={'HIDDEN'}
-		)
+	)
 
 	def invoke(self, context, event):
 		return context.window_manager.invoke_popup(self)
@@ -473,7 +474,7 @@ class AddonUpdaterUpdatedSuccessful(bpy.types.Operator):
 		name="Error Occurred",
 		default="",
 		options={'HIDDEN'}
-		)
+	)
 
 	def invoke(self, context, event):
 		return context.window_manager.invoke_props_popup(self, event)
@@ -571,7 +572,7 @@ class AddonUpdaterRestoreBackup(bpy.types.Operator):
 class AddonUpdaterIgnore(bpy.types.Operator):
 	"""Prevent future update notice popups"""
 	bl_label = "Ignore update"
-	bl_idname = updater.addon+".updater_ignore"
+	bl_idname = updater.addon + ".updater_ignore"
 	bl_description = "Ignore update to prevent future popups"
 	bl_options = {'REGISTER', 'INTERNAL'}
 
@@ -596,7 +597,7 @@ class AddonUpdaterIgnore(bpy.types.Operator):
 class AddonUpdaterEndBackground(bpy.types.Operator):
 	"""Stop checking for update in the background"""
 	bl_label = "End background check"
-	bl_idname = updater.addon+".end_background_check"
+	bl_idname = updater.addon + ".end_background_check"
 	bl_description = "Stop checking for update in the background"
 	bl_options = {'REGISTER', 'INTERNAL'}
 
@@ -878,8 +879,6 @@ def showReloadPopup():
 # -----------------------------------------------------------------------------
 # Example UI integrations
 # -----------------------------------------------------------------------------
-
-
 def update_notice_box_ui(self, context):
 	""" Panel - Update Available for placement at end/beginning of panel
 
@@ -1054,7 +1053,7 @@ def update_settings_ui(self, context, element=None):
 		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(AddonUpdaterUpdateNow.bl_idname,
-					   text="Update now to "+str(updater.update_version))
+					   text="Update now to " + str(updater.update_version))
 		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(AddonUpdaterCheckNow.bl_idname,
@@ -1063,7 +1062,7 @@ def update_settings_ui(self, context, element=None):
 	elif updater.update_ready and updater.manual_only:
 		col.scale_y = 2
 		col.operator("wm.url_open",
-				text="Download "+str(updater.update_version)).url = updater.website
+				text="Download " + str(updater.update_version)).url = updater.website
 	else:  # i.e. that updater.update_ready == False
 		sub_col = col.row(align=True)
 		sub_col.scale_y = 1
@@ -1195,7 +1194,7 @@ def update_settings_ui_condensed(self, context, element=None):
 		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(AddonUpdaterUpdateNow.bl_idname,
-					   text="Update now to "+str(updater.update_version))
+					   text="Update now to " + str(updater.update_version))
 		split = sub_col.split(align=True)
 		split.scale_y = 2
 		split.operator(AddonUpdaterCheckNow.bl_idname,
@@ -1204,7 +1203,7 @@ def update_settings_ui_condensed(self, context, element=None):
 	elif updater.update_ready and updater.manual_only:
 		col.scale_y = 2
 		col.operator("wm.url_open",
-				text="Download "+str(updater.update_version)).url = updater.website
+				text="Download " + str(updater.update_version)).url = updater.website
 	else:  # i.e. that updater.update_ready == False
 		sub_col = col.row(align=True)
 		sub_col.scale_y = 1
