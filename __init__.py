@@ -36,10 +36,10 @@ import bpy
 from . import addon_updater_ops
 
 
-class OBJECT_PT_DemoUpdaterPanel(bpy.types.Panel):
+class DemoUpdaterPanel(bpy.types.Panel):
 	"""Panel to demo popup notice and ignoring functionality"""
 	bl_label = "Updater Demo Panel"
-	bl_idname = "OBJECT_PT_hello"
+	bl_idname = "OBJECT_PT_DemoUpdaterPanel_hello"
 	bl_space_type = 'VIEW_3D'
 	bl_region_type = 'TOOLS' if bpy.app.version < (2, 80) else 'UI'
 	bl_context = "objectmode"
@@ -56,7 +56,6 @@ class OBJECT_PT_DemoUpdaterPanel(bpy.types.Panel):
 		# and if the time interval has passed
 		addon_updater_ops.check_for_update_background()
 
-
 		layout.label(text="Demo Updater Addon")
 		layout.label(text="")
 
@@ -68,7 +67,7 @@ class OBJECT_PT_DemoUpdaterPanel(bpy.types.Panel):
 
 		# could also use your own custom drawing
 		# based on shared variables
-		if addon_updater_ops.updater.update_ready == True:
+		if addon_updater_ops.updater.update_ready:
 			layout.label(text="Custom update message", icon="INFO")
 		layout.label(text="")
 
@@ -88,27 +87,31 @@ class DemoPreferences(bpy.types.AddonPreferences):
 		description="If enabled, auto-check for updates using an interval",
 		default=False,
 		)
-	updater_intrval_months = bpy.props.IntProperty(
+
+	updater_interval_months = bpy.props.IntProperty(
 		name='Months',
 		description="Number of months between checking for updates",
 		default=0,
 		min=0
 		)
-	updater_intrval_days = bpy.props.IntProperty(
+
+	updater_interval_days = bpy.props.IntProperty(
 		name='Days',
 		description="Number of days between checking for updates",
 		default=7,
 		min=0,
 		max=31
 		)
-	updater_intrval_hours = bpy.props.IntProperty(
+
+	updater_interval_hours = bpy.props.IntProperty(
 		name='Hours',
 		description="Number of hours between checking for updates",
 		default=0,
 		min=0,
 		max=23
 		)
-	updater_intrval_minutes = bpy.props.IntProperty(
+
+	updater_interval_minutes = bpy.props.IntProperty(
 		name='Minutes',
 		description="Number of minutes between checking for updates",
 		default=0,
