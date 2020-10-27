@@ -245,10 +245,10 @@ class addon_updater_check_now(bpy.types.Operator):
 
 		updater.set_check_interval(
 			enable=settings.auto_check_update,
-			months=settings.updater_intrval_months,
-			days=settings.updater_intrval_days,
-			hours=settings.updater_intrval_hours,
-			minutes=settings.updater_intrval_minutes)  # optional, if auto_check_update
+			months=settings.updater_interval_months,
+			days=settings.updater_interval_days,
+			hours=settings.updater_interval_hours,
+			minutes=settings.updater_interval_minutes)  # optional, if auto_check_update
 
 		# input is an optional callback function
 		# this function should take a bool input, if true: update ready
