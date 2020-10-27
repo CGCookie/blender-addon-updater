@@ -80,7 +80,7 @@ class TestEngines(unittest.TestCase):
 		self.run_engine_test(updater)
 
 	def test_github(self):
-		"""Test the gitlab updater"""
+		"""Test the Github updater"""
 
 		updater = addon_updater.Singleton_updater()
 		updater.engine = "Github"
@@ -96,7 +96,7 @@ class TestEngines(unittest.TestCase):
 		self.run_engine_test(updater)
 
 	def test_bitbucket(self):
-		"""Test the bitbucket updater"""
+		"""Test the Bitbucket updater"""
 
 		updater = addon_updater.Singleton_updater()
 		updater.engine = "Bitbucket"
@@ -121,14 +121,15 @@ class TestEngines(unittest.TestCase):
 		updater._addon_root = UPDATER_MODULE_DIR
 		updater.verbose = False
 
-		updater.current_version = (1,0,0)
+		updater.current_version = (1, 0, 0)
 		updater.backup_current = False
 		updater.include_branches = True
 		updater.use_releases = False
 
 		# Test raw API call
 		tag_url = updater.form_tags_url()
-		branch_url = updater.form_branch_url("master")
+		_ = updater.form_branch_url("master")
+		# branch_url = updater.form_branch_url("master")
 		# parsed_tag = updater._engine.parse_tags()
 
 		# verify ths raw request doesn't fail
@@ -139,11 +140,11 @@ class TestEngines(unittest.TestCase):
 		# verify and check output of parse request
 		res = updater.get_api(tag_url)
 		self.assertIsNotNone(res)
-		self.assertTrue(len(res)>0)
+		self.assertTrue(len(res) > 0)
 
 		# Test the end to end get tag names request
 		tags = updater._get_tag_names()
-		self.assertTrue(len(tags)>0)
+		self.assertTrue(len(tags) > 0)
 		# print("Found {} tags".format(len(tags)))
 
 		# Grab link to an archive (should be master for all)
@@ -168,7 +169,7 @@ class TestEngines(unittest.TestCase):
 		self.assertTrue(updater._update_ready)
 
 		# Test the synchronous check function, knowing it should have no update
-		updater.current_version = (99,0,0)
+		updater.current_version = (99, 0, 0)
 		updater._update_ready = None
 		updater.check_for_update()
 		self.assertFalse(updater._update_ready)
@@ -195,15 +196,15 @@ class TestFunctions(unittest.TestCase):
 		"""Test tuple extraction examples"""
 
 		updater = addon_updater.Singleton_updater()
-		updater.include_branches = False # otherwise could treat as branch name
+		updater.include_branches = False  # otherwise could treat as branch name
 
 		# structure of: input, expected
 		test_cases = [
-			["0.0.0", (0,0,0)],
-			["v0.0.0", (0,0,0)],
-			["v0.0", (0,0)],
-			["v0.0 beta", (0,0)],
-			["version 1,2,3 beta", (1,2,3)]
+			["0.0.0", (0, 0, 0)],
+			["v0.0.0", (0, 0, 0)],
+			["v0.0", (0, 0)],
+			["v0.0 beta", (0, 0)],
+			["version 1,2,3 beta", (1, 2, 3)]
 		]
 
 		for case in test_cases:
@@ -214,8 +215,8 @@ class TestFunctions(unittest.TestCase):
 		"""Test the reload function which disables and re-enables addon"""
 		updater = addon_updater.Singleton_updater()
 		updater.auto_reload_post_update = True
-		updater._addon_package = "blender-addon-updater-github" # test override
-		updater.reload_addon() # assert no error
+		updater._addon_package = "blender-addon-updater-github"  # test override
+		updater.reload_addon()  # assert no error
 
 
 if __name__ == '__main__':
