@@ -52,7 +52,7 @@ DEFAULT_PER_PAGE = 30  # currently not used
 # -----------------------------------------------------------------------------
 # The main class
 # -----------------------------------------------------------------------------
-class Singleton_updater(object):
+class SingletonUpdater:
 	"""
 	This is the singleton class to reference a copy from,
 	it is the shared module level class
@@ -1637,7 +1637,7 @@ class Singleton_updater(object):
 # -----------------------------------------------------------------------------
 
 
-class BitbucketEngine(object):
+class BitbucketEngine:
 	"""Integration to Bitbucket API for git-formatted repositories"""
 
 	def __init__(self):
@@ -1666,7 +1666,7 @@ class BitbucketEngine(object):
 		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["name"], updater)} for tag in response["values"]]
 
 
-class GithubEngine(object):
+class GithubEngine:
 	"""Integration to Github API"""
 
 	def __init__(self):
@@ -1697,7 +1697,7 @@ class GithubEngine(object):
 		return response
 
 
-class GitlabEngine(object):
+class GitlabEngine:
 	"""Integration to GitLab API"""
 
 	def __init__(self):
@@ -1744,4 +1744,4 @@ class GitlabEngine(object):
 # should be what's imported to other files
 # -----------------------------------------------------------------------------
 
-Updater = Singleton_updater()
+Updater = SingletonUpdater()
