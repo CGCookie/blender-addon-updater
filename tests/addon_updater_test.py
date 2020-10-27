@@ -67,7 +67,7 @@ class TestEngines(unittest.TestCase):
 	def test_gitlab(self):
 		"""Test the gitlab updater"""
 
-		updater = addon_updater.Singleton_updater()
+		updater = addon_updater.SingletonUpdater()
 		updater.engine = "GitLab"
 		updater.private_token = None
 		updater.user = "theduckcow"
@@ -82,7 +82,7 @@ class TestEngines(unittest.TestCase):
 	def test_github(self):
 		"""Test the Github updater"""
 
-		updater = addon_updater.Singleton_updater()
+		updater = addon_updater.SingletonUpdater()
 		updater.engine = "Github"
 		updater.private_token = None
 		updater.user = "cgcookie"
@@ -98,7 +98,7 @@ class TestEngines(unittest.TestCase):
 	def test_bitbucket(self):
 		"""Test the Bitbucket updater"""
 
-		updater = addon_updater.Singleton_updater()
+		updater = addon_updater.SingletonUpdater()
 		updater.engine = "Bitbucket"
 		updater.private_token = None
 		updater.user = "theduckcow"
@@ -195,7 +195,7 @@ class TestFunctions(unittest.TestCase):
 	def test_version_tuple_from_text(self):
 		"""Test tuple extraction examples"""
 
-		updater = addon_updater.Singleton_updater()
+		updater = addon_updater.SingletonUpdater()
 		updater.include_branches = False  # otherwise could treat as branch name
 
 		# structure of: input, expected
@@ -213,7 +213,7 @@ class TestFunctions(unittest.TestCase):
 
 	def test_reload_callback(self):
 		"""Test the reload function which disables and re-enables addon"""
-		updater = addon_updater.Singleton_updater()
+		updater = addon_updater.SingletonUpdater()
 		updater.auto_reload_post_update = True
 		updater._addon_package = "blender-addon-updater-github"  # test override
 		updater.reload_addon()  # assert no error
