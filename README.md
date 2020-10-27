@@ -86,7 +86,7 @@ Included in this repository is an example addon which is integrates the auto-upd
 
     ....
 
-    updater_intrval_minutes = bpy.props.IntProperty(
+    updater_interval_minutes = bpy.props.IntProperty(
         name='Minutes',
         description = "Number of minutes between checking for updates",
         default=0,
@@ -149,7 +149,7 @@ if updater.update_ready == True:
   if res == 0:
     print("Update ran successfully, restart blender")
   else:
-    print("Updater returned "+str(res)+", error occurred")
+    print("Updater returned " + str(res) + ", error occurred")
 elif updater.update_ready == False:
   print("No update available")
 elif updater.update_ready == None:
@@ -160,11 +160,11 @@ elif updater.update_ready == None:
 
 ```
 tag_version = updater.tags[2] # or otherwise select a valid tag
-res = updater.run_update(force=False,revert_tag=None, callback=function_obj)
+res = updater.run_update(force=False, revert_tag=None, callback=function_obj)
 if res == 0:
   print("Update ran successfully, restart blender")
 else:
-  print("Updater returned "+str(res)+", error occurred")
+  print("Updater returned " + str(res) + ", error occurred")
 ```
 
 
@@ -173,11 +173,11 @@ If utilizing updater.include_branches, you can grab the latest release tag by sk
 ```
 n = len(updater.include_branch_list)
 tag_version = updater.tags[n] # or otherwise select a valid tag
-res = updater.run_update(force=False,revert_tag=None, callback=function_obj)
+res = updater.run_update(force=False, revert_tag=None, callback=function_obj)
 if res == 0:
   print("Update ran successfully, restart blender")
 else:
-  print("Updater returned "+str(res)+", error occurred")
+  print("Updater returned " + str(res) + ", error occurred")
 ```
 
 
@@ -515,7 +515,7 @@ To accomplish the mentioned behavior, use the below configuration.
 
 ```
 updater.overwrite_patterns = ["README.md", "custom_icon.png"]
-updater.remove_pre_update_patterns = ["*.py","*.pyc", "default.blend"]
+updater.remove_pre_update_patterns = ["*.py", "*.pyc", "default.blend"]
 ```
 
 Breaking this down, we always specify to overwrite the README and custom_icon.png files explicitly. No need to remove either in pre update since we expect they will be found in the update, and the overwrite patterns ensures they always get overwritten and only those files.
