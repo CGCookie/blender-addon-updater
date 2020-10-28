@@ -220,8 +220,8 @@ class AddonUpdaterInstallPopup(bpy.types.Operator):
 
 # User preference check-now operator
 class AddonUpdaterCheckNow(bpy.types.Operator):
-	bl_label = "Check now for "+updater.addon+" update"
-	bl_idname = updater.addon+".updater_check_now"
+	bl_label = "Check now for " + updater.addon + " update"
+	bl_idname = updater.addon + ".updater_check_now"
 	bl_description = "Check now for an update to the {x} addon".format(
 														x=updater.addon)
 	bl_options = {'REGISTER', 'INTERNAL'}
@@ -321,8 +321,8 @@ class AddonUpdaterUpdateNow(bpy.types.Operator):
 
 
 class AddonUpdaterUpdateTarget(bpy.types.Operator):
-	bl_label = updater.addon+" version target"
-	bl_idname = updater.addon+".updater_update_target"
+	bl_label = updater.addon + " version target"
+	bl_idname = updater.addon + ".updater_update_target"
 	bl_description = "Install a targeted version of the {x} addon".format(
 														x=updater.addon)
 	bl_options = {'REGISTER', 'INTERNAL'}
@@ -466,7 +466,7 @@ class AddonUpdaterInstallManually(bpy.types.Operator):
 class AddonUpdaterUpdatedSuccessful(bpy.types.Operator):
 	"""Addon in place, popup telling user it completed or what went wrong"""
 	bl_label = "Installation Report"
-	bl_idname = updater.addon+".updater_update_successful"
+	bl_idname = updater.addon + ".updater_update_successful"
 	bl_description = "Update installation response"
 	bl_options = {'REGISTER', 'INTERNAL', 'UNDO'}
 
@@ -550,7 +550,7 @@ class AddonUpdaterUpdatedSuccessful(bpy.types.Operator):
 class AddonUpdaterRestoreBackup(bpy.types.Operator):
 	"""Restore addon from backup"""
 	bl_label = "Restore backup"
-	bl_idname = updater.addon+".updater_restore_backup"
+	bl_idname = updater.addon + ".updater_restore_backup"
 	bl_description = "Restore addon from backup"
 	bl_options = {'REGISTER', 'INTERNAL'}
 
