@@ -763,7 +763,7 @@ class SingletonUpdater:
 
 		if error is not None:
 			if self._verbose:
-				print("Error: Aborting update, "+error)
+				print("Error: Aborting update, " + error)
 			self._error = "Update aborted, staging path error"
 			self._error_msg = "Error: {}".format(error)
 			return False
@@ -929,7 +929,7 @@ class SingletonUpdater:
 			top_folder = name[:name.index(zsep) + 1]
 			if name == top_folder + zsep:
 				continue  # skip top level folder
-			sub_path = name[name.index(zsep)+1:]
+			sub_path = name[name.index(zsep) + 1:]
 			if name.endswith(zsep):
 				try:
 					os.mkdir(os.path.join(outdir, sub_path))
