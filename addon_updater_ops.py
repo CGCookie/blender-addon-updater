@@ -833,7 +833,7 @@ def check_for_update_nonthreaded(self, context):
 		self.report({'INFO'}, "No update ready")
 
 
-def showReloadPopup():
+def show_reload_popup():
 	"""For use in register only, to show popup after re-enabling the addon
 
 	Must be enabled by developer
@@ -1499,7 +1499,7 @@ def register(bl_info):
 	# special situation: we just updated the addon, show a popup
 	# to tell the user it worked
 	# should be enclosed in try/catch in case other issues arise
-	showReloadPopup()
+	show_reload_popup()
 
 
 def unregister():
