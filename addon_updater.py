@@ -264,11 +264,11 @@ class SingletonUpdater:
 
 	# not currently used
 	@property
-	def include_branch_autocheck(self):
+	def include_branch_auto_check(self):
 		return self._include_branch_auto_check
 
-	@include_branch_autocheck.setter
-	def include_branch_autocheck(self, value):
+	@include_branch_auto_check.setter
+	def include_branch_auto_check(self, value):
 		try:
 			self._include_branch_auto_check = bool(value)
 		except:
