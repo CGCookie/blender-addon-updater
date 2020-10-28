@@ -115,7 +115,7 @@ class SingletonUpdater:
 		self._updater_path = os.path.join(os.path.dirname(__file__),
 										self._addon + "_updater")
 		self._addon_root = os.path.dirname(__file__)
-		self._json = {}
+		self._json = dict()
 		self._error = None
 		self._error_msg = None
 		self._prefiltered_tag_count = 0
@@ -1186,7 +1186,7 @@ class SingletonUpdater:
 	# called for running check in a background thread
 	def check_for_update_async(self, callback=None):
 
-		if self._json is not None and "update_ready" in self._json and self._json["version_text"] is not {}:
+		if self._json is not None and "update_ready" in self._json and self._json["version_text"] is not dict():
 			if self._json["update_ready"]:
 				self._update_ready = True
 				self._update_link = self._json["version_text"]["link"]
@@ -1369,7 +1369,7 @@ class SingletonUpdater:
 		"""
 		self._json["update_ready"] = False
 		self._json["ignore"] = False  # clear ignore flag
-		self._json["version_text"] = {}
+		self._json["version_text"] = dict()
 
 		if revert_tag is not None:
 			self.set_tag(revert_tag)
@@ -1526,7 +1526,7 @@ class SingletonUpdater:
 				"ignore": False,
 				"just_restored": False,
 				"just_updated": False,
-				"version_text": {}
+				"version_text": dict()
 			}
 			self.save_updater_json()
 
@@ -1539,10 +1539,10 @@ class SingletonUpdater:
 				self._json["version_text"]["version"] = self._update_version
 			else:
 				self._json["update_ready"] = False
-				self._json["version_text"] = {}
+				self._json["version_text"] = dict()
 		else:
 			self._json["update_ready"] = False
-			self._json["version_text"] = {}
+			self._json["version_text"] = dict()
 
 		jpath = self.get_json_path()
 		outf = open(jpath, 'w')
@@ -1556,13 +1556,13 @@ class SingletonUpdater:
 	def json_reset_postupdate(self):
 		self._json["just_updated"] = False
 		self._json["update_ready"] = False
-		self._json["version_text"] = {}
+		self._json["version_text"] = dict()
 		self.save_updater_json()
 
 	def json_reset_restore(self):
 		self._json["just_restored"] = False
 		self._json["update_ready"] = False
-		self._json["version_text"] = {}
+		self._json["version_text"] = dict()
 		self.save_updater_json()
 		self._update_ready = None  # reset so you could check update again
 
