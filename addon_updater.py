@@ -822,7 +822,7 @@ class SingletonUpdater:
 				shutil.rmtree(local)
 			except:
 				if self._verbose:
-					print("Failed to removed previous backup folder, contininuing")
+					print("Failed to removed previous backup folder, continuing")
 				self.print_trace()
 
 		# remove the temp folder; shouldn't exist but could if previously interrupted
@@ -831,7 +831,7 @@ class SingletonUpdater:
 				shutil.rmtree(tempdest)
 			except:
 				if self._verbose:
-					print("Failed to remove existing temp folder, contininuing")
+					print("Failed to remove existing temp folder, continuing")
 				self.print_trace()
 
 		# make the full addon copy, which temporarily places outside the addon folder
