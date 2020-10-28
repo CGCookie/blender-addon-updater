@@ -65,9 +65,9 @@ class SingletonUpdater:
 		self._website = None
 		self._current_version = None
 		self._subfolder_path = None
-		self._tags = []
+		self._tags = list()
 		self._tag_latest = None
-		self._tag_names = []
+		self._tag_names = list()
 		self._latest_release = None
 		self._use_releases = False
 		self._include_branches = False
@@ -83,7 +83,7 @@ class SingletonUpdater:
 
 		# set patterns for what files to overwrite on update
 		self._overwrite_patterns = ["*.py", "*.pyc"]
-		self._remove_pre_update_patterns = []
+		self._remove_pre_update_patterns = list()
 
 		# by default, don't auto enable/disable the addon on update
 		# as it is slightly less stable/won't always fully reload module
@@ -415,7 +415,7 @@ class SingletonUpdater:
 	@property
 	def tags(self):
 		if len(self._tags) == 0:
-			return []
+			return list()
 		tag_names = list()
 		for tag in self._tags:
 			tag_names.append(tag["name"])
@@ -539,7 +539,7 @@ class SingletonUpdater:
 		return True
 
 	def _get_tag_names(self):
-		tag_names = []
+		tag_names = list()
 		self.get_tags()
 		for tag in self._tags:
 			tag_names.append(tag["name"])
@@ -603,7 +603,7 @@ class SingletonUpdater:
 			self._prefiltered_tag_count = len(all_tags)
 		else:
 			self._prefiltered_tag_count = 0
-			all_tags = []
+			all_tags = list()
 
 		# pre-process to skip tags
 		if self.skip_tag is not None:
@@ -627,7 +627,7 @@ class SingletonUpdater:
 		if self._tags is None:
 			# some error occurred
 			self._tag_latest = None
-			self._tags = []
+			self._tags = list()
 			return
 		elif self._prefiltered_tag_count == 0 and not self._include_branches:
 			self._tag_latest = None
@@ -1162,7 +1162,7 @@ class SingletonUpdater:
 
 		# should go through string and remove all non-integers,
 		# and for any given break split into a different section
-		segments = []
+		segments = list()
 		tmp = ''
 		for char in str(text):
 			if not char.isdigit():
@@ -1664,7 +1664,7 @@ class BitbucketEngine:
 
 	def parse_tags(self, response, updater):
 		if response is None:
-			return []
+			return list()
 		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["name"], updater)} for tag in response["values"]]
 
 
@@ -1695,7 +1695,7 @@ class GithubEngine:
 
 	def parse_tags(self, response, updater):
 		if response is None:
-			return []
+			return list()
 		return response
 
 
@@ -1737,7 +1737,7 @@ class GitlabEngine:
 
 	def parse_tags(self, response, updater):
 		if response is None:
-			return []
+			return list()
 		return [{"name": tag["name"], "zipball_url": self.get_zip_url(tag["commit"]["id"], updater)} for tag in response]
 
 
