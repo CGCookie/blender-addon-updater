@@ -672,7 +672,7 @@ def updater_run_install_popup_handler(scene):
 		pass
 
 	if "ignore" in updater.json and updater.json["ignore"]:
-		return # don't do popup if ignore pressed
+		return  # don't do popup if ignore pressed
 	# elif type(updater.update_version) != type((0,0,0)):
 	# 	# likely was from master or another branch, shouldn't trigger popup
 	# 	updater.json_reset_restore()
