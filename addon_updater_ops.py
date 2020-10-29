@@ -1436,7 +1436,7 @@ def register(bl_info):
 	# a release/tag). Setting has no impact on BitBucket or GitLab repos
 	updater.use_releases = False
 	# note: Releases always have a tag, but a tag may not always be a release
-	# Therefore, setting True above will filter out any non-annoted tags
+	# Therefore, setting True above will filter out any non-annotated tags
 	# note 2: Using this option will also display the release name instead of
 	# just the tag name, bear this in mind given the skip_tag_function filtering above
 
