@@ -298,9 +298,9 @@ class AddonUpdaterUpdateNow(bpy.types.Operator):
 						print("Updater returned successful")
 					else:
 						print("Updater returned " + str(res) + ", error occurred")
-			except Exception as e:
+			except Exception as expt:
 				updater._error = "Error trying to run update"
-				updater._error_msg = str(e)
+				updater._error_msg = str(expt)
 				updater.print_trace()
 				atr = AddonUpdaterInstallManually.bl_idname.split(".")
 				getattr(getattr(bpy.ops, atr[0]), atr[1])('INVOKE_DEFAULT')
