@@ -54,9 +54,11 @@ except Exception as e:
             self.error_msg = None
             self.async_checking = None
 
-        def run_update(self): pass
+        def run_update(self, force, callback, clean):
+            pass
 
-        def check_for_update(self): pass
+        def check_for_update(self, now):
+            pass
 
     updater = SingletonUpdaterNone()
     updater.error = "Error initializing updater module"
@@ -158,7 +160,7 @@ class AddonUpdaterInstallPopup(bpy.types.Operator):
             col = layout.column()
             col.scale_y = 0.7
             col.label(text="Update {} ready!".format(str(updater.update_version)),
-                        icon="LOOP_FORWARDS")
+                      icon="LOOP_FORWARDS")
             col.label(text="Choose 'Update Now' & press OK to install, ", icon="BLANK1")
             col.label(text="or click outside window to defer", icon="BLANK1")
             row = col.row()
@@ -197,8 +199,8 @@ class AddonUpdaterInstallPopup(bpy.types.Operator):
             # else: "install update now!"
 
             res = updater.run_update(force=False,
-                                    callback=post_update_callback,
-                                    clean=self.clean_install)
+                                     callback=post_update_callback,
+                                     clean=self.clean_install)
 
             # should return 0, if not something happened
             if updater.verbose:
@@ -287,10 +289,9 @@ class AddonUpdaterUpdateNow(bpy.types.Operator):
         if updater.update_ready:
             # if it fails, offer to open the website instead
             try:
-                res = updater.run_update(
-                    force=False,
-                    callback=post_update_callback,
-                    clean=self.clean_install)
+                res = updater.run_update(force=False,
+                                         callback=post_update_callback,
+                                         clean=self.clean_install)
 
                 # should return 0, if not something happened
                 if updater.verbose:
@@ -788,10 +789,10 @@ def check_for_update_background():
     if not settings:
         return
     updater.set_check_interval(enable=settings.auto_check_update,
-                months=settings.updater_intrval_months,
-                days=settings.updater_intrval_days,
-                hours=settings.updater_intrval_hours,
-                minutes=settings.updater_intrval_minutes
+                months=settings.updater_interval_months,
+                days=settings.updater_interval_days,
+                hours=settings.updater_interval_hours,
+                minutes=settings.updater_interval_minutes
                 )  # optional, if auto_check_update
 
     # input is an optional callback function
@@ -818,10 +819,10 @@ def check_for_update_nonthreaded(self, context):
                 __package__))
         return
     updater.set_check_interval(enable=settings.auto_check_update,
-                months=settings.updater_intrval_months,
-                days=settings.updater_intrval_days,
-                hours=settings.updater_intrval_hours,
-                minutes=settings.updater_intrval_minutes)  # optional, if auto_check_update
+                               months=settings.updater_intrval_months,
+                               days=settings.updater_intrval_days,
+                               hours=settings.updater_intrval_hours,
+                               minutes=settings.updater_intrval_minutes)  # optional, if auto_check_update
 
     (update_ready, version, link) = updater.check_for_update(now=False)
     if update_ready:
@@ -968,10 +969,9 @@ def update_settings_ui(self, context, element=None):
         saved_state = updater.json
         if "just_updated" in saved_state and saved_state["just_updated"]:
             row.alert = True
-            row.operator(
-                "wm.quit_blender",
-                text="Restart blender to complete update",
-                icon="ERROR")
+            row.operator("wm.quit_blender",
+                         text="Restart blender to complete update",
+                         icon="ERROR")
             return
 
     split = layout_split(row, factor=0.4)
@@ -1062,7 +1062,7 @@ def update_settings_ui(self, context, element=None):
     elif updater.update_ready and updater.manual_only:
         col.scale_y = 2
         col.operator("wm.url_open",
-                text="Download " + str(updater.update_version)).url = updater.website
+                     text="Download " + str(updater.update_version)).url = updater.website
     else:  # i.e. that updater.update_ready == False
         sub_col = col.row(align=True)
         sub_col.scale_y = 1
@@ -1203,7 +1203,7 @@ def update_settings_ui_condensed(self, context, element=None):
     elif updater.update_ready and updater.manual_only:
         col.scale_y = 2
         col.operator("wm.url_open",
-                text="Download " + str(updater.update_version)).url = updater.website
+                     text="Download " + str(updater.update_version)).url = updater.website
     else:  # i.e. that updater.update_ready == False
         sub_col = col.row(align=True)
         sub_col.scale_y = 1
