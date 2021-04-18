@@ -234,11 +234,12 @@ class SingletonUpdater:
 
     @engine.setter
     def engine(self, value):
-        if value.lower() is "github":
+        engine = value.lower()
+        if engine == "github":
             self._engine = GithubEngine()
-        elif value.lower() is "gitlab":
+        elif engine == "gitlab":
             self._engine = GitlabEngine()
-        elif value.lower() is "bitbucket":
+        elif engine == "bitbucket":
             self._engine = BitbucketEngine()
         else:
             raise ValueError("Invalid engine selection")
