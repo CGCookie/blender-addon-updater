@@ -1183,14 +1183,15 @@ class SingletonUpdater:
     # called for running check in a background thread
     def check_for_update_async(self, callback=None):
 
-        if self._json is not None and "update_ready" in self._json and self._json["version_text"] != dict():
-            if self._json["update_ready"]:
-                self._update_ready = True
-                self._update_link = self._json["version_text"]["link"]
-                self._update_version = str(self._json["version_text"]["version"])
-                # cached update
-                callback(True)
-                return
+        is_ready = self._json is not None and "update_ready" in self._json and \
+                 self._json["version_text"] != dict() and self._json["update_ready"]
+        if is_ready:
+            self._update_ready = True
+            self._update_link = self._json["version_text"]["link"]
+            self._update_version = str(self._json["version_text"]["version"])
+            # cached update
+            callback(True)
+            return
 
         # do the check
         if not self._check_interval_enabled:
