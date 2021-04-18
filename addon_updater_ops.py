@@ -247,7 +247,7 @@ class AddonUpdaterCheckNow(bpy.types.Operator):
             return {'CANCELLED'}
 
         updater.set_check_interval(
-            enable=settings.auto_check_update,
+            enabled=settings.auto_check_update,
             months=settings.updater_interval_months,
             days=settings.updater_interval_days,
             hours=settings.updater_interval_hours,
@@ -788,7 +788,7 @@ def check_for_update_background():
     settings = get_user_preferences(bpy.context)
     if not settings:
         return
-    updater.set_check_interval(enable=settings.auto_check_update,
+    updater.set_check_interval(enabled=settings.auto_check_update,
                                months=settings.updater_interval_months,
                                days=settings.updater_interval_days,
                                hours=settings.updater_interval_hours,
@@ -818,7 +818,7 @@ def check_for_update_nonthreaded(self, context):
             print("Could not get {} preferences, update check skipped".format(
                 __package__))
         return
-    updater.set_check_interval(enable=settings.auto_check_update,
+    updater.set_check_interval(enabled=settings.auto_check_update,
                                months=settings.updater_interval_months,
                                days=settings.updater_interval_days,
                                hours=settings.updater_interval_hours,
@@ -1025,12 +1025,10 @@ def update_settings_ui(self, context, element=None):
         split = sub_col.split(align=True)
         split.enabled = False
         split.scale_y = 2
-        split.operator(AddonUpdaterCheckNow.bl_idname,
-                       text="Checking...")
+        split.operator(AddonUpdaterCheckNow.bl_idname, text="Checking...")
         split = sub_col.split(align=True)
         split.scale_y = 2
-        split.operator(AddonUpdaterEndBackground.bl_idname,
-                       text="", icon="X")
+        split.operator(AddonUpdaterEndBackground.bl_idname, text="", icon="X")
 
     elif updater.include_branches and \
             len(updater.tags) == len(updater.include_branch_list) and not \
@@ -1364,8 +1362,7 @@ def register(bl_info):
 
     # Optional, to hard-set update frequency, use this here - however,
     # this demo has this set via UI properties.
-    # updater.set_check_interval(
-    # 		enable=False,months=0,days=0,hours=0,minutes=2)
+    # updater.set_check_interval(enabled=False, months=0, days=0, hours=0, minutes=2)
 
     # Optional, consider turning off for production or allow as an option
     # This will print out additional debugging info to the console
