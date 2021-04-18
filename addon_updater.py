@@ -181,7 +181,6 @@ class SingletonUpdater:
     def backup_current(self, value):
         if value is None:
             self._backup_current = False
-            return
         else:
             self._backup_current = value
 
@@ -193,7 +192,6 @@ class SingletonUpdater:
     def backup_ignore_patterns(self, value):
         if value is None:
             self._backup_ignore_patterns = None
-            return
         elif not isinstance(value, list):
             raise ValueError("Backup pattern must be in list format")
         else:
@@ -220,12 +218,10 @@ class SingletonUpdater:
             try:
                 tuple(tuple_values)
             except:
-                raise ValueError(
-                    "Not a tuple! current_version must be a tuple of integers")
+                raise ValueError("Not a tuple! current_version must be a tuple of integers")
         for i in tuple_values:
             if type(i) is not int:
-                raise ValueError(
-                    "Not an integer! current_version must be a tuple of integers")
+                raise ValueError("Not an integer! current_version must be a tuple of integers")
         self._current_version = tuple(tuple_values)
 
     @property
@@ -628,7 +624,7 @@ class SingletonUpdater:
             # some error occurred
             self._tag_latest = None
             self._tags = list()
-            return
+
         elif self._prefiltered_tag_count == 0 and not self._include_branches:
             self._tag_latest = None
             if self._error is None:  # if not None, could have had no internet
@@ -636,12 +632,14 @@ class SingletonUpdater:
                 self._error_msg = "No releases or tags found on this repository"
             if self._verbose:
                 print("No releases or tags found on this repository")
+
         elif self._prefiltered_tag_count == 0 and self._include_branches:
             if not self._error:
                 self._tag_latest = self._tags[0]
             if self._verbose:
                 branch = self._include_branch_list[0]
                 print("{} branch found, no releases".format(branch), self._tags[0])
+
         elif (len(self._tags) - len(self._include_branch_list) == 0 and self._include_branches) \
                 or (len(self._tags) == 0 and not self._include_branches) \
                 and self._prefiltered_tag_count > 0:
@@ -650,6 +648,7 @@ class SingletonUpdater:
             self._error_msg = "No versions found within compatible version range"
             if self._verbose:
                 print("No versions found within compatible version range")
+
         else:
             if not self._include_branches:
                 self._tag_latest = self._tags[0]
@@ -811,8 +810,7 @@ class SingletonUpdater:
         if self._verbose:
             print("Backing up current addon folder")
         local = os.path.join(self._updater_path, "backup")
-        tempdest = os.path.join(self._addon_root, os.pardir,
-                                self._addon + "_updater_backup_temp")
+        tempdest = os.path.join(self._addon_root, os.pardir, self._addon + "_updater_backup_temp")
 
         if self._verbose:
             print("Backup destination path: ", local)
@@ -856,8 +854,7 @@ class SingletonUpdater:
         if self._verbose:
             print("Backing up current addon folder")
         backuploc = os.path.join(self._updater_path, "backup")
-        tempdest = os.path.join(self._addon_root, os.pardir,
-                        self._addon + "_updater_backup_temp")
+        tempdest = os.path.join(self._addon_root, os.pardir, self._addon + "_updater_backup_temp")
         tempdest = os.path.abspath(tempdest)
 
         # make the copy
@@ -1409,8 +1406,7 @@ class SingletonUpdater:
                 if self._verbose:
                     print("Update stopped, update link unavailable")
                 if callback:
-                    callback(self._addon_package,
-                        "Update stopped, update link unavailable")
+                    callback(self._addon_package, "Update stopped, update link unavailable")
                 return "Update stopped, update link unavailable"
 
             if self._verbose and revert_tag is None:
