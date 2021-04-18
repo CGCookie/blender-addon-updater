@@ -1045,7 +1045,7 @@ def update_settings_ui(self, context, element=None):
         split.operator(AddonUpdaterCheckNow.bl_idname,
                        text="", icon="FILE_REFRESH")
 
-    elif updater.update_read and not updater.manual_only:
+    elif updater.update_ready and not updater.manual_only:
         sub_col = col.row(align=True)
         sub_col.scale_y = 1
         split = sub_col.split(align=True)
