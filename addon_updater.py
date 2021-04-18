@@ -90,7 +90,7 @@ class SingletonUpdater:
         self._auto_reload_post_update = False
 
         # settings relating to frequency and whether to enable auto background check
-        self._check_interval_enable = False
+        self._check_interval_enabled = False
         self._check_interval_months = 0
         self._check_interval_days = 7
         self._check_interval_hours = 0
@@ -199,7 +199,7 @@ class SingletonUpdater:
 
     @property
     def check_interval(self):
-        return (self._check_interval_enable,
+        return (self._check_interval_enabled,
                 self._check_interval_months,
                 self._check_interval_days,
                 self._check_interval_hours,
@@ -557,9 +557,9 @@ class SingletonUpdater:
             raise ValueError("Minutes must be an integer value")
 
         if not enabled:
-            self._check_interval_enable = False
+            self._check_interval_enabled = False
         else:
-            self._check_interval_enable = True
+            self._check_interval_enabled = True
 
         self._check_interval_months = months
         self._check_interval_days = days
@@ -1183,7 +1183,7 @@ class SingletonUpdater:
     # called for running check in a background thread
     def check_for_update_async(self, callback=None):
 
-        if self._json is not None and "update_ready" in self._json and self._json["version_text"] is not dict():
+        if self._json is not None and "update_ready" in self._json and self._json["version_text"] != dict():
             if self._json["update_ready"]:
                 self._update_ready = True
                 self._update_link = self._json["version_text"]["link"]
@@ -1193,12 +1193,12 @@ class SingletonUpdater:
                 return
 
         # do the check
-        if not self._check_interval_enable:
+        if not self._check_interval_enabled:
             return
         elif self._async_checking:
             if self._verbose:
                 print("Skipping async check, already started")
-            return  # already running the bg thread
+            # already running the bg thread
         elif self._update_ready is None:
             self.start_async_check_update(False, callback)
 
@@ -1453,7 +1453,7 @@ class SingletonUpdater:
         return 0
 
     def past_interval_timestamp(self):
-        if not self._check_interval_enable:
+        if not self._check_interval_enabled:
             return True  # ie this exact feature is disabled
 
         if "last_check" not in self._json or self._json["last_check"] == "":
