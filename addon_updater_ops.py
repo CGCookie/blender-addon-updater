@@ -74,18 +74,21 @@ updater.addon = "addon_updater_demo"
 # Blender version utils
 # -----------------------------------------------------------------------------
 def make_annotations(cls):
-    """Add annotation attribute to class fields to avoid Blender 2.8 warnings"""
-    if not hasattr(bpy.app, "version") or bpy.app.version < (2, 80):
-        return cls
-    bl_props = {k: v for k, v in cls.__dict__.items() if isinstance(v, tuple)}
-    if bl_props:
-        if '__annotations__' not in cls.__dict__:
-            setattr(cls, '__annotations__', {})
-        annotations = cls.__dict__['__annotations__']
-        for k, v in bl_props.items():
-            annotations[k] = v
-            delattr(cls, k)
-    return cls
+	"""Add annotation attribute to class fields to avoid Blender 2.8 warnings"""
+	if not hasattr(bpy.app, "version") or bpy.app.version < (2, 80):
+		return cls
+	if bpy.app.version < (2, 93, 0):
+		bl_props = {k: v for k, v in cls.__dict__.items() if isinstance(v, tuple)}
+	else:
+		bl_props = {k: v for k, v in cls.__dict__.items() if isinstance(v, bpy.props._PropertyDeferred)}
+	if bl_props:
+		if '__annotations__' not in cls.__dict__:
+			setattr(cls, '__annotations__', {})
+		annotations = cls.__dict__['__annotations__']
+		for k, v in bl_props.items():
+			annotations[k] = v
+			delattr(cls, k)
+	return cls
 
 
 def layout_split(layout, factor=0.0, align=False):
