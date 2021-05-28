@@ -215,7 +215,7 @@ class TestFunctions(unittest.TestCase):
         """Test the reload function which disables and re-enables addon"""
         updater = addon_updater.SingletonUpdater()
         updater.auto_reload_post_update = True
-        updater._addon_package = "blender-addon-updater-github"  # test override
+        updater._addon_package = "blender-addon-updater"  # test override
         updater.reload_addon()  # assert no error
 
 
