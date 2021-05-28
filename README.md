@@ -9,7 +9,7 @@ With this Python module, developers can create auto-checking for updates with th
 
 *Want to add this code to your addon? [See this tutorial here](http://theduckcow.com/2016/addon-updater-tutorial/)*
 
-This addon has been updated to work with both blender 2.7x and 2.8x simultaneously, see [this section below](https://github.com/CGCookie/blender-addon-updater#Blender-27-and-28).
+This addon has been updated and still works from Blender 2.7 through 3.0, see [this section below](https://github.com/CGCookie/blender-addon-updater#blender-27-and-28).
 
 
 # Key Features
@@ -246,21 +246,21 @@ updater.addon = "addon_name"
   - **backup_current** Create a backup of the current code when performing an update or reversion.
 - **overwrite_patterns:** A list of patterns to match for which files of the local addon install should be overwritten by matching files in the downloaded version version
   - Type: List of strings, each item follows a match pattern supported by the python module fnmatch
-  - Default: [], which is internally made equivalent to ["*.py","*.pyc"]
-  - Notes: You can use wild card patterns, see documentation for fnmatch.filter. The new default behavior introduced here is setting ["*.py","*.pyc"] means it matches the default behavior of blender. Also note this only describes patterns to allow *overwriting*, if a file in the new update doesn't already exist locally, then it will be installed to the local addon.
+  - Default: `[]`, which is internally made equivalent to `["*.py","*.pyc"]`
+  - Notes: You can use wild card patterns, see documentation for fnmatch.filter. The new default behavior introduced here is setting `["*.py","*.pyc"]` means it matches the default behavior of blender. Also note this only describes patterns to allow *overwriting*, if a file in the new update doesn't already exist locally, then it will be installed to the local addon.
   - Examples:
-    - ["some.py"] In this method, only files matching the name some.py would be overwritten via the update. Thus, even if the updated addon had a newer __init__.py file, it would not replace the local version. This method could be used to build a file replacement whitelist.
-    - ["*.json"] means all JSON files found in addon update will overwrite those of same name in current install. This would be useful if the addon only has configuration, read-only data that should be always updated with the addon. Note that default blender behavior would not overwrite such JSON files if already present in the local install, this gets around that
-    - ["*"] means that all matching files found in the update would overwrite files in the local install. Note this was the behavior pre updater v1.0.4, this is also the safest option to use if you want to ensure all files always get updated with the newer version in the update, including resource files. Be mindful that any local or custom modified files may get overwritten.
-    // also note that this is a new setting as of v1.0.4 of the updater; the previous behavior of the updater was using the equivalent setting of ["*"] which would mean that all files found in the update would overwrite files in the local install.
-    - [] or ["*.py","*.pyc"] matches default blender behavior, ie same effect if user installs update manually through blender interface without deleting the existing addon first
+    - `["some.py"]` In this method, only files matching the name some.py would be overwritten via the update. Thus, even if the updated addon had a newer __init__.py file, it would not replace the local version. This method could be used to build a file replacement whitelist.
+    - `["*.json"]` means all JSON files found in addon update will overwrite those of same name in current install. This would be useful if the addon only has configuration, read-only data that should be always updated with the addon. Note that default blender behavior would not overwrite such JSON files if already present in the local install, this gets around that
+    - `["*"]` means that all matching files found in the update would overwrite files in the local install. Note this was the behavior pre updater v1.0.4, this is also the safest option to use if you want to ensure all files always get updated with the newer version in the update, including resource files. Be mindful that any local or custom modified files may get overwritten.
+    // also note that this is a new setting as of v1.0.4 of the updater; the previous behavior of the updater was using the equivalent setting of `["*"]` which would mean that all files found in the update would overwrite files in the local install.
+    - `[]` or `["*.py","*.pyc"]` matches default blender behavior, ie same effect if user installs update manually through blender interface without deleting the existing addon first
 - **remove_pre_update_patterns:** A list of patterns to match for which files of the currently installed addon should be removed prior to running the update
   - Type: List of strings, each item follows a match pattern supported by the python module fnmatch
-  - Default: [], recommended/as configured in demo addon: ["*.pyc"]
+  - Default: `[]`, recommended/as configured in demo addon: ["*.pyc"]
   - Notes: This explicitly will delete all files in the local addon install which match any of the rules, and will run after a backup is taken (so the backup is complete), but before the overwrite_patterns are applied. If the structure or files of an addon may change in the future, it may be wise to set remove_pre_update_patterns to ["*.py","*.pyc"] which would ensure all python files are always removed prior to the update, thus ensuring no longer used files aren't present. Using it in this fashion would also negate the need to specify the same patterns in the overwrite_patterns option. Note this option only deletes files, not folders.
   - Examples:
-    - ["*"] means all files in the addon (except those under the dedicated updater subfolder of the addon) will always be deleted prior to running the update. This is nearly equivalent to using clean=True in the run_update method (however that will also delete folders)
-    -  ["*.pyc"] means pycache files are always removed prior to update, which is a safe
+    - `["*"]` means all files in the addon (except those under the dedicated updater subfolder of the addon) will always be deleted prior to running the update. This is nearly equivalent to using clean=True in the run_update method (however that will also delete folders)
+    -  `["*.pyc"]` means pycache files are always removed prior to update, which is a safe
 - **backup_ignore_patterns:** A setting to ignore certain files or folders when performing a backup prior to installing an update/target version, useful to avoid copying resources or large files that wouldn't be replaced by the update anyways (via not being included in the overwrite_patterns setting)
   - Type: List of strings
   - Default: None
@@ -463,7 +463,7 @@ This would still add in *new* files present in the update not present in the loc
 
 **Addon contains only py files, no resources (e.g. JSON files, images, blends), and against better judgment, not even licenses or readme files**
 
-In this example, we only need to worry about replacing the python files with the new python files. By default, this demo addon is configured so that new py files and pyc files will overwrite old files with matching paths/names in the local install. This is accomplished by setting `updater.overwrite_patterns = ["*.py","*.pyc"]` in the operator file. You could also be more explicit and specify all files which may be overwritten via `updater.overwrite_patterns = ["__init__.py", "module.py", "*.pyc"]` for example (noting the "*.pyc" is still there to ensure all caches are flushed).
+In this example, we only need to worry about replacing the python files with the new python files. By default, this demo addon is configured so that new py files and pyc files will overwrite old files with matching paths/names in the local install. This is accomplished by setting `updater.overwrite_patterns = ["*.py","*.pyc"]` in the operator file. You could also be more explicit and specify all files which may be overwritten via `updater.overwrite_patterns = ["__init__.py", "module.py", "*.pyc"]` for example (noting the "\*.pyc" is still there to ensure all caches are flushed).
 
 Note that if in the future, a file is renamed e.g. from module.py to new_module.py, when the update runs (and assuming `remove_pre_update_patterns` has been left to it's empty list default), then the updater will copy in the new_module.py into the local install, while also leaving the previous version's module.py in place. The result will have both the module.py and new_module.py file in place.
 
@@ -485,13 +485,13 @@ updater.overwrite_patterns = ["README.md", "*.blend"]
 
 In this setup, the updater is told to always replace the readme file explicitly (note the case sensitivity). No other files are indicated to be overwritten, indicating for example the license file will never be overwritten with an update - that shouldn't be changing anyways. This setup would actually mean not even the python files are overwritten if the update has matching files to the local install. Not even the __init__.py file would be updated, which is where the next setting becomes useful.
 
-The "*.blend" will result in any blend file being overwritten if matching locally to the update. e.g. /addonroot/assets/resources.blend will be replaced with the e.g. /addonroot/assets/resources.blend found in update repository. This would make sense if the blend file is static and not expected to be ever user modified.
+The "\*.blend" will result in any blend file being overwritten if matching locally to the update. e.g. /addonroot/assets/resources.blend will be replaced with the e.g. /addonroot/assets/resources.blend found in update repository. This would make sense if the blend file is static and not expected to be ever user modified.
 
 ```
 updater.remove_pre_update_patterns = ["*.py","*.pyc"]
 ```
 
-The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add *.py into the `overwrite_patterns`, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, JSON etc will all be left alone. With the exception of blend files (as per `overwrite_patterns` above), they also won't be overwritten - even if there are updates.
+The second line tells the updater to delete all .py and .pyc files prior to updating, no matter what. This why we don't need to also add \*.py into the `overwrite_patterns`, because if the python files have already been removed, then there's no chance for the update to have a matching python file in the local install (and thus no need to check against overwriting rules). This setup also has the benefit of never leaving old, unused python code around. if module_new.py is used in one version but then removed in the next, this setup of pre-removing all py files ensures it is deleted. Note that this doesn't do anything to any other files. Meaning existing files such as blends, images, JSON etc will all be left alone. With the exception of blend files (as per `overwrite_patterns` above), they also won't be overwritten - even if there are updates.
 
 **Addon contains py files, resource files, and user/local configuration files**
 
@@ -527,7 +527,7 @@ Just as importantly, note how the customizable.blend is not mentioned in either 
 
 **In conclusion**
 
-If you are planning to modify the `overwrite_patterns` or `remove_pre_update_patterns` settings, be sure to plan and test it works as you expect. It's important to have "*.py" in at least one of them, or alternatively individually name all python file basenames in either of the two settings.
+If you are planning to modify the `overwrite_patterns` or `remove_pre_update_patterns` settings, be sure to plan and test it works as you expect. It's important to have "\*.py" in at least one of them, or alternatively individually name all python file basenames in either of the two settings.
 
 It is redundant to have the same rule in both settings, behavior of the `remove_pre_update_patterns` will supersede the more passive overwriting permission rules of `overwrite_patterns`
 
@@ -540,13 +540,13 @@ Finally, enabled verbose and check the console output after running an update! T
 
 # Blender 2.7 and 2.8
 
-This repository and example addon has been updated to work simultaneously for both Blender 2.7x and Blender 2.8x, though addon developers could still choose to host dedicated 2.8x versions separate from 2.7x versions while using this updater system. Note that annotations are applied to class fields programmatically instead of through coding syntax (e.g. you will not see `propname: bpy.props...`, but the same effect will be in place and there should be no console warnings)
+This repository and example addon has been updated to still work for Blender 2.7x, 2.8x, 2.9x, and (as of writing) early builds of 3.0. Optionally, addon developers could still choose to host dedicated 2.8x versions separate from 2.7x versions while using this updater system. Note that annotations are applied to class fields programmatically instead of through coding syntax (e.g. you will not see `propname: bpy.props...`, but the same effect will be in place and there should be no console warnings)
 
-Note that, as an addon developer, you have different options for supporting Blender 2.7 and 2.8 while still using this updater system. These are:
+Note that, as an addon developer, you have different options for supporting Blender 2.7 and 2.8+ while still using this updater system. These are:
 
-1) Make the addon work for 2.7x and 2.8x simultaneously (in the same way that this module and demo addon does).
+1) Make the addon work for 2.7x and 2.8+ simultaneously (in the same way that this module and demo addon does).
     - This requires some extra work, in particular note the workaround of annotations as accomplished by the `make_annotations` function.
-2) Have dedicated, separate releases for Blender 2.7x and 2.8x which are separated by a major version, and use min/max conversioning to isolate which users can update to which versions.
+2) Have dedicated, separate releases for Blender 2.7x and 2.8+ which are separated by a major version, and use min/max conversioning to isolate which users can update to which versions.
     - For instance, if an existing addon is version 1.5 and works on blender 2.79, then a feature-parity version for Blender 2.8 could be released as addon version 2.0; this 2.0 addon with have a `version_min_update` set to be 2.0 for the blender 2.8 code, and the Blender 2.7x code would set `version_max_update` to be 2.0 as well as a ceiling.
     - The next update to the Blender 2.79-compatible addon (released at the same time or earlier, to prevent 2.7x users from accidentally updating to breaking 2.8 code) should push this settings change to make sure users don't accidentally update to a version they shouldn't.
     - Note in this scenario, you also prevent being able to update Blender 2.7x version numbers to or beyond 2.0. Note that there is no obligation to simultaneously update the Blender 2.7x and 2.8x versions at the same time as the version numbers themselves are not actually linked in any way.
@@ -573,8 +573,8 @@ For this reason, it is very important to be aware and setup tokens accordingly. 
   - Use at own risk and ensure to do according research to ensure there are no security risks or possible backlashes due to providing updating for private repositories on GitLab.
   - When in doubt, you can always revoke a personal token - but once revoked, it cannot be re-enabled and thus any existing installs using the token will no longer be able to pull from the private repo unless manually updating the addon themselves.
   - These are only recommendations. As indicated by the GPL license, software is provided as-is and developers are not held liable to mishandling which results in unwanted consequences such as malicious exploit of a badly implemented private repository updating.
-- GitHub: Not yet supported
-- Bitbucket: Not yet supported
+- GitHub: Not yet supported. Likely to only be included via community contribution.
+- Bitbucket: Not yet supported. Likely to only be included via community contribution.
 
 # Issues or help
 
