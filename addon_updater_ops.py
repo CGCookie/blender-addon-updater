@@ -426,7 +426,7 @@ class AddonUpdaterInstallManually(bpy.types.Operator):
             return
 
         # use a "failed flag"? it shows this label if the case failed.
-        if self.error is not "":
+        if self.error != "":
             col = layout.column()
             col.scale_y = 0.7
             col.label(text="There was an issue trying to auto-install", icon="ERROR")
@@ -659,6 +659,9 @@ def updater_run_success_popup_handler(scene):
 def updater_run_install_popup_handler(scene):
     global ran_auto_check_install_popup
     ran_auto_check_install_popup = True
+    if updater.verbose:
+        print("{} updater: Running the install popup handler.".format(
+            updater.addon))
 
     # in case of error importing updater
     if updater.invalid_updater:
@@ -699,11 +702,14 @@ def updater_run_install_popup_handler(scene):
 def background_update_callback(update_ready):
     """Passed into the updater, background thread updater"""
     global ran_auto_check_install_popup
+    if updater._verbose:
+        print("{} updater: Running background update callback".format(
+            updater.addon))
 
     # in case of error importing updater
     if updater.invalid_updater:
         return
-    if not updater.showpopups:
+    if not updater.show_popups:
         return
     if not update_ready:
         return
@@ -726,6 +732,9 @@ def background_update_callback(update_ready):
         bpy.app.handlers.depsgraph_update_post.append(
                 updater_run_install_popup_handler)
     ran_auto_check_install_popup = True
+    if updater._verbose:
+        print("{} updater: Attempted popup prompt".format(
+            updater.addon))
 
 
 def post_update_callback(module_name, res=None):
@@ -800,9 +809,6 @@ def check_for_update_background():
     # input is an optional callback function
     # this function should take a bool input, if true: update ready
     # if false, no update ready
-    if updater.verbose:
-        print("{} updater: Running background check for update".format(
-                updater.addon))
     updater.check_for_update_async(background_update_callback)
     ran_background_check = True
 
@@ -1101,7 +1107,7 @@ def update_settings_ui(self, context, element=None):
     last_check = updater.json["last_check"]
     if updater.error is not None and updater.error_msg is not None:
         row.label(text=updater.error_msg)
-    elif last_check is not "" and last_check is not None:
+    elif last_check:
         last_check = last_check[0: last_check.index(".")]
         row.label(text="Last update check: " + last_check)
     else:
