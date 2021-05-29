@@ -702,9 +702,7 @@ def updater_run_install_popup_handler(scene):
 def background_update_callback(update_ready):
     """Passed into the updater, background thread updater"""
     global ran_auto_check_install_popup
-    if updater._verbose:
-        print("{} updater: Running background update callback".format(
-            updater.addon))
+    updater.print_verbose("Running background update callback")
 
     # in case of error importing updater
     if updater.invalid_updater:
@@ -732,9 +730,7 @@ def background_update_callback(update_ready):
         bpy.app.handlers.depsgraph_update_post.append(
                 updater_run_install_popup_handler)
     ran_auto_check_install_popup = True
-    if updater._verbose:
-        print("{} updater: Attempted popup prompt".format(
-            updater.addon))
+    updater.print_verbose("Attempted popup prompt")
 
 
 def post_update_callback(module_name, res=None):
