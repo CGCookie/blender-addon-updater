@@ -831,11 +831,21 @@ class SingletonUpdater:
 
         # Make a full addon copy, temporarily placed outside the addon folder.
         if self._backup_ignore_patterns is not None:
-            shutil.copytree(
-                self._addon_root, tempdest,
-                ignore=shutil.ignore_patterns(*self._backup_ignore_patterns))
+            try:
+                shutil.copytree(self._addon_root, tempdest,
+                                ignore=shutil.ignore_patterns(
+                                    *self._backup_ignore_patterns))
+            except:
+                print("Failed to create backup, still attempting update.")
+                self.print_trace()
+                return
         else:
-            shutil.copytree(self._addon_root, tempdest)
+            try:
+                shutil.copytree(self._addon_root, tempdest)
+            except:
+                print("Failed to create backup, still attempting update.")
+                self.print_trace()
+                return
         shutil.move(tempdest, local)
 
         # Save the date for future reference.
@@ -1524,10 +1534,17 @@ class SingletonUpdater:
             self._json["version_text"] = dict()
 
         jpath = self.get_json_path()
-        outf = open(jpath, 'w')
-        data_out = json.dumps(self._json, indent=4)
-        outf.write(data_out)
-        outf.close()
+        if not os.path.isdir(os.path.dirname(jpath)):
+            print("State error: Directory does not exist, cannot save json: ",
+                  os.path.basename(jpath))
+            return
+        try:
+            with open(jpath, 'w') as outf:
+                data_out = json.dumps(self._json, indent=4)
+                outf.write(data_out)
+        except:
+            print("Failed to open/save data to json: ", jpath)
+            self.print_trace()
         self.print_verbose("Wrote out updater JSON settings with content:")
         self.print_verbose(str(self._json))
 
@@ -1586,7 +1603,7 @@ class SingletonUpdater:
         if callback:
             self.print_verbose("Finished check update, doing callback")
             callback(self._update_ready)
-        self.print_verbose("{} BG thread: Finished check update, no callback")
+        self.print_verbose("BG thread: Finished check update, no callback")
 
     def stop_async_check_update(self):
         """Method to give impression of stopping check for update.

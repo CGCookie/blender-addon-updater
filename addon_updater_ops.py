@@ -224,8 +224,7 @@ class AddonUpdaterInstallPopup(bpy.types.Operator):
             atr = AddonUpdaterInstallPopup.bl_idname.split(".")
             getattr(getattr(bpy.ops, atr[0]), atr[1])('INVOKE_DEFAULT')
         else:
-            if updater.verbose:
-                print("Doing nothing, not ready for update")
+            updater.print_verbose("Doing nothing, not ready for update")
         return {'FINISHED'}
 
 
@@ -662,9 +661,7 @@ def updater_run_success_popup_handler(scene):
 def updater_run_install_popup_handler(scene):
     global ran_auto_check_install_popup
     ran_auto_check_install_popup = True
-    if updater.verbose:
-        print("{} updater: Running the install popup handler.".format(
-            updater.addon))
+    updater.print_verbose("Running the install popup handler.")
 
     # in case of error importing updater
     if updater.invalid_updater:
@@ -830,8 +827,7 @@ def check_for_update_nonthreaded(self, context):
         atr = AddonUpdaterInstallPopup.bl_idname.split(".")
         getattr(getattr(bpy.ops, atr[0]), atr[1])('INVOKE_DEFAULT')
     else:
-        if updater.verbose:
-            print("No update ready")
+        updater.print_verbose("No update ready")
         self.report({'INFO'}, "No update ready")
 
 
@@ -916,7 +912,9 @@ def update_notice_box_ui(self, context):
     layout = self.layout
     box = layout.box()
     col = box.column(align=True)
+    col.alert = True
     col.label(text="Update ready!", icon="ERROR")
+    col.alert = False
     col.separator()
     row = col.row(align=True)
     split = row.split(align=True)
