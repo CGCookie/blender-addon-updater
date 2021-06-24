@@ -95,11 +95,13 @@ Included in this repository is an example addon which is integrates the auto-upd
         )
 ```
 
-7) Add the draw call to any according panel to indicate there is an update by adding this line to the end of the panel or window: `addon_updater_ops.update_notice_box_ui()`
+7) If blender version > 2.80, add the decorator `@addon_updater_ops.make_annotations` before the class drawing the preference UI. As shown in the   sample demo addon's `DemoPreferences` class, located in the `__init__` file.
+
+8) Add the draw call to any according panel to indicate there is an update by adding this line to the end of the panel or window: `addon_updater_ops.update_notice_box_ui()`
   - Again make sure to import the Operator File if this panel is defined in a file other than the addon's `__init__.py` file.
   - Note that this function will only be called once per blender session, and will only do anything if auto-check is enabled, thus triggering a background check for update provided the interval of time has passed since the last check for update. This is safe to trigger from draw as it is launched in a background thread and will not hang blender.
 
-8) Ensure at least one [release or tag](https://help.github.com/articles/creating-releases/) exists on the GitHub repository
+9) Ensure at least one [release or tag](https://help.github.com/articles/creating-releases/) exists on the GitHub repository
   - As an alternative or in addition to using releases, the setting `updater.include_branches = True` in the `addon_updater_ops.py` register function allows you to update to specific git branches. You can then specify the list of branches for updating by using `updater.include_branche_list = ['branch','names']` for which the default is set to ['master']
   - If no releases are found, the user preferences button will always show "Update to Master" without doing any version checking
 
