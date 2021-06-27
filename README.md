@@ -95,7 +95,11 @@ Included in this repository is an example addon which is integrates the auto-upd
         )
 ```
 
-7) If Blender version > 2.80, add the decorator `@addon_updater_ops.make_annotations` before the class drawing the preference UI. As shown in the   sample demo addon's `DemoPreferences` class, located in the `__init__` file.
+7) To support Blender version > 2.80, make one (not necessairly both) of these changes:
+
+    a. Add the decorator `@addon_updater_ops.make_annotations` before your addon's user preferences class ([see here](https://github.com/CGCookie/blender-addon-updater/blob/master/__init__.py#L76))
+
+    b. Call `make_annotations()`, passing your addon's user preferences class as an input, inside a register function ([see here](https://github.com/CGCookie/blender-addon-updater/blob/master/__init__.py#L152))
 
 8) Add the draw call to any according panel to indicate there is an update by adding this line to the end of the panel or window: `addon_updater_ops.update_notice_box_ui()`
   - Again make sure to import the Operator File if this panel is defined in a file other than the addon's `__init__.py` file.
