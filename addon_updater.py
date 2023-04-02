@@ -62,9 +62,9 @@ class SingletonUpdater:
         self._website = None
         self._current_version = None
         self._subfolder_path = None
-        self._tags = list()
+        self._tags = []
         self._tag_latest = None
-        self._tag_names = list()
+        self._tag_names = []
         self._latest_release = None
         self._use_releases = False
         self._include_branches = False
@@ -80,7 +80,7 @@ class SingletonUpdater:
 
         # Set patterns the files to overwrite during an update.
         self._overwrite_patterns = ["*.py", "*.pyc"]
-        self._remove_pre_update_patterns = list()
+        self._remove_pre_update_patterns = []
 
         # By default, don't auto disable+re-enable the addon after an update,
         # as this is less stable/often won't fully reload all modules anyways.
@@ -112,7 +112,7 @@ class SingletonUpdater:
         self._updater_path = os.path.join(
             os.path.dirname(__file__), self._addon + "_updater")
         self._addon_root = os.path.dirname(__file__)
-        self._json = dict()
+        self._json = {}
         self._error = None
         self._error_msg = None
         self._prefiltered_tag_count = 0
@@ -358,7 +358,7 @@ class SingletonUpdater:
     @remove_pre_update_patterns.setter
     def remove_pre_update_patterns(self, value):
         if value is None:
-            self._remove_pre_update_patterns = list()
+            self._remove_pre_update_patterns = []
         elif not isinstance(value, list):
             raise ValueError(
                 "remove_pre_update_patterns needs to be in a list format")
@@ -417,8 +417,8 @@ class SingletonUpdater:
     @property
     def tags(self):
         if len(self._tags) == 0:
-            return list()
-        tag_names = list()
+            return []
+        tag_names = []
         for tag in self._tags:
             tag_names.append(tag["name"])
         return tag_names
@@ -540,7 +540,7 @@ class SingletonUpdater:
         return True
 
     def _get_tag_names(self):
-        tag_names = list()
+        tag_names = []
         self.get_tags()
         for tag in self._tags:
             tag_names.append(tag["name"])
@@ -604,7 +604,7 @@ class SingletonUpdater:
             self._prefiltered_tag_count = len(all_tags)
         else:
             self._prefiltered_tag_count = 0
-            all_tags = list()
+            all_tags = []
 
         # pre-process to skip tags
         if self.skip_tag is not None:
@@ -628,7 +628,7 @@ class SingletonUpdater:
         if self._tags is None:
             # some error occurred
             self._tag_latest = None
-            self._tags = list()
+            self._tags = []
 
         elif self._prefiltered_tag_count == 0 and not self._include_branches:
             self._tag_latest = None
@@ -1165,7 +1165,7 @@ class SingletonUpdater:
         if text is None:
             return ()
 
-        segments = list()
+        segments = []
         tmp = ''
         for char in str(text):
             if not char.isdigit():
@@ -1190,7 +1190,7 @@ class SingletonUpdater:
         is_ready = (
             self._json is not None
             and "update_ready" in self._json
-            and self._json["version_text"] != dict()
+            and self._json["version_text"] != {}
             and self._json["update_ready"])
 
         if is_ready:
@@ -1369,7 +1369,7 @@ class SingletonUpdater:
         """
         self._json["update_ready"] = False
         self._json["ignore"] = False  # clear ignore flag
-        self._json["version_text"] = dict()
+        self._json["version_text"] = {}
 
         if revert_tag is not None:
             self.set_tag(revert_tag)
@@ -1515,7 +1515,7 @@ class SingletonUpdater:
                 "ignore": False,
                 "just_restored": False,
                 "just_updated": False,
-                "version_text": dict()
+                "version_text": {}
             }
             self.save_updater_json()
 
@@ -1528,10 +1528,10 @@ class SingletonUpdater:
                 self._json["version_text"]["version"] = self._update_version
             else:
                 self._json["update_ready"] = False
-                self._json["version_text"] = dict()
+                self._json["version_text"] = {}
         else:
             self._json["update_ready"] = False
-            self._json["version_text"] = dict()
+            self._json["version_text"] = {}
 
         jpath = self.get_json_path()
         if not os.path.isdir(os.path.dirname(jpath)):
@@ -1551,13 +1551,13 @@ class SingletonUpdater:
     def json_reset_postupdate(self):
         self._json["just_updated"] = False
         self._json["update_ready"] = False
-        self._json["version_text"] = dict()
+        self._json["version_text"] = {}
         self.save_updater_json()
 
     def json_reset_restore(self):
         self._json["just_restored"] = False
         self._json["update_ready"] = False
-        self._json["version_text"] = dict()
+        self._json["version_text"] = {}
         self.save_updater_json()
         self._update_ready = None  # Reset so you could check update again.
 
@@ -1655,7 +1655,7 @@ class BitbucketEngine:
 
     def parse_tags(self, response, updater):
         if response is None:
-            return list()
+            return []
         return [
             {
                 "name": tag["name"],
@@ -1689,7 +1689,7 @@ class GithubEngine:
 
     def parse_tags(self, response, updater):
         if response is None:
-            return list()
+            return []
         return response
 
 
@@ -1728,7 +1728,7 @@ class GitlabEngine:
 
     def parse_tags(self, response, updater):
         if response is None:
-            return list()
+            return []
         return [
             {
                 "name": tag["name"],
